@@ -126,11 +126,6 @@ namespace SeamstressVariant.Survivors.Seamstress
             BleedingHeartComponent heart = bodyPrefab.AddComponent<BleedingHeartComponent>();
             // maxHeart will be set to character's max health in Start()
 
-            // Add bleed aura component for passive
-            BleedAuraComponent bleedAura = bodyPrefab.AddComponent<BleedAuraComponent>();
-            bleedAura.detectionRadius = 25f; // 25 unit detection radius
-            bleedAura.updateInterval = 0.5f; // Update every 0.5 seconds
-
             //bodyPrefab.AddComponent<HuntressTrackerComopnent>();
             //anything else here
         }

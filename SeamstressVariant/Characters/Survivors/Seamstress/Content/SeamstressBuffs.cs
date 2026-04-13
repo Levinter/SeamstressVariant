@@ -11,8 +11,8 @@ namespace SeamstressVariant.Survivors.Seamstress
         // heart visualization buff
         public static BuffDef heartBuff;
 
-        // bleed aura count visualization buff
-        public static BuffDef bleedAuraBuff;
+        // bleed stack counter buff to visualize active enemy bleeds
+        public static BuffDef bleedStackCounterBuff;
 
         public static void Init(AssetBundle assetBundle)
         {
@@ -22,13 +22,12 @@ namespace SeamstressVariant.Survivors.Seamstress
                 false,
                 false);
 
-            // Create buff for visualizing bleed aura count
-            bleedAuraBuff = Modules.Content.CreateAndAddBuff("SeamstressBleedAura",
-                assetBundle.LoadAsset<Sprite>("texPassiveIcon"), // Use the passive icon or create an aura-specific one
-                new Color(0.9f, 0.1f, 0.1f), // Dark red color for bleed aura
-                true, // canStack = true so we can show the bleed count
+            // Create buff for visualizing active enemy bleed stacks
+            bleedStackCounterBuff = Modules.Content.CreateAndAddBuff("SeamstressBleedStackCounter",
+                LegacyResourcesAPI.Load<BuffDef>("BuffDefs/Bleeding").iconSprite, // Use bleed icon
+                new Color(1f, 0.2f, 0.2f), // Bright red for stack visualization
+                true, // canStack = true to show count
                 false); // not a debuff
-
         }
     }
 }
