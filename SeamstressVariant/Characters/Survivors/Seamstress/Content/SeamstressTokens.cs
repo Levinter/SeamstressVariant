@@ -42,8 +42,8 @@ namespace SeamstressVariant.Survivors.Seamstress
 
             #region Passive
             Language.Add(prefix + "PASSIVE_NAME", "Bleeding Heart");
-            Language.Add(prefix + "PASSIVE_DESCRIPTION", "All healing is converted into <style=cKeywordName>Heart</style> instead of restoring health. Attacks have <style=cIsDamage>5%</style> base bleed chance, increased by Heart.");
-            Language.Add("KEYWORD_HEART", "<style=cKeywordName>Heart</style><style=cSub>Further increases bleed chance. +1% bleed per 100 Heart.</style>");
+            Language.Add(prefix + "PASSIVE_DESCRIPTION", "All healing is converted into <style=cKeywordName>Heart</style> instead of restoring health. Heart capacity is <style=cIsHealing>1:1 with your maximum health</style>. Every second, gain <style=cIsHealing>5 Heart</style> per active <style=cIsDamage>Bleed</style> stack on nearby enemies. Gain <style=cIsDamage>+5% Bleed chance</style>, plus <style=cIsDamage>+1% per 100 Heart</style>, and an extra <style=cIsDamage>+5%</style> while Heart is full.");
+            Language.Add("KEYWORD_HEART", "<style=cKeywordName>Heart</style><style=cSub>Stored healing. Capacity is equal to your maximum health (1:1). Increases Bleed chance by +1% per 100 Heart. At full Heart, gain an additional +5% Bleed chance.</style>");
             #endregion
 
             #region Primary

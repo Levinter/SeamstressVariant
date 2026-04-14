@@ -126,6 +126,9 @@ namespace SeamstressVariant.Survivors.Seamstress
             BleedingHeartComponent heart = bodyPrefab.AddComponent<BleedingHeartComponent>();
             // maxHeart will be set to character's max health in Start()
 
+            // Add overlay controller to drive the Heart meter UI (reuses VoidSurvivor corruption bar)
+            bodyPrefab.AddComponent<HeartOverlayController>();
+
             //bodyPrefab.AddComponent<HuntressTrackerComopnent>();
             //anything else here
         }
@@ -446,7 +449,18 @@ namespace SeamstressVariant.Survivors.Seamstress
                 //base bleed chance
                 args.bleedChanceAdd = 5;
                 //increase bleedchance by amount on heart
-                args.bleedChanceAdd += heart.GetHeart() / 2;
+                float bleedChanceFromHeart = heart.GetHeart() / 100f; // 1% bleed chance per 100 heart
+
+                // Only apply if the computed bonus is a whole number.
+                if (Mathf.Approximately(bleedChanceFromHeart, Mathf.Round(bleedChanceFromHeart)))
+                {
+                    args.bleedChanceAdd += bleedChanceFromHeart;
+                }
+
+                if (heart.IsHeartFull())
+                {
+                    args.bleedChanceAdd += 5; // Extra 5% bleed chance on full heart
+                }
             }
         }
 

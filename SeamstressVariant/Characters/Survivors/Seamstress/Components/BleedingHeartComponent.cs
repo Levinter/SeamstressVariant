@@ -95,6 +95,16 @@ namespace SeamstressVariant.Survivors.Seamstress.Components
             return currentHeart;
         }
 
+        public float GetMaxHeart()
+        {
+            return MaxHeart;
+        }
+
+        public bool IsHeartFull()
+        {
+            return currentHeart >= MaxHeart;
+        }
+
         public int GetActiveBleedStacks()
         {
             return activeBleedStacks;
