@@ -21,7 +21,8 @@ namespace SeamstressVariant.Survivors.Seamstress.Components
         private const float NearbyEnemyRadius = 20f;
         private float scanTimer = 0f;
         private const float ScanInterval = 1f;
-        private const float HealPerBleedStack = 5f;
+        private const float HealPerBleedStack = 40f;
+        private const int HeartPerBleedChancePercent = 1;
 
         private bool isInitialized = false;
 
@@ -39,7 +40,7 @@ namespace SeamstressVariant.Survivors.Seamstress.Components
 
         private void Update()
         {
-            if (!NetworkServer.active || body == null)
+            if (!NetworkServer.active || body == null || healthComponent == null || !healthComponent.alive)
             {
                 return;
             }
@@ -81,7 +82,7 @@ namespace SeamstressVariant.Survivors.Seamstress.Components
         // Add Health to heart from healing
         public void AddToHeart(float amount)
         {
-            if (isInitialized)
+            if (isInitialized && healthComponent != null && healthComponent.alive)
             {
                 currentHeart = Mathf.Min(currentHeart + amount, MaxHeart);
                 Log.Debug("AMOUNT IN HEART = " + currentHeart);
@@ -95,9 +96,39 @@ namespace SeamstressVariant.Survivors.Seamstress.Components
             return currentHeart;
         }
 
+        public float ConsumeHeart(float amount)
+        {
+            if (!isInitialized || amount <= 0f)
+            {
+                return 0f;
+            }
+
+            float previousHeart = currentHeart;
+            currentHeart = Mathf.Max(0f, currentHeart - amount);
+            float consumed = previousHeart - currentHeart;
+
+            if (consumed > 0f)
+            {
+                Log.Debug("CONSUMED HEART = " + consumed + " | REMAINING = " + currentHeart);
+                body.MarkAllStatsDirty();
+            }
+
+            return consumed;
+        }
+
+        public bool CanSustainDefiantHeart()
+        {
+            return currentHeart > 1f;
+        }
+
         public float GetMaxHeart()
         {
             return MaxHeart;
+        }
+
+        public int GetBleedChanceBonusFromHeart()
+        {
+            return (int)(currentHeart / HeartPerBleedChancePercent);
         }
 
         public bool IsHeartFull()
@@ -149,7 +180,7 @@ namespace SeamstressVariant.Survivors.Seamstress.Components
 
         private void ApplyPassiveHeal()
         {
-            if (activeBleedStacks <= 0 || healthComponent == null)
+            if (activeBleedStacks <= 0 || healthComponent == null || !healthComponent.alive)
             {
                 return;
             }

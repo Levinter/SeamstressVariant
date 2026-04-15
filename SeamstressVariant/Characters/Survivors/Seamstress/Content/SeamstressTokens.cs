@@ -24,7 +24,7 @@ namespace SeamstressVariant.Survivors.Seamstress
              + "< ! > Sword is a good all-rounder while Boxing Gloves are better for laying a beatdown on more powerful foes." + Environment.NewLine + Environment.NewLine
              + "< ! > Pistol is a powerful anti air, with its low cooldown and high damage." + Environment.NewLine + Environment.NewLine
              + "< ! > Roll has a lingering armor buff that helps to use it aggressively." + Environment.NewLine + Environment.NewLine
-             + "< ! > Bomb can be used to wipe crowds with ease." + Environment.NewLine + Environment.NewLine;
+             + "< ! > Defiant Heart drains Heart each second and grants Defiance, preventing death while active." + Environment.NewLine + Environment.NewLine;
 
             string outro = "..and so he left, searching for a new identity.";
             string outroFailure = "..and so he vanished, forever a blank slate.";
@@ -62,8 +62,8 @@ namespace SeamstressVariant.Survivors.Seamstress
             #endregion
 
             #region Special
-            Language.Add(prefix + "SPECIAL_BOMB_NAME", "Bomb");
-            Language.Add(prefix + "SPECIAL_BOMB_DESCRIPTION", $"Throw a bomb for <style=cIsDamage>{100f * SeamstressStaticValues.bombDamageCoefficient}% damage</style>.");
+            Language.Add(prefix + "SPECIAL_DEFIANT_HEART_NAME", "Defiant Heart");
+            Language.Add(prefix + "SPECIAL_DEFIANT_HEART_DESCRIPTION", "Enter a defiant state while <style=cIsHealing>Heart is above 1</style>. Drain <style=cIsHealing>Heart once per second</style> and gain <style=cIsUtility>Defiance</style>. While Defiance is active, incoming damage <style=cIsUtility>cannot reduce you below 1 health</style>.");
             #endregion
 
             #region Achievements

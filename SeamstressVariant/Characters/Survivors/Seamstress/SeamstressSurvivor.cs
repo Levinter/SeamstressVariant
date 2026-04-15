@@ -152,6 +152,7 @@ namespace SeamstressVariant.Survivors.Seamstress
 
             Prefabs.AddEntityStateMachine(bodyPrefab, "Weapon");
             Prefabs.AddEntityStateMachine(bodyPrefab, "Weapon2");
+            Prefabs.AddEntityStateMachine(bodyPrefab, "Special");
         }
 
         #region skills
@@ -327,17 +328,18 @@ namespace SeamstressVariant.Survivors.Seamstress
             //a basic skill. some fields are omitted and will just have default values
             SkillDef specialSkillDef1 = Skills.CreateSkillDef(new SkillDefInfo
             {
-                skillName = "HenryBomb",
-                skillNameToken = HENRY_PREFIX + "SPECIAL_BOMB_NAME",
-                skillDescriptionToken = HENRY_PREFIX + "SPECIAL_BOMB_DESCRIPTION",
+                skillName = "HenryDefiantHeart",
+                skillNameToken = HENRY_PREFIX + "SPECIAL_DEFIANT_HEART_NAME",
+                skillDescriptionToken = HENRY_PREFIX + "SPECIAL_DEFIANT_HEART_DESCRIPTION",
                 skillIcon = assetBundle.LoadAsset<Sprite>("texSpecialIcon"),
 
-                activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.ThrowBomb)),
-                //setting this to the "weapon2" EntityStateMachine allows us to cast this skill at the same time primary, which is set to the "weapon" EntityStateMachine
-                activationStateMachineName = "Weapon2", interruptPriority = EntityStates.InterruptPriority.Skill,
+                activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.DefiantHeart)),
+                // Dedicated machine so this sustained special does not block Secondary (Weapon2).
+                activationStateMachineName = "Special", interruptPriority = EntityStates.InterruptPriority.Skill,
 
                 baseMaxStock = 1,
                 baseRechargeInterval = 10f,
+                beginSkillCooldownOnSkillEnd = true,
 
                 isCombatSkill = true,
                 mustKeyPress = false,
@@ -437,6 +439,7 @@ namespace SeamstressVariant.Survivors.Seamstress
         private void AddHooks()
         {
             On.RoR2.HealthComponent.Heal += HealthComponent_Heal;
+            On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
             R2API.RecalculateStatsAPI.GetStatCoefficients += RecalculateStatsAPI_GetStatCoefficients;
         }
 
@@ -448,14 +451,8 @@ namespace SeamstressVariant.Survivors.Seamstress
             {
                 //base bleed chance
                 args.bleedChanceAdd = 5;
-                //increase bleedchance by amount on heart
-                float bleedChanceFromHeart = heart.GetHeart() / 100f; // 1% bleed chance per 100 heart
-
-                // Only apply if the computed bonus is a whole number.
-                if (Mathf.Approximately(bleedChanceFromHeart, Mathf.Round(bleedChanceFromHeart)))
-                {
-                    args.bleedChanceAdd += bleedChanceFromHeart;
-                }
+                // 1% bleed chance per x(config) Heart.
+                args.bleedChanceAdd += heart.GetBleedChanceBonusFromHeart();
 
                 if (heart.IsHeartFull())
                 {
@@ -466,17 +463,19 @@ namespace SeamstressVariant.Survivors.Seamstress
 
         private float HealthComponent_Heal(On.RoR2.HealthComponent.orig_Heal orig, HealthComponent self, float amount, ProcChainMask procChainMask, bool nonRegen)
         {
-            if (self.body.bodyIndex == BodyCatalog.FindBodyIndex("SeamstressVariantBody")){
+            if (self.body.bodyIndex == BodyCatalog.FindBodyIndex("SeamstressVariantBody") && self.alive){
                 float previousHealth = self.health;
+                float incomingHeal = Mathf.Max(0f, amount);
                 float healed = orig(self, amount, procChainMask, nonRegen);
 
-                if (healed > 0)
+                if (incomingHeal > 0f)
                 {
                     var heart = self.GetComponent<BleedingHeartComponent>();
                     
                     if (heart != null)
                     {
-                        heart.AddToHeart(healed);
+                        // Redirect attempted healing into Heart, even when HP is already full.
+                        heart.AddToHeart(incomingHeal);
                         self.health = previousHealth;
                     }
                 }
@@ -485,6 +484,23 @@ namespace SeamstressVariant.Survivors.Seamstress
             } else {
                 return orig (self, amount, procChainMask, nonRegen);
             }
+        }
+
+        private void HealthComponent_TakeDamage(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo damageInfo)
+        {
+            if (self != null
+                && self.body != null
+                && self.body.bodyIndex == BodyCatalog.FindBodyIndex("SeamstressVariantBody")
+                && self.body.HasBuff(SeamstressBuffs.defianceBuff)
+                && damageInfo != null
+                && damageInfo.damage > 0f)
+            {
+                damageInfo.damageType |= DamageType.NonLethal;
+                float maxAllowedDamage = Mathf.Max(0f, self.health - 1f);
+                damageInfo.damage = Mathf.Min(damageInfo.damage, maxAllowedDamage);
+            }
+
+            orig(self, damageInfo);
         }
     }
 }

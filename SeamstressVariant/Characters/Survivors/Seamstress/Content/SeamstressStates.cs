@@ -12,7 +12,7 @@ namespace SeamstressVariant.Survivors.Seamstress
 
             Modules.Content.AddEntityState(typeof(Roll));
 
-            Modules.Content.AddEntityState(typeof(ThrowBomb));
+            Modules.Content.AddEntityState(typeof(DefiantHeart));
         }
     }
 }
