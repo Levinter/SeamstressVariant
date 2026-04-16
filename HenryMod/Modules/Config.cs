@@ -2,11 +2,11 @@
 using BepInEx.Configuration;
 using UnityEngine;
 
-namespace SeamstressVariant.Modules
+namespace HenryMod.Modules
 {
     public static class Config
     {
-        public static ConfigFile MyConfig = SeamstressVariantPlugin.instance.Config;
+        public static ConfigFile MyConfig = HenryPlugin.instance.Config;
 
         /// <summary>
         /// automatically makes config entries for disabling survivors

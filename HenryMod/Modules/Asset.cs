@@ -8,9 +8,8 @@ using System.Collections.Generic;
 using RoR2.UI;
 using RoR2.Projectile;
 using Path = System.IO.Path;
-using SeamstressVariant;
 
-namespace SeamstressVariant.Modules
+namespace HenryMod.Modules
 {
     internal static class Asset
     {
@@ -34,7 +33,7 @@ namespace SeamstressVariant.Modules
             AssetBundle assetBundle = null;
             try
             {
-                assetBundle = AssetBundle.LoadFromFile(Path.Combine(Path.GetDirectoryName(SeamstressVariantPlugin.instance.Info.Location), "AssetBundles", bundleName));
+                assetBundle = AssetBundle.LoadFromFile(Path.Combine(Path.GetDirectoryName(HenryPlugin.instance.Info.Location), "AssetBundles", bundleName));
             }
             catch (System.Exception e)
             {
