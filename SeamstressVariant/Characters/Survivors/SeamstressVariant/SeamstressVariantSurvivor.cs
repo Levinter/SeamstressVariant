@@ -49,18 +49,25 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         public override CustomRendererInfo[] customRendererInfos => new CustomRendererInfo[]
         {
                 new CustomRendererInfo
-                {
-                    childName = "SwordModel",
-                    material = assetBundle.LoadMaterial("matHenry"),
-                },
-                new CustomRendererInfo
-                {
-                    childName = "GunModel",
-                },
-                new CustomRendererInfo
-                {
-                    childName = "Model",
-                }
+                    {
+                        childName = "Model"
+                    },
+                    new CustomRendererInfo
+                    {
+                        childName = "ScissorLModel"
+                    },
+                    new CustomRendererInfo
+                    {
+                        childName = "ScissorRModel"
+                    },
+                    new CustomRendererInfo
+                    {
+                        childName = "CrownModel"
+                    },
+                    new CustomRendererInfo
+                    {
+                        childName = "HeartModel"
+                    }
         };
 
         public override UnlockableDef characterUnlockableDef => SeamstressVariantUnlockables.characterUnlockableDef;
@@ -130,8 +137,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
         public void AddHitboxes()
         {
-            //example of how to create a HitBoxGroup. see summary for more details
-            Prefabs.SetupHitBoxGroup(characterModelObject, "SwordGroup", "SwordHitbox");
+            Prefabs.SetupHitBoxGroup(characterModelObject, "Sword", "SwordHitbox");
+            Prefabs.SetupHitBoxGroup(characterModelObject, "SwordBig", "SwordHitboxBig");
+            Prefabs.SetupHitBoxGroup(characterModelObject, "Weave", "WeaveHitbox");
+            Prefabs.SetupHitBoxGroup(characterModelObject, "WeaveBig", "WeaveHitboxBig");
+            Prefabs.SetupHitBoxGroup(characterModelObject, "Right", "RightScissorHitbox");
+            Prefabs.SetupHitBoxGroup(characterModelObject, "Left", "LeftScissorHitbox");
         }
 
         public override void InitializeEntityStateMachines() 
