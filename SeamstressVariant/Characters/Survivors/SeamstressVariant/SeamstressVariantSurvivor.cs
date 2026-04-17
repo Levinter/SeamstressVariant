@@ -4,6 +4,7 @@ using SeamstressVariant.Modules.Characters;
 using RoR2;
 using RoR2.Skills;
 using SeamstressVariant;
+using SeamstressMod;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,18 +15,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 {
     public class SeamstressVariantSurvivor : SurvivorBase<SeamstressVariantSurvivor>
     {
-        //used to load the assetbundle for this character. must be unique
-        public override string assetBundleName => "whatassetbundlelmao"; //if you do not change this, you are giving permission to deprecate the mod
-
-        //the name of the prefab we will create. conventionally ending in "Body". must be unique
-        public override string bodyName => "SeamstressVariantBody"; //if you do not change this, you get the point by now
-
-        //name of the ai master for vengeance and goobo. must be unique
-        public override string masterName => "SeamstressVariantMonsterMaster"; //if you do not
-
-        //the names of the prefabs you set up in unity that we will use to build your character
-        public override string modelPrefabName => "mdlHenry";
-        public override string displayPrefabName => "HenryDisplay";
+        public override string assetBundleName => "none";
+        public override string bodyName => "SeamstressVariantBody";
+        public override string masterName => "SeamstressVariantMonsterMaster";
+        public override string modelPrefabName => "mdlSeamstress";
+        public override string displayPrefabName => "SeamstressDisplay";
 
         public const string HENRY_PREFIX = SeamstressVariantPlugin.DEVELOPER_PREFIX + "_SEAMSTRESS_";
 
@@ -92,7 +86,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             base.Initialize();
         }
-
         
 
         public override void InitializeCharacter()

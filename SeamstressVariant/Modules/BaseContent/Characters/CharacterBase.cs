@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using SeamstressMod;
 
 namespace SeamstressVariant.Modules.Characters
 {
@@ -30,7 +31,7 @@ namespace SeamstressVariant.Modules.Characters
         public virtual void Initialize()
         {
             instance = this as T;
-            assetBundle = Asset.LoadAssetBundle(assetBundleName);
+            assetBundle = SeamstressMod.Seamstress.Content.SeamstressAssets.mainAssetBundle; //Load asset bundle from Original Seamstress
 
             InitializeCharacter();
         }
