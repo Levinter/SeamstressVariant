@@ -7,8 +7,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Achievements
     [RegisterAchievement(identifier, unlockableIdentifier, null, 10, null)]
     public class SeamstressVariantMasteryAchievement : BaseMasteryAchievement
     {
-        public const string identifier = SeamstressVariantSurvivor.HENRY_PREFIX + "masteryAchievement";
-        public const string unlockableIdentifier = SeamstressVariantSurvivor.HENRY_PREFIX + "masteryUnlockable";
+        public const string identifier = SeamstressVariantSurvivor.SEAMSTRESS_VARIANT_PREFIX + "masteryAchievement";
+        public const string unlockableIdentifier = SeamstressVariantSurvivor.SEAMSTRESS_VARIANT_PREFIX + "masteryUnlockable";
 
         public override string RequiredCharacterBody => SeamstressVariantSurvivor.instance.bodyName;
 

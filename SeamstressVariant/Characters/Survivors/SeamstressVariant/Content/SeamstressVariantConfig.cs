@@ -6,6 +6,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
     public static class SeamstressVariantConfig
     {
         public static ConfigEntry<float> utilityBlinkDuration;
+        public static ConfigEntry<float> utilityBlinkHealthCost;
 
         public static void Init()
         {
@@ -18,6 +19,14 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 0.05f,
                 0.5f,
                 "Duration of Seamstress Variant blink in seconds.");
+
+            utilityBlinkHealthCost = Config.BindAndOptions(
+                section,
+                "Utility Blink Health Cost",
+                10f,
+                0f,
+                30f,
+                "Health drained each time Blink is used. Non-lethal (will not reduce below 1 HP).");
         }
     }
 }

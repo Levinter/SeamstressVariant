@@ -2,6 +2,7 @@ using EntityStates;
 using KinematicCharacterController;
 using RoR2;
 using SeamstressMod.Seamstress.Content;
+using SeamstressVariant.Survivors.SeamstressVariant.Components;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -13,18 +14,14 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         public static string beginSoundString = "Play_imp_attack_blink";
         public string animationLayer = "FullBody, Override";
-        public string animString = "Dash";
-
         public float duration = 0.1f;
-
         protected CameraTargetParams.AimRequest request;
+        protected bool hasAimRequest;
         protected Vector3 blinkVector;
         protected float speedCoefficient;
-
         protected CharacterModel characterModel;
         protected HurtBoxGroup hurtboxGroup;
         protected Animator animator;
-
         protected GameObject dashPrefab;
         protected GameObject blinkPrefab;
         protected Material destealthMaterial;
@@ -33,7 +30,36 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         {
             base.OnEnter();
 
+            hasAimRequest = false;
+
             duration = SeamstressVariantConfig.utilityBlinkDuration.Value;
+
+            if (NetworkServer.active && healthComponent)
+            {
+                float totalCost = Mathf.Max(SeamstressVariantConfig.utilityBlinkHealthCost.Value, 0f);
+                if (totalCost > 0f)
+                {
+                    float availableHealth = Mathf.Max(healthComponent.health - 1f, 0f);
+
+                    if (availableHealth >= totalCost)
+                    {
+                        // Health alone can cover the cost.
+                        healthComponent.health -= totalCost;
+                    }
+                    else
+                    {
+                        // Drain health to floor, then pull the remainder from Heart.
+                        float remainder = totalCost - availableHealth;
+                        healthComponent.health = 1f;
+
+                        BleedingHeartComponent heart = characterBody.GetComponent<BleedingHeartComponent>();
+                        if (heart != null)
+                        {
+                            heart.ConsumeHeart(remainder);
+                        }
+                    }
+                }
+            }
 
             // Keep OG seamstress blink VFX when available.
             dashPrefab = SeamstressAssets.impDashEffect;
@@ -63,6 +89,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             if (cameraTargetParams)
             {
                 request = cameraTargetParams.RequestAimType(CameraTargetParams.AimType.Aura);
+                hasAimRequest = true;
             }
 
             blinkVector = GetBlinkVector();
@@ -174,7 +201,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             if (!outer.destroying)
             {
-                CreateBlinkEffect(characterBody.corePosition, false);
+                Vector3 effectOrigin = characterBody ? characterBody.corePosition : transform.position;
+                CreateBlinkEffect(effectOrigin, false);
 
                 modelTransform = GetModelTransform();
                 if (modelTransform && destealthMaterial && animator)
@@ -200,7 +228,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
                 if (cameraTargetParams)
                 {
-                    request.Dispose();
+                    if (hasAimRequest)
+                    {
+                        request.Dispose();
+                        hasAimRequest = false;
+                    }
                 }
             }
 

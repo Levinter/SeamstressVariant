@@ -8,17 +8,17 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
     {
         public static void Init()
         {
-            AddHenryTokens();
+            AddSeamstressVariantTokens();
 
             ////uncomment this to spit out a lanuage file with all the above tokens that people can translate
             ////make sure you set Language.usingLanguageFolder and printingEnabled to true
-            //Language.PrintOutput("Henry.txt");
+            //Language.PrintOutput("SeamstressVariant.txt");
             ////refer to guide on how to build and distribute your mod with the proper folders
         }
 
-        public static void AddHenryTokens()
+        public static void AddSeamstressVariantTokens()
         {
-            string prefix = SeamstressVariantSurvivor.HENRY_PREFIX;
+            string prefix = SeamstressVariantSurvivor.SEAMSTRESS_VARIANT_PREFIX;
 
             string desc = "Henry is a skilled fighter who makes use of a wide arsenal of weaponry to take down his foes.<color=#CCD3E0>" + Environment.NewLine + Environment.NewLine
              + "< ! > Sword is a good all-rounder while Boxing Gloves are better for laying a beatdown on more powerful foes." + Environment.NewLine + Environment.NewLine
@@ -58,7 +58,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             #region Utility
             Language.Add(prefix + "UTILITY_BLINK_NAME", "Blink");
-            Language.Add(prefix + "UTILITY_BLINK_DESCRIPTION", "Blink a short distance. <style=cIsUtility>You cannot be hit during the blink.</style>");
+            Language.Add(prefix + "UTILITY_BLINK_DESCRIPTION", "Blink a short distance. <style=cIsHealth>Costs health on use</style>. <style=cIsUtility>You cannot be hit during the blink.</style>");
             #endregion
 
             #region Special

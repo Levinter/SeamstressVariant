@@ -21,16 +21,16 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         public override string modelPrefabName => "mdlHenry";
         public override string displayPrefabName => "HenryDisplay";
 
-        public const string HENRY_PREFIX = SeamstressVariantPlugin.DEVELOPER_PREFIX + "_SEAMSTRESS_";
+        public const string SEAMSTRESS_VARIANT_PREFIX = SeamstressVariantPlugin.DEVELOPER_PREFIX + "_SEAMSTRESS_";
 
         //used when registering your survivor's language tokens
-        public override string survivorTokenPrefix => HENRY_PREFIX;
+        public override string survivorTokenPrefix => SEAMSTRESS_VARIANT_PREFIX;
         
         public override BodyInfo bodyInfo => new BodyInfo
         {
             bodyName = bodyName,
-            bodyNameToken = HENRY_PREFIX + "NAME",
-            subtitleNameToken = HENRY_PREFIX + "SUBTITLE",
+            bodyNameToken = SEAMSTRESS_VARIANT_PREFIX + "NAME",
+            subtitleNameToken = SEAMSTRESS_VARIANT_PREFIX + "SUBTITLE",
 
             characterPortrait = assetBundle.LoadAsset<Texture>("texHenryIcon"),
             bodyColor = Color.white,
@@ -185,7 +185,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             AddPassiveSkill();
             AddPrimarySkills();
             AddSecondarySkills();
-            AddUtiitySkills();
+            AddUtilitySkills();
             AddSpecialSkills();
         }
 
@@ -195,8 +195,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             bodyPrefab.GetComponent<SkillLocator>().passiveSkill = new SkillLocator.PassiveSkill
             {
                 enabled = true,
-                skillNameToken = HENRY_PREFIX + "PASSIVE_NAME",
-                skillDescriptionToken = HENRY_PREFIX + "PASSIVE_DESCRIPTION",
+                skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "PASSIVE_NAME",
+                skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "PASSIVE_DESCRIPTION",
                 keywordToken = "KEYWORD_HEART",
                 icon = assetBundle.LoadAsset<Sprite>("texPassiveIcon"),
             };
@@ -206,8 +206,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             SkillDef passiveSkillDef1 = Skills.CreateSkillDef(new SkillDefInfo
             {
                 skillName = "HenryPassive",
-                skillNameToken = HENRY_PREFIX + "PASSIVE_NAME",
-                skillDescriptionToken = HENRY_PREFIX + "PASSIVE_DESCRIPTION",
+                skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "PASSIVE_NAME",
+                skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "PASSIVE_DESCRIPTION",
                 keywordTokens = new string[] { "KEYWORD_AGILE" },
                 skillIcon = assetBundle.LoadAsset<Sprite>("texPassiveIcon"),
 
@@ -250,8 +250,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             SteppedSkillDef primarySkillDef1 = Skills.CreateSkillDef<SteppedSkillDef>(new SkillDefInfo
                 (
                     "HenrySlash",
-                    HENRY_PREFIX + "PRIMARY_SLASH_NAME",
-                    HENRY_PREFIX + "PRIMARY_SLASH_DESCRIPTION",
+                    SEAMSTRESS_VARIANT_PREFIX + "PRIMARY_SLASH_NAME",
+                    SEAMSTRESS_VARIANT_PREFIX + "PRIMARY_SLASH_DESCRIPTION",
                     assetBundle.LoadAsset<Sprite>("texPrimaryIcon"),
                     new EntityStates.SerializableEntityStateType(typeof(SkillStates.SlashCombo)),
                     "Weapon",
@@ -272,8 +272,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             SkillDef secondarySkillDef1 = Skills.CreateSkillDef(new SkillDefInfo
             {
                 skillName = "HenryGun",
-                skillNameToken = HENRY_PREFIX + "SECONDARY_GUN_NAME",
-                skillDescriptionToken = HENRY_PREFIX + "SECONDARY_GUN_DESCRIPTION",
+                skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "SECONDARY_GUN_NAME",
+                skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "SECONDARY_GUN_DESCRIPTION",
                 keywordTokens = new string[] { "KEYWORD_AGILE" },
                 skillIcon = assetBundle.LoadAsset<Sprite>("texSecondaryIcon"),
 
@@ -304,7 +304,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             Skills.AddSecondarySkills(bodyPrefab, secondarySkillDef1);
         }
 
-        private void AddUtiitySkills()
+        private void AddUtilitySkills()
         {
             Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Utility);
 
@@ -312,8 +312,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             SkillDef utilitySkillDef1 = Skills.CreateSkillDef(new SkillDefInfo
             {
                 skillName = "HenryBlink",
-                skillNameToken = HENRY_PREFIX + "UTILITY_BLINK_NAME",
-                skillDescriptionToken = HENRY_PREFIX + "UTILITY_BLINK_DESCRIPTION",
+                skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "UTILITY_BLINK_NAME",
+                skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "UTILITY_BLINK_DESCRIPTION",
                 skillIcon = assetBundle.LoadAsset<Sprite>("texUtilityIcon"),
 
                 activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.Blink)),
@@ -350,8 +350,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             SkillDef specialSkillDef1 = Skills.CreateSkillDef(new SkillDefInfo
             {
                 skillName = "HenryDefiantHeart",
-                skillNameToken = HENRY_PREFIX + "SPECIAL_DEFIANT_HEART_NAME",
-                skillDescriptionToken = HENRY_PREFIX + "SPECIAL_DEFIANT_HEART_DESCRIPTION",
+                skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "SPECIAL_DEFIANT_HEART_NAME",
+                skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "SPECIAL_DEFIANT_HEART_DESCRIPTION",
                 skillIcon = assetBundle.LoadAsset<Sprite>("texSpecialIcon"),
 
                 activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.DefiantHeart)),
@@ -398,7 +398,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             //uncomment this when you have a mastery skin
             //MasterySkin
-            //SkinDef masterySkin = Modules.Skins.CreateSkinDef(HENRY_PREFIX + "MASTERY_SKIN",
+            //SkinDef masterySkin = Modules.Skins.CreateSkinDef(SEAMSTRESS_VARIANT_PREFIX + "MASTERY_SKIN",
             //    assetBundle.LoadAsset<Sprite>("texMasteryAchievement"),
             //    defaultRenderers,
             //    prefabCharacterModel.gameObject,
@@ -436,6 +436,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             On.RoR2.HealthComponent.Heal += HealthComponent_Heal;
             On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
             R2API.RecalculateStatsAPI.GetStatCoefficients += RecalculateStatsAPI_GetStatCoefficients;
+            On.RoR2.EntityStateMachine.SetState += EntityStateMachine_SetState;
         }
 
         private void RecalculateStatsAPI_GetStatCoefficients(CharacterBody sender, R2API.RecalculateStatsAPI.StatHookEventArgs args)
@@ -496,6 +497,37 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             }
 
             orig(self, damageInfo);
+        }
+
+        private void EntityStateMachine_SetState(On.RoR2.EntityStateMachine.orig_SetState orig, EntityStateMachine self, EntityStates.EntityState newState)
+        {
+            // Check if we're trying to enter Blink state and the body lacks resources
+            if (newState != null && newState.GetType().Name == "Blink")
+            {
+                var characterBody = self.GetComponent<CharacterBody>();
+                if (characterBody != null && characterBody.bodyIndex == BodyCatalog.FindBodyIndex("SeamstressVariantBody"))
+                {
+                    var healthComponent = characterBody.healthComponent;
+                    if (healthComponent != null)
+                    {
+                        float totalCost = Mathf.Max(SeamstressVariantConfig.utilityBlinkHealthCost.Value, 0f);
+                        if (totalCost > 0f)
+                        {
+                            float availableHealth = Mathf.Max(healthComponent.health - 1f, 0f);
+                            var heart = characterBody.GetComponent<BleedingHeartComponent>();
+                            float availableHeart = heart != null ? heart.GetHeart() : 0f;
+
+                            // Not enough combined resources — don't enter the state
+                            if (availableHealth + availableHeart < totalCost)
+                            {
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+
+            orig(self, newState);
         }
     }
 }
