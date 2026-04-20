@@ -18,8 +18,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         public override string assetBundleName => "none";
         public override string bodyName => "SeamstressVariantBody";
         public override string masterName => "SeamstressVariantMonsterMaster";
-        public override string modelPrefabName => "mdlSeamstress";
-        public override string displayPrefabName => "SeamstressDisplay";
+        public override string modelPrefabName => "mdlHenry";
+        public override string displayPrefabName => "HenryDisplay";
 
         public const string HENRY_PREFIX = SeamstressVariantPlugin.DEVELOPER_PREFIX + "_SEAMSTRESS_";
 
@@ -49,25 +49,18 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         public override CustomRendererInfo[] customRendererInfos => new CustomRendererInfo[]
         {
                 new CustomRendererInfo
-                    {
-                        childName = "Model"
-                    },
-                    new CustomRendererInfo
-                    {
-                        childName = "ScissorLModel"
-                    },
-                    new CustomRendererInfo
-                    {
-                        childName = "ScissorRModel"
-                    },
-                    new CustomRendererInfo
-                    {
-                        childName = "CrownModel"
-                    },
-                    new CustomRendererInfo
-                    {
-                        childName = "HeartModel"
-                    }
+                {
+                    childName = "SwordModel",
+                    material = assetBundle.LoadMaterial("matHenry"),
+                },
+                new CustomRendererInfo
+                {
+                    childName = "GunModel",
+                },
+                new CustomRendererInfo
+                {
+                    childName = "Model",
+                }
         };
 
         public override UnlockableDef characterUnlockableDef => SeamstressVariantUnlockables.characterUnlockableDef;
@@ -94,9 +87,31 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             base.Initialize();
         }
         
+        /*public AssetBundle LoadAssetBundleFromSource()
+        {
+            Log.Fatal("LOADING ASSETS FROM OG SEAMSTRESS");
+            var seamstressInstance = SeamstressMod.Seamstress.SeamstressSurvivor.instance;
+            if (seamstressInstance == null)
+            {
+                Log.Fatal("ERROR: SEAMSTRESS INSTANCE NULL");
+                return null;
+            }
+
+            if (seamstressInstance.assetBundle == null)
+            {
+                Log.Fatal("ERROR: SEAMSTRESS ASSET BUNDLE NOT FOUND");
+                return null;
+            }
+
+            var sourceBundle = seamstressInstance.assetBundle;
+            Log.Fatal("SEAMSTRESS ASSET BUNDLE FOUND WITH NAME: " + sourceBundle.name);
+
+            return sourceBundle;
+        }*/
 
         public override void InitializeCharacter()
         {
+            //assetBundle = LoadAssetBundleFromSource();
             //need the character unlockable before you initialize the survivordef
             SeamstressVariantUnlockables.Init();
 
@@ -296,16 +311,16 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             //here's a skilldef of a typical movement skill.
             SkillDef utilitySkillDef1 = Skills.CreateSkillDef(new SkillDefInfo
             {
-                skillName = "HenryRoll",
-                skillNameToken = HENRY_PREFIX + "UTILITY_ROLL_NAME",
-                skillDescriptionToken = HENRY_PREFIX + "UTILITY_ROLL_DESCRIPTION",
+                skillName = "HenryBlink",
+                skillNameToken = HENRY_PREFIX + "UTILITY_BLINK_NAME",
+                skillDescriptionToken = HENRY_PREFIX + "UTILITY_BLINK_DESCRIPTION",
                 skillIcon = assetBundle.LoadAsset<Sprite>("texUtilityIcon"),
 
-                activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.Roll)),
+                activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.Blink)),
                 activationStateMachineName = "Body",
                 interruptPriority = EntityStates.InterruptPriority.PrioritySkill,
 
-                baseRechargeInterval = 4f,
+                baseRechargeInterval = 0.5f,
                 baseMaxStock = 1,
 
                 rechargeStock = 1,

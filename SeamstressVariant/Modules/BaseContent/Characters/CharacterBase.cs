@@ -31,7 +31,7 @@ namespace SeamstressVariant.Modules.Characters
         public virtual void Initialize()
         {
             instance = this as T;
-            assetBundle = SeamstressMod.Seamstress.Content.SeamstressAssets.mainAssetBundle; //Load asset bundle from Original Seamstress
+            assetBundle = Asset.LoadAssetBundle(assetBundleName);
 
             InitializeCharacter();
         }

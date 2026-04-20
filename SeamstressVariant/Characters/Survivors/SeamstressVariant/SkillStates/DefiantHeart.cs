@@ -8,8 +8,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 {
     public class DefiantHeart : BaseSkillState
     {
-        public static float heartDrainPerTick = 10f;
-        public static float heartDrainInterval = 1f;
+        public static float heartDrainPerTick = 5f;
+        public static float heartDrainInterval = 0.25f;
 
         private BleedingHeartComponent heart;
         private SetStateOnHurt setStateOnHurt;
@@ -106,7 +106,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             float storedHeart = heart.GetHeart();
 
             heart.ConsumeHeart(storedHeart);
-            healthComponent.health = Mathf.Clamp(storedHeart, 1f, healthComponent.fullHealth);
+            healthComponent.health = Mathf.Clamp(healthComponent.health + storedHeart, 1f, healthComponent.fullHealth);
 
             if (characterBody)
             {

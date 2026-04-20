@@ -5,9 +5,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 {
     public static class SeamstressVariantBuffs
     {
-        // armor buff gained during roll
-        public static BuffDef armorBuff;
-        
         // heart visualization buff
         public static BuffDef heartBuff;
 
@@ -19,11 +16,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
         public static void Init(AssetBundle assetBundle)
         {
-            armorBuff = Modules.Content.CreateAndAddBuff("HenryArmorBuff",
-                LegacyResourcesAPI.Load<BuffDef>("BuffDefs/HiddenInvincibility").iconSprite,
-                Color.white,
-                false,
-                false);
 
             // Create buff for visualizing active enemy bleed stacks
             bleedStackCounterBuff = Modules.Content.CreateAndAddBuff("SeamstressVariantBleedStackCounter",

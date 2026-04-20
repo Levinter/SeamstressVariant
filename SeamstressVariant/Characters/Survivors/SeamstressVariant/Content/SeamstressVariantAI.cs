@@ -75,27 +75,27 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             shootDriver.aimType = AISkillDriver.AimType.AtMoveTarget;
             shootDriver.buttonPressType = AISkillDriver.ButtonPressType.Hold; 
             
-            AISkillDriver rollDriver = master.AddComponent<AISkillDriver>();
+            AISkillDriver blinkDriver = master.AddComponent<AISkillDriver>();
             //Selection Conditions
-            rollDriver.customName = "Use Utility Roll";
-            rollDriver.skillSlot = SkillSlot.Utility;
-            rollDriver.requireSkillReady = true;
-            rollDriver.minDistance = 8;
-            rollDriver.maxDistance = 20;
-            rollDriver.selectionRequiresTargetLoS = true;
-            rollDriver.selectionRequiresOnGround = false;
-            rollDriver.selectionRequiresAimTarget = false;
-            rollDriver.maxTimesSelected = -1;
+            blinkDriver.customName = "Use Utility Blink";
+            blinkDriver.skillSlot = SkillSlot.Utility;
+            blinkDriver.requireSkillReady = true;
+            blinkDriver.minDistance = 8;
+            blinkDriver.maxDistance = 20;
+            blinkDriver.selectionRequiresTargetLoS = true;
+            blinkDriver.selectionRequiresOnGround = false;
+            blinkDriver.selectionRequiresAimTarget = false;
+            blinkDriver.maxTimesSelected = -1;
 
             //Behavior
-            rollDriver.moveTargetType = AISkillDriver.TargetType.CurrentEnemy;
-            rollDriver.activationRequiresTargetLoS = false;
-            rollDriver.activationRequiresAimTargetLoS = false;
-            rollDriver.activationRequiresAimConfirmation = false;
-            rollDriver.movementType = AISkillDriver.MovementType.StrafeMovetarget;
-            rollDriver.moveInputScale = 1;
-            rollDriver.aimType = AISkillDriver.AimType.AtMoveTarget;
-            rollDriver.buttonPressType = AISkillDriver.ButtonPressType.Hold;
+            blinkDriver.moveTargetType = AISkillDriver.TargetType.CurrentEnemy;
+            blinkDriver.activationRequiresTargetLoS = false;
+            blinkDriver.activationRequiresAimTargetLoS = false;
+            blinkDriver.activationRequiresAimConfirmation = false;
+            blinkDriver.movementType = AISkillDriver.MovementType.StrafeMovetarget;
+            blinkDriver.moveInputScale = 1;
+            blinkDriver.aimType = AISkillDriver.AimType.AtMoveTarget;
+            blinkDriver.buttonPressType = AISkillDriver.ButtonPressType.Hold;
 
             AISkillDriver bombDriver = master.AddComponent<AISkillDriver>();
             //Selection Conditions
