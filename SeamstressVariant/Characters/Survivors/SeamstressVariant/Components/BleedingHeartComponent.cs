@@ -20,8 +20,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private int nearbyEnemyCount = 0;
         private const float NearbyEnemyRadius = 20f;
         private float scanTimer = 0f;
+        private float healTimer = 0f;
         private const float ScanInterval = 1f;
-        private const float HealPerBleedStack = 40f;
+        private const float HealInterval = 0.25f;
+        private const float HealPerBleedStack = 10f;
         private const int HeartPerBleedChancePercent = 1;
 
         private bool isInitialized = false;
@@ -46,12 +48,19 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             }
 
             scanTimer -= Time.deltaTime;
+            healTimer -= Time.deltaTime;
+
             if (scanTimer <= 0f)
             {
                 scanTimer = ScanInterval;
                 ScanNearbyEnemies();
                 Log.Debug("NEARBY ENEMIES = " + nearbyEnemyCount + " | BLEED STACKS = " + activeBleedStacks);
                 UpdateBleedStackBuff();
+            }
+
+            if (healTimer <= 0f)
+            {
+                healTimer = HealInterval;
                 ApplyPassiveHeal();
             }
         }

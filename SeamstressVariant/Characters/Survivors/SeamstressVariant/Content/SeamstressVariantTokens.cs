@@ -41,9 +41,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             #endregion
 
             #region Passive
-            Language.Add(prefix + "PASSIVE_NAME", "Bleeding Heart");
-            Language.Add(prefix + "PASSIVE_DESCRIPTION", "All healing is converted into <style=cKeywordName>Heart</style> instead of restoring health. Heart capacity is <style=cIsHealing>1:1 with your maximum health</style>. Every second, gain <style=cIsHealing>5 Heart</style> per active <style=cIsDamage>Bleed</style> stack on nearby enemies. Gain <style=cIsDamage>+5% Bleed chance</style>, plus <style=cIsDamage>+1% per 100 Heart</style>, and an extra <style=cIsDamage>+5%</style> while Heart is full.");
-            Language.Add("KEYWORD_HEART", "<style=cKeywordName>Heart</style><style=cSub>Stored healing. Capacity is equal to your maximum health (1:1). Increases Bleed chance by +1% per 100 Heart. At full Heart, gain an additional +5% Bleed chance.</style>");
+            Language.Add(prefix + "PASSIVE_NAME", "Her Bleeding Heart");
+            Language.Add(prefix + "PASSIVE_DESCRIPTION", "All healing is transfered to the <style=cKeywordName>Heart</style> instead of restoring health. Every second, gain <style=cIsHealing>5 Heart</style> per active <style=cIsDamage>Bleed</style> stack on nearby enemies. Gain <style=cIsDamage>+5% Bleed chance</style> and an extra <style=cIsDamage>+5%</style> while Heart is full.");
+            Language.Add("KEYWORD_HEART", "<style=cKeywordName>Heart</style><style=cSub>Stores healing. Capacity is equal to your maximum health. Increases Bleed chance by +1% per 100 Heart. At full Heart, gain an additional +5% Bleed chance.</style>");
             #endregion
 
             #region Primary
@@ -64,6 +64,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             #region Special
             Language.Add(prefix + "SPECIAL_DEFIANT_HEART_NAME", "Defiant Heart");
             Language.Add(prefix + "SPECIAL_DEFIANT_HEART_DESCRIPTION", "Enter a defiant state while <style=cIsHealing>Heart is above 1</style>. Drain <style=cIsHealing>Heart once per second</style> and gain <style=cIsUtility>Defiance</style>. While Defiance is active, incoming damage <style=cIsUtility>cannot reduce you below 1 health</style>.");
+
+            Language.Add(prefix + "SPECIAL_DEFIANT_DASH_NAME", "Defiant Dash");
+            Language.Add(prefix + "SPECIAL_DEFIANT_DASH_DESCRIPTION", "Dash forward and gain <style=cIsUtility>Defiance</style>. While Defiance is active, incoming damage <style=cIsUtility>cannot reduce you below 1 health</style>. <style=cIsHealing>Drains Heart while active.</style>");
             #endregion
 
             #region Achievements

@@ -346,27 +346,29 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         {
             Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Special);
 
-            //a basic skill. some fields are omitted and will just have default values
-            SkillDef specialSkillDef1 = Skills.CreateSkillDef(new SkillDefInfo
+            // DefiantDash is now the unified special skill (Dash + Sustained Defiance)
+            SkillDef specialSkillDef = Skills.CreateSkillDef(new SkillDefInfo
             {
-                skillName = "HenryDefiantHeart",
-                skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "SPECIAL_DEFIANT_HEART_NAME",
-                skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "SPECIAL_DEFIANT_HEART_DESCRIPTION",
+                skillName = "HenryDefiantDash",
+                skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "SPECIAL_DEFIANT_DASH_NAME",
+                skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "SPECIAL_DEFIANT_DASH_DESCRIPTION",
                 skillIcon = assetBundle.LoadAsset<Sprite>("texSpecialIcon"),
 
-                activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.DefiantHeart)),
-                // Dedicated machine so this sustained special does not block Secondary (Weapon2).
-                activationStateMachineName = "Special", interruptPriority = EntityStates.InterruptPriority.Skill,
+                activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.DefiantDash)),
+                activationStateMachineName = "Special",
+                interruptPriority = EntityStates.InterruptPriority.Skill,
 
                 baseMaxStock = 1,
-                baseRechargeInterval = 10f,
+                baseRechargeInterval = 8f,
                 beginSkillCooldownOnSkillEnd = true,
 
                 isCombatSkill = true,
-                mustKeyPress = false,
+                mustKeyPress = true,
+                cancelSprintingOnActivation = false,
+                forceSprintDuringState = true,
             });
 
-            Skills.AddSpecialSkills(bodyPrefab, specialSkillDef1);
+            Skills.AddSpecialSkills(bodyPrefab, specialSkillDef);
         }
         #endregion skills
         

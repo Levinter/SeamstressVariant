@@ -12,7 +12,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             Modules.Content.AddEntityState(typeof(Blink));
 
-            Modules.Content.AddEntityState(typeof(DefiantHeart));
+            Modules.Content.AddEntityState(typeof(DefiantDash));
         }
     }
 }
