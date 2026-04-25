@@ -31,7 +31,7 @@ namespace SeamstressVariant.Modules.Characters
         public virtual void Initialize()
         {
             instance = this as T;
-            assetBundle = Asset.LoadAssetBundle(assetBundleName);
+            assetBundle = SeamstressMod.Seamstress.Content.SeamstressAssets.mainAssetBundle;
 
             InitializeCharacter();
         }
@@ -45,12 +45,14 @@ namespace SeamstressVariant.Modules.Characters
 
         protected virtual void InitializeCharacterBodyPrefab()
         {
-            characterModelObject = Prefabs.LoadCharacterModel(assetBundle, modelPrefabName);
+            GameObject sourceModelPrefab = Prefabs.LoadCharacterModel(assetBundle, modelPrefabName);
+            characterModelObject = R2API.PrefabAPI.InstantiateClone(sourceModelPrefab, $"{modelPrefabName}{bodyName}", false);
 
-            bodyPrefab = Modules.Prefabs.CreateBodyPrefab(characterModelObject, bodyInfo);
+            bodyPrefab = Prefabs.CreateBodyPrefab(characterModelObject, bodyInfo);
             prefabCharacterBody = bodyPrefab.GetComponent<CharacterBody>();
 
-            prefabCharacterModel = Modules.Prefabs.SetupCharacterModel(bodyPrefab, customRendererInfos);
+            bool modelIsPreconfigured = characterModelObject.GetComponent<CharacterModel>() != null;
+            prefabCharacterModel = Prefabs.SetupCharacterModel(bodyPrefab, modelIsPreconfigured ? null : customRendererInfos);
         }
 
         public virtual void InitializeItemDisplays() {

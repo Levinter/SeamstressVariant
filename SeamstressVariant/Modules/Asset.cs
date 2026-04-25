@@ -1,10 +1,12 @@
 ﻿using System.Reflection;
+using System;
 using R2API;
 using UnityEngine;
 using UnityEngine.Networking;
 using RoR2;
 using System.IO;
 using System.Collections.Generic;
+using System.Linq;
 using RoR2.UI;
 using RoR2.Projectile;
 using Path = System.IO.Path;
@@ -45,6 +47,99 @@ namespace SeamstressVariant.Modules
 
             return assetBundle;
 
+        }
+
+        internal static void DebugLogBundleContents(this AssetBundle assetBundle)
+        {
+            if (assetBundle == null)
+            {
+                Log.Error("DebugLogBundleContents called with a null AssetBundle.");
+                return;
+            }
+
+            string[] assetNames = assetBundle.GetAllAssetNames();
+            if (assetNames == null)
+            {
+                Log.Warning($"AssetBundle '{assetBundle.name}' returned null from GetAllAssetNames().");
+                return;
+            }
+
+            string[] prefabNames = assetNames
+                .Where(name => name.EndsWith(".prefab", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(name => name)
+                .ToArray();
+
+            string[] materialNames = assetNames
+                .Where(name => name.EndsWith(".mat", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(name => name)
+                .ToArray();
+
+            string[] meshNames = assetNames
+                .Where(name => name.EndsWith(".mesh", StringComparison.OrdinalIgnoreCase) || name.EndsWith(".fbx", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(name => name)
+                .ToArray();
+
+            string[] textureNames = assetNames
+                .Where(name => name.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
+                    || name.EndsWith(".tga", StringComparison.OrdinalIgnoreCase)
+                    || name.EndsWith(".tif", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(name => name)
+                .ToArray();
+
+            string[] animationNames = assetNames
+                .Where(name => name.EndsWith(".anim", StringComparison.OrdinalIgnoreCase)
+                    || name.EndsWith(".controller", StringComparison.OrdinalIgnoreCase)
+                    || name.EndsWith(".mask", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(name => name)
+                .ToArray();
+
+            Log.Info($"AssetBundle '{assetBundle.name}' contains {assetNames.Length} assets total.");
+            Log.Info($"Reusable groups: {prefabNames.Length} prefabs, {materialNames.Length} materials, {meshNames.Length} meshes/models, {textureNames.Length} textures, {animationNames.Length} animation assets.");
+
+            if (prefabNames.Length > 0)
+            {
+                Log.Info($"Prefabs in '{assetBundle.name}':");
+                foreach (string prefabName in prefabNames)
+                {
+                    Log.Info($"[Prefab] {Path.GetFileNameWithoutExtension(prefabName)} <- {prefabName}");
+                }
+            }
+
+            if (materialNames.Length > 0)
+            {
+                Log.Info($"Materials in '{assetBundle.name}':");
+                foreach (string materialName in materialNames)
+                {
+                    Log.Info($"[Material] {Path.GetFileNameWithoutExtension(materialName)} <- {materialName}");
+                }
+            }
+
+            if (meshNames.Length > 0)
+            {
+                Log.Info($"Meshes/models in '{assetBundle.name}':");
+                foreach (string meshName in meshNames)
+                {
+                    Log.Info($"[Mesh] {Path.GetFileNameWithoutExtension(meshName)} <- {meshName}");
+                }
+            }
+
+            if (textureNames.Length > 0)
+            {
+                Log.Info($"Textures in '{assetBundle.name}':");
+                foreach (string textureName in textureNames)
+                {
+                    Log.Info($"[Texture] {Path.GetFileNameWithoutExtension(textureName)} <- {textureName}");
+                }
+            }
+
+            if (animationNames.Length > 0)
+            {
+                Log.Info($"Animation assets in '{assetBundle.name}':");
+                foreach (string animationName in animationNames)
+                {
+                    Log.Info($"[Animation] {Path.GetFileNameWithoutExtension(animationName)} <- {animationName}");
+                }
+            }
         }
 
         internal static GameObject CloneTracer(string originalTracerName, string newTracerName)

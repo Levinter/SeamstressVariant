@@ -4,7 +4,6 @@ using SeamstressVariant.Modules.Characters;
 using RoR2;
 using RoR2.Skills;
 using SeamstressVariant;
-using SeamstressMod;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -18,7 +17,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         public override string assetBundleName => "none";
         public override string bodyName => "SeamstressVariantBody";
         public override string masterName => "SeamstressVariantMonsterMaster";
-        public override string modelPrefabName => "mdlHenry";
+        public override string modelPrefabName => "mdlseamstress";
         public override string displayPrefabName => "HenryDisplay";
 
         public const string SEAMSTRESS_VARIANT_PREFIX = SeamstressVariantPlugin.DEVELOPER_PREFIX + "_SEAMSTRESS_";
@@ -32,7 +31,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             bodyNameToken = SEAMSTRESS_VARIANT_PREFIX + "NAME",
             subtitleNameToken = SEAMSTRESS_VARIANT_PREFIX + "SUBTITLE",
 
-            characterPortrait = assetBundle.LoadAsset<Texture>("texHenryIcon"),
+            characterPortrait = null,
             bodyColor = Color.white,
             sortPosition = 100,
 
@@ -51,7 +50,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 new CustomRendererInfo
                 {
                     childName = "SwordModel",
-                    material = assetBundle.LoadMaterial("matHenry"),
+                    material = null,
                 },
                 new CustomRendererInfo
                 {
@@ -87,31 +86,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             base.Initialize();
         }
         
-        /*public AssetBundle LoadAssetBundleFromSource()
-        {
-            Log.Fatal("LOADING ASSETS FROM OG SEAMSTRESS");
-            var seamstressInstance = SeamstressMod.Seamstress.SeamstressSurvivor.instance;
-            if (seamstressInstance == null)
-            {
-                Log.Fatal("ERROR: SEAMSTRESS INSTANCE NULL");
-                return null;
-            }
-
-            if (seamstressInstance.assetBundle == null)
-            {
-                Log.Fatal("ERROR: SEAMSTRESS ASSET BUNDLE NOT FOUND");
-                return null;
-            }
-
-            var sourceBundle = seamstressInstance.assetBundle;
-            Log.Fatal("SEAMSTRESS ASSET BUNDLE FOUND WITH NAME: " + sourceBundle.name);
-
-            return sourceBundle;
-        }*/
-
         public override void InitializeCharacter()
         {
-            //assetBundle = LoadAssetBundleFromSource();
             //need the character unlockable before you initialize the survivordef
             SeamstressVariantUnlockables.Init();
 
@@ -198,7 +174,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "PASSIVE_NAME",
                 skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "PASSIVE_DESCRIPTION",
                 keywordToken = "KEYWORD_HEART",
-                icon = assetBundle.LoadAsset<Sprite>("texPassiveIcon"),
+                icon = null,
             };
 
             //option 2. a new SkillFamily for a passive, used if you want multiple selectable passives
@@ -209,7 +185,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "PASSIVE_NAME",
                 skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "PASSIVE_DESCRIPTION",
                 keywordTokens = new string[] { "KEYWORD_AGILE" },
-                skillIcon = assetBundle.LoadAsset<Sprite>("texPassiveIcon"),
+                skillIcon = null,
 
                 //unless you're somehow activating your passive like a skill, none of the following is needed.
                 //but that's just me saying things. the tools are here at your disposal to do whatever you like with
@@ -252,7 +228,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                     "HenrySlash",
                     SEAMSTRESS_VARIANT_PREFIX + "PRIMARY_SLASH_NAME",
                     SEAMSTRESS_VARIANT_PREFIX + "PRIMARY_SLASH_DESCRIPTION",
-                    assetBundle.LoadAsset<Sprite>("texPrimaryIcon"),
+                    null,
                     new EntityStates.SerializableEntityStateType(typeof(SkillStates.SlashCombo)),
                     "Weapon",
                     true
@@ -275,7 +251,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "SECONDARY_GUN_NAME",
                 skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "SECONDARY_GUN_DESCRIPTION",
                 keywordTokens = new string[] { "KEYWORD_AGILE" },
-                skillIcon = assetBundle.LoadAsset<Sprite>("texSecondaryIcon"),
+                skillIcon = null,
 
                 activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.Shoot)),
                 activationStateMachineName = "Weapon2",
@@ -314,7 +290,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 skillName = "HenryBlink",
                 skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "UTILITY_BLINK_NAME",
                 skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "UTILITY_BLINK_DESCRIPTION",
-                skillIcon = assetBundle.LoadAsset<Sprite>("texUtilityIcon"),
+                skillIcon = null,
 
                 activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.Blink)),
                 activationStateMachineName = "Body",
@@ -352,7 +328,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 skillName = "HenryDefiantDash",
                 skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "SPECIAL_DEFIANT_DASH_NAME",
                 skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "SPECIAL_DEFIANT_DASH_DESCRIPTION",
-                skillIcon = assetBundle.LoadAsset<Sprite>("texSpecialIcon"),
+                skillIcon = null,
 
                 activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.DefiantDash)),
                 activationStateMachineName = "Special",
@@ -375,43 +351,83 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         #region skins
         public override void InitializeSkins()
         {
-            ModelSkinController skinController = prefabCharacterModel.gameObject.GetComponent<ModelSkinController>();
-            if (skinController == null)
-                skinController = prefabCharacterModel.gameObject.AddComponent<ModelSkinController>();
+            if (prefabCharacterModel == null)
+            {
+                Log.Error("InitializeSkins aborted: prefabCharacterModel is null.");
+                return;
+            }
 
-            CharacterModel.RendererInfo[] defaultRenderers = prefabCharacterModel.baseRendererInfos;
+            ModelSkinController skinController = prefabCharacterModel.GetComponent<ModelSkinController>();
+            if (skinController == null)
+            {
+                skinController = prefabCharacterModel.gameObject.AddComponent<ModelSkinController>();
+            }
+
+            CharacterModel.RendererInfo[] defaultRendererinfos = prefabCharacterModel.baseRendererInfos;
+            if (defaultRendererinfos == null)
+            {
+                defaultRendererinfos = Array.Empty<CharacterModel.RendererInfo>();
+            }
 
             List<SkinDef> skins = new List<SkinDef>();
 
+            #region DefaultSkin
             //this creates a SkinDef with all default fields
-            SkinDef defaultSkin = Modules.Skins.CreateSkinDef("DEFAULT_SKIN",
-                assetBundle.LoadAsset<Sprite>("texMainSkin"),
-                defaultRenderers,
+            SkinDef defaultSkin = Skins.CreateSkinDef("DEFAULT_SKIN",
+                null,
+                defaultRendererinfos,
                 prefabCharacterModel.gameObject);
 
-            //these are your Mesh Coverage Coverage Coverages
-            //simply uncomment this and change the action to whatever TF you need
-            //defaultSkin.meshReplacements = Modules.Skins.getMeshReplacements(assetBundle, defaultRenderers,
+            //these are your Mesh Replacements. The order here is based on your CustomRendererInfos from earlier
+                //pass in meshes as they are named in your assetbundle
+            //currently not needed as with only 1 skin they will simply take the default meshes
+                //uncomment this when you have another skin
+            //defaultSkin.meshReplacements = Modules.Skins.getMeshReplacements(assetBundle, defaultRendererinfos,
             //    "meshHenrySword",
             //    "meshHenryGun",
             //    "meshHenry");
 
+            //add new skindef to our list of skindefs. this is what we'll be passing to the SkinController
             skins.Add(defaultSkin);
+            #endregion
 
             //uncomment this when you have a mastery skin
-            //MasterySkin
-            //SkinDef masterySkin = Modules.Skins.CreateSkinDef(SEAMSTRESS_VARIANT_PREFIX + "MASTERY_SKIN",
+            #region MasterySkin
+            
+            ////creating a new skindef as we did before
+            //SkinDef masterySkin = Modules.Skins.CreateSkinDef(HENRY_PREFIX + "MASTERY_SKIN_NAME",
             //    assetBundle.LoadAsset<Sprite>("texMasteryAchievement"),
-            //    defaultRenderers,
+            //    defaultRendererinfos,
             //    prefabCharacterModel.gameObject,
-            //    SeamstressVariantUnlockables.masterySkinUnlockableDef);
+            //    HenryUnlockables.masterySkinUnlockableDef);
 
-            //masterySkin.meshReplacements = Modules.Skins.getMeshReplacements(assetBundle, defaultRenderers,
+            ////adding the mesh replacements as above. 
+            ////if you don't want to replace the mesh (for example, you only want to replace the material), pass in null so the order is preserved
+            //masterySkin.meshReplacements = Modules.Skins.getMeshReplacements(assetBundle, defaultRendererinfos,
             //    "meshHenrySwordAlt",
-            //    null,
+            //    null,//no gun mesh replacement. use same gun mesh
             //    "meshHenryAlt");
 
+            ////masterySkin has a new set of RendererInfos (based on default rendererinfos)
+            ////you can simply access the RendererInfos' materials and set them to the new materials for your skin.
+            //masterySkin.rendererInfos[0].defaultMaterial = assetBundle.LoadMaterial("matHenryAlt");
+            //masterySkin.rendererInfos[1].defaultMaterial = assetBundle.LoadMaterial("matHenryAlt");
+            //masterySkin.rendererInfos[2].defaultMaterial = assetBundle.LoadMaterial("matHenryAlt");
+
+            ////here's a barebones example of using gameobjectactivations that could probably be streamlined or rewritten entirely, truthfully, but it works
+            //masterySkin.gameObjectActivations = new SkinDef.GameObjectActivation[]
+            //{
+            //    new SkinDef.GameObjectActivation
+            //    {
+            //        gameObject = childLocator.FindChildGameObject("GunModel"),
+            //        shouldActivate = false,
+            //    }
+            //};
+            ////simply find an object on your child locator you want to activate/deactivate and set if you want to activate/deacitvate it with this skin
+
             //skins.Add(masterySkin);
+            
+            #endregion
 
             skinController.skins = skins.ToArray();
         }
