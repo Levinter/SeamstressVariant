@@ -1,6 +1,10 @@
-﻿using RoR2;
+﻿using R2API;
+using RoR2;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.Networking;
 using SeamstressVariant.Modules;
+using SeamstressMod.Seamstress.Content;
 using System;
 using RoR2.Projectile;
 
@@ -13,6 +17,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         public static GameObject swordHitImpactEffect;
 
         public static GameObject bombExplosionEffect;
+
+        public static GameObject defianceEndEffect;
 
         // networked hit sounds
         public static NetworkSoundEventDef swordHitSoundEvent;
@@ -38,9 +44,39 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         private static void CreateEffects()
         {
             CreateBombExplosionEffect();
+            CreateDefianceEndEffect();
 
             swordSwingEffect = _assetBundle.LoadEffect("HenrySwordSwingEffect", true);
             swordHitImpactEffect = _assetBundle.LoadEffect("ImpactHenrySlash");
+
+            // Register OG Seamstress effects used by ClawCombo so OverlapAttack can spawn them.
+            Content.CreateAndAddEffectDef(SeamstressAssets.scissorsHitImpactEffect);
+        }
+
+        private static void CreateDefianceEndEffect()
+        {
+            defianceEndEffect = PrefabAPI.InstantiateClone(
+                Addressables.LoadAssetAsync<GameObject>("RoR2/Base/LunarSkillReplacements/LunarDetonatorConsume.prefab").WaitForCompletion(),
+                "SeamstressVariantDefianceEndEffect");
+            defianceEndEffect.AddComponent<NetworkIdentity>();
+
+            ParticleSystem.MainModule child0 = defianceEndEffect.transform.GetChild(0).GetComponent<ParticleSystem>().main;
+            child0.startColor = new ParticleSystem.MinMaxGradient(Color.black);
+
+            ParticleSystem.MainModule child1 = defianceEndEffect.transform.GetChild(1).GetComponent<ParticleSystem>().main;
+            child1.startColor = new ParticleSystem.MinMaxGradient(Color.red);
+
+            defianceEndEffect.transform.GetChild(2).GetComponent<ParticleSystemRenderer>().material.SetColor("_TintColor", Color.red);
+            defianceEndEffect.transform.GetChild(3).gameObject.SetActive(false);
+            defianceEndEffect.transform.GetChild(4).GetComponent<ParticleSystemRenderer>().material.SetColor("_TintColor", Color.red);
+
+            Material needleMat = UnityEngine.Object.Instantiate(Addressables.LoadAssetAsync<Material>("RoR2/Base/LunarSkillReplacements/matLunarNeedleImpactEffect.mat").WaitForCompletion());
+            needleMat.SetColor("_TintColor", Color.red);
+            defianceEndEffect.transform.GetChild(5).GetComponent<ParticleSystemRenderer>().material = needleMat;
+
+            defianceEndEffect.transform.GetChild(6).gameObject.SetActive(false);
+
+            Content.CreateAndAddEffectDef(defianceEndEffect);
         }
 
         private static void CreateBombExplosionEffect()

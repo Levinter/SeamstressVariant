@@ -6,7 +6,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
     {
         public static void Init()
         {
-            Modules.Content.AddEntityState(typeof(SlashCombo));
+            Modules.Content.AddEntityState(typeof(ClawCombo));
 
             Modules.Content.AddEntityState(typeof(Shoot));
 

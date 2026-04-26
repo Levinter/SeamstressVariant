@@ -23,7 +23,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private float healTimer = 0f;
         private const float ScanInterval = 1f;
         private const float HealInterval = 0.25f;
-        private const float HealPerBleedStack = 10f;
+        private const float HealPerBleedStack = 5f;
         private const int HeartPerBleedChancePercent = 1;
 
         private bool isInitialized = false;

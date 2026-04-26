@@ -12,7 +12,7 @@ using System.Security.Permissions;
 namespace SeamstressVariant
 {
     [BepInDependency("com.rune580.riskofoptions")]
-    [BepInDependency("com.kenko.Seamstress")]
+    [BepInDependency("com.kenko.Seamstress", BepInDependency.DependencyFlags.HardDependency)]
     [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.EveryoneNeedSameModVersion)]
     [BepInPlugin(MODUID, MODNAME, MODVERSION)]
     public class SeamstressVariantPlugin : BaseUnityPlugin

@@ -10,8 +10,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
     public class DefiantDash : BaseSkillState
     {
         // Dash phase parameters
-        public float baseDuration = 0.8f;
-        public float dashPower = 6f;
+        public float baseDuration = 0.5f;
+        public float dashPower = 5f;
 
         // Sustained phase parameters (from DefiantHeart)
         public static float heartDrainPerTick = 5f;
@@ -21,12 +21,18 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         private GameObject impDashEffect;
         private GameObject smallBlinkEffect;
         private GameObject bloodExplosionEffect;
+        private GameObject bloodSplatterEffect;
         private Material destealthMaterial;
+        private Color mainColor;
+
+        // Defiance visual state
+        private GameObject trailEffectR;
+        private GameObject trailEffectL;
+        private bool sustainedVisualActive;
 
         // Dash phase state
         private Vector3 dashVector;
         private bool hasDelayed;
-        private bool defianceApplied;
         private bool dashCompleted;
 
         // Sustained phase state
@@ -47,11 +53,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             impDashEffect = SeamstressAssets.impDashEffect;
             smallBlinkEffect = SeamstressAssets.smallBlinkEffect;
             bloodExplosionEffect = SeamstressAssets.bloodExplosionEffect;
+            bloodSplatterEffect = SeamstressAssets.bloodSplatterEffect;
             destealthMaterial = SeamstressAssets.destealthMaterial;
+            mainColor = SeamstressAssets.coolRed;
 
             // Dash phase initialization
             hasDelayed = false;
-            defianceApplied = false;
             dashCompleted = false;
 
             // Sustained phase initialization
@@ -127,10 +134,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 if (fixedAge > baseDuration / 2f / attackSpeedStat)
                 {
                     // Apply Defiance as the dash begins so the buff is immediately visible/active.
-                    if (NetworkServer.active && characterBody && !defianceApplied)
+                    if (NetworkServer.active && characterBody)
                     {
                         characterBody.AddBuff(SeamstressVariantBuffs.defianceBuff);
-                        defianceApplied = true;
                     }
 
                     dashVector = inputBank ? inputBank.aimDirection : characterDirection.forward;
@@ -164,6 +170,23 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     if (smallBlinkEffect)
                     {
                         EffectManager.SpawnEffect(smallBlinkEffect, dashEffectData, false);
+                    }
+
+                    // Blood splatter on nearby world geometry.
+                    if (bloodSplatterEffect)
+                    {
+                        Vector3 splatterOrigin = transform.localPosition;
+                        RaycastHit hit;
+                        if (Physics.Raycast(splatterOrigin, Vector3.one, out hit, 10f, LayerMask.GetMask("World")))
+                        {
+                            splatterOrigin = hit.point;
+                        }
+                        EffectManager.SpawnEffect(bloodSplatterEffect, new EffectData
+                        {
+                            origin = splatterOrigin,
+                            rotation = Quaternion.identity,
+                            color = (Color32)mainColor
+                        }, false);
                     }
 
                     // Launch.
@@ -223,10 +246,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             if (NetworkServer.active && characterBody)
             {
-                if (!characterBody.HasBuff(SeamstressVariantBuffs.defianceBuff))
-                {
-                    characterBody.AddBuff(SeamstressVariantBuffs.defianceBuff);
-                }
                 ApplyStateImmunities();
                 RemoveDebuffs();
             }
@@ -234,6 +253,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             if (GetModelAnimator())
             {
                 PlayAnimation("Gesture, Override", "BufferEmpty");
+                ApplyDefianceVisuals();
             }
         }
 
@@ -279,6 +299,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         private void ReactivateSustainedPhase()
         {
+
             if (!NetworkServer.active || heart == null || healthComponent == null)
             {
                 outer.SetNextStateToMain();
@@ -289,16 +310,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             heart.ConsumeHeart(storedHeart);
             healthComponent.health = Mathf.Clamp(healthComponent.health + storedHeart, 1f, healthComponent.fullHealth);
-
-            if (characterBody)
-            {
-                int defianceCount = characterBody.GetBuffCount(SeamstressVariantBuffs.defianceBuff);
-                if (defianceCount > 0)
-                {
-                    //characterBody.SetBuffCount(SeamstressVariantBuffs.defianceBuff.buffIndex, 0);
-                    characterBody.RemoveBuff(SeamstressVariantBuffs.defianceBuff);
-                }
-            }
 
             outer.SetNextStateToMain();
         }
@@ -351,6 +362,112 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             setStateOnHurt.canBeTaunted = originalCanBeTaunted;
         }
 
+        private void ApplyDefianceVisuals()
+        {
+            sustainedVisualActive = true;
+
+            // Activate "Body, Butchered" animation layer
+            Animator anim = GetModelAnimator();
+            if (anim)
+            {
+                int layerIdx = anim.GetLayerIndex("Body, Butchered");
+                if (layerIdx >= 0)
+                {
+                    anim.SetLayerWeight(layerIdx, 1f);
+                }
+            }
+
+            // Hide heart child
+            Transform heartModel = FindModelChild("HeartModel");
+            if (heartModel)
+            {
+                heartModel.gameObject.SetActive(false);
+            }
+
+            // Entry flash overlay
+            Transform modelTransform = GetModelTransform();
+            if (modelTransform && destealthMaterial)
+            {
+                TemporaryOverlayInstance entryOverlay = TemporaryOverlayManager.AddOverlay(gameObject);
+                entryOverlay.duration = 1f;
+                entryOverlay.destroyComponentOnEnd = true;
+                entryOverlay.originalMaterial = destealthMaterial;
+                entryOverlay.inspectorCharacterModel = modelTransform.GetComponent<CharacterModel>();
+                entryOverlay.alphaCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
+                entryOverlay.animateShaderAlpha = true;
+            }
+
+            // Spawn hand trail effects
+            if (SeamstressAssets.trailEffectHands)
+            {
+                Transform handR = FindModelChild("HandR");
+                Transform handL = FindModelChild("HandL");
+                if (handR)
+                {
+                    trailEffectR = Object.Instantiate(SeamstressAssets.trailEffectHands, handR);
+                }
+                if (handL)
+                {
+                    trailEffectL = Object.Instantiate(SeamstressAssets.trailEffectHands, handL);
+                }
+            }
+        }
+
+        private void RemoveDefianceVisuals()
+        {
+            if (!sustainedVisualActive)
+            {
+                return;
+            }
+            sustainedVisualActive = false;
+
+            // Deactivate "Body, Butchered" animation layer
+            Animator anim = GetModelAnimator();
+            if (anim)
+            {
+                int layerIdx = anim.GetLayerIndex("Body, Butchered");
+                if (layerIdx >= 0)
+                {
+                    anim.SetLayerWeight(layerIdx, 0f);
+                }
+            }
+
+            // Restore heart child
+            Transform heartModel = FindModelChild("HeartModel");
+            if (heartModel)
+            {
+                heartModel.gameObject.SetActive(true);
+            }
+
+            // Destroy hand trails
+            if (trailEffectR)
+            {
+                Object.Destroy(trailEffectR);
+                trailEffectR = null;
+            }
+            if (trailEffectL)
+            {
+                Object.Destroy(trailEffectL);
+                trailEffectL = null;
+            }
+
+            // Exit overlay
+            Transform modelTransform = GetModelTransform();
+            if (modelTransform && destealthMaterial)
+            {
+                TemporaryOverlayInstance exitOverlay = TemporaryOverlayManager.AddOverlay(gameObject);
+                exitOverlay.duration = 1f;
+                exitOverlay.destroyComponentOnEnd = true;
+                exitOverlay.originalMaterial = destealthMaterial;
+                exitOverlay.inspectorCharacterModel = modelTransform.GetComponent<CharacterModel>();
+                exitOverlay.alphaCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
+                exitOverlay.animateShaderAlpha = true;
+            }
+
+            // End sound
+            Util.PlaySound("Play_voidman_transform_return", gameObject);
+        }
+
         public override void OnExit()
         {
             if (NetworkServer.active)
@@ -362,7 +479,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     int defianceCount = characterBody.GetBuffCount(SeamstressVariantBuffs.defianceBuff);
                     if (defianceCount > 0)
                     {
+                        Log.Fatal("DEFIANT HEART ONEXIT CALL");
                         characterBody.SetBuffCount(SeamstressVariantBuffs.defianceBuff.buffIndex, 0);
+                        RemoveDefianceVisuals();
                     }
                 }
             }

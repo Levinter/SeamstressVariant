@@ -14,7 +14,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         public static string beginSoundString = "Play_imp_attack_blink";
         public string animationLayer = "FullBody, Override";
-        public float duration = 0.1f;
+        public float duration = 0.15f;
         protected CameraTargetParams.AimRequest request;
         protected bool hasAimRequest;
         protected Vector3 blinkVector;
@@ -33,6 +33,25 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             hasAimRequest = false;
 
             duration = SeamstressVariantConfig.utilityBlinkDuration.Value;
+
+            // Guard against buffered inputs firing after health recovers.
+            // If the authority doesn't have enough health + heart to cover the cost, cancel immediately.
+            if (isAuthority)
+            {
+                float requiredCost = Mathf.Max(SeamstressVariantConfig.utilityBlinkHealthCost.Value, 0f);
+                if (requiredCost > 0f && healthComponent)
+                {
+                    float availableHealth = Mathf.Max(healthComponent.health - 1f, 0f);
+                    BleedingHeartComponent heart = characterBody ? characterBody.GetComponent<BleedingHeartComponent>() : null;
+                    float heartAmount = heart != null ? heart.GetHeart() : 0f;
+
+                    if (availableHealth + heartAmount < requiredCost)
+                    {
+                        outer.SetNextStateToMain();
+                        return;
+                    }
+                }
+            }
 
             if (NetworkServer.active && healthComponent)
             {
@@ -67,6 +86,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             destealthMaterial = SeamstressAssets.destealthMaterial;
 
             Util.PlaySound(beginSoundString, gameObject);
+
+            Animator modelAnimator = GetModelAnimator();
+            if (modelAnimator)
+            {
+                modelAnimator.SetLayerWeight(modelAnimator.GetLayerIndex("Scissor, Override"), 0f);
+            }
 
             modelTransform = GetModelTransform();
             if (modelTransform)
@@ -113,7 +138,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 }
             }
 
-            speedCoefficient = 0.3f * characterBody.jumpPower * Mathf.Clamp(characterBody.moveSpeed * sprintBonus / 4f, 5f, 20f);
+            speedCoefficient = 0.5f * characterBody.jumpPower * Mathf.Clamp(characterBody.moveSpeed * sprintBonus / 4f, 5f, 20f);
 
             gameObject.layer = LayerIndex.fakeActor.intVal;
             if (characterMotor)

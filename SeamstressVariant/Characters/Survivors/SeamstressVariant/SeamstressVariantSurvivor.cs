@@ -18,7 +18,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         public override string bodyName => "SeamstressVariantBody";
         public override string masterName => "SeamstressVariantMonsterMaster";
         public override string modelPrefabName => "mdlseamstress";
-        public override string displayPrefabName => "HenryDisplay";
+        public override string displayPrefabName => "SeamstressDisplay";
 
         public const string SEAMSTRESS_VARIANT_PREFIX = SeamstressVariantPlugin.DEVELOPER_PREFIX + "_SEAMSTRESS_";
 
@@ -229,7 +229,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                     SEAMSTRESS_VARIANT_PREFIX + "PRIMARY_SLASH_NAME",
                     SEAMSTRESS_VARIANT_PREFIX + "PRIMARY_SLASH_DESCRIPTION",
                     null,
-                    new EntityStates.SerializableEntityStateType(typeof(SkillStates.SlashCombo)),
+                    new EntityStates.SerializableEntityStateType(typeof(SkillStates.ClawCombo)),
                     "Weapon",
                     true
                 ));
@@ -285,7 +285,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Utility);
 
             //here's a skilldef of a typical movement skill.
-            SkillDef utilitySkillDef1 = Skills.CreateSkillDef(new SkillDefInfo
+            SkillDef utilitySkillDef1 = Skills.CreateSkillDef<BlinkSkillDef>(new SkillDefInfo
             {
                 skillName = "HenryBlink",
                 skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "UTILITY_BLINK_NAME",
@@ -335,7 +335,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 interruptPriority = EntityStates.InterruptPriority.Skill,
 
                 baseMaxStock = 1,
-                baseRechargeInterval = 8f,
+                baseRechargeInterval = 16f,
                 beginSkillCooldownOnSkillEnd = true,
 
                 isCombatSkill = true,
@@ -351,85 +351,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         #region skins
         public override void InitializeSkins()
         {
-            if (prefabCharacterModel == null)
-            {
-                Log.Error("InitializeSkins aborted: prefabCharacterModel is null.");
-                return;
-            }
+            ModelSkinController skinController = prefabCharacterModel.gameObject.GetComponent<ModelSkinController>()
+                ?? prefabCharacterModel.gameObject.AddComponent<ModelSkinController>();
 
-            ModelSkinController skinController = prefabCharacterModel.GetComponent<ModelSkinController>();
-            if (skinController == null)
-            {
-                skinController = prefabCharacterModel.gameObject.AddComponent<ModelSkinController>();
-            }
-
-            CharacterModel.RendererInfo[] defaultRendererinfos = prefabCharacterModel.baseRendererInfos;
-            if (defaultRendererinfos == null)
-            {
-                defaultRendererinfos = Array.Empty<CharacterModel.RendererInfo>();
-            }
-
-            List<SkinDef> skins = new List<SkinDef>();
-
-            #region DefaultSkin
-            //this creates a SkinDef with all default fields
-            SkinDef defaultSkin = Skins.CreateSkinDef("DEFAULT_SKIN",
-                null,
-                defaultRendererinfos,
-                prefabCharacterModel.gameObject);
-
-            //these are your Mesh Replacements. The order here is based on your CustomRendererInfos from earlier
-                //pass in meshes as they are named in your assetbundle
-            //currently not needed as with only 1 skin they will simply take the default meshes
-                //uncomment this when you have another skin
-            //defaultSkin.meshReplacements = Modules.Skins.getMeshReplacements(assetBundle, defaultRendererinfos,
-            //    "meshHenrySword",
-            //    "meshHenryGun",
-            //    "meshHenry");
-
-            //add new skindef to our list of skindefs. this is what we'll be passing to the SkinController
-            skins.Add(defaultSkin);
-            #endregion
-
-            //uncomment this when you have a mastery skin
-            #region MasterySkin
-            
-            ////creating a new skindef as we did before
-            //SkinDef masterySkin = Modules.Skins.CreateSkinDef(HENRY_PREFIX + "MASTERY_SKIN_NAME",
-            //    assetBundle.LoadAsset<Sprite>("texMasteryAchievement"),
-            //    defaultRendererinfos,
-            //    prefabCharacterModel.gameObject,
-            //    HenryUnlockables.masterySkinUnlockableDef);
-
-            ////adding the mesh replacements as above. 
-            ////if you don't want to replace the mesh (for example, you only want to replace the material), pass in null so the order is preserved
-            //masterySkin.meshReplacements = Modules.Skins.getMeshReplacements(assetBundle, defaultRendererinfos,
-            //    "meshHenrySwordAlt",
-            //    null,//no gun mesh replacement. use same gun mesh
-            //    "meshHenryAlt");
-
-            ////masterySkin has a new set of RendererInfos (based on default rendererinfos)
-            ////you can simply access the RendererInfos' materials and set them to the new materials for your skin.
-            //masterySkin.rendererInfos[0].defaultMaterial = assetBundle.LoadMaterial("matHenryAlt");
-            //masterySkin.rendererInfos[1].defaultMaterial = assetBundle.LoadMaterial("matHenryAlt");
-            //masterySkin.rendererInfos[2].defaultMaterial = assetBundle.LoadMaterial("matHenryAlt");
-
-            ////here's a barebones example of using gameobjectactivations that could probably be streamlined or rewritten entirely, truthfully, but it works
-            //masterySkin.gameObjectActivations = new SkinDef.GameObjectActivation[]
-            //{
-            //    new SkinDef.GameObjectActivation
-            //    {
-            //        gameObject = childLocator.FindChildGameObject("GunModel"),
-            //        shouldActivate = false,
-            //    }
-            //};
-            ////simply find an object on your child locator you want to activate/deactivate and set if you want to activate/deacitvate it with this skin
-
-            //skins.Add(masterySkin);
-            
-            #endregion
-
-            skinController.skins = skins.ToArray();
+            SkinDef defaultSkin = Skins.CreateSkinDef("DEFAULT_SKIN", null, prefabCharacterModel.baseRendererInfos, prefabCharacterModel.gameObject);
+            skinController.skins = new[] { defaultSkin };
         }
         #endregion skins
 
@@ -454,7 +380,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             On.RoR2.HealthComponent.Heal += HealthComponent_Heal;
             On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
             R2API.RecalculateStatsAPI.GetStatCoefficients += RecalculateStatsAPI_GetStatCoefficients;
-            On.RoR2.EntityStateMachine.SetState += EntityStateMachine_SetState;
         }
 
         private void RecalculateStatsAPI_GetStatCoefficients(CharacterBody sender, R2API.RecalculateStatsAPI.StatHookEventArgs args)
@@ -517,35 +442,5 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             orig(self, damageInfo);
         }
 
-        private void EntityStateMachine_SetState(On.RoR2.EntityStateMachine.orig_SetState orig, EntityStateMachine self, EntityStates.EntityState newState)
-        {
-            // Check if we're trying to enter Blink state and the body lacks resources
-            if (newState != null && newState.GetType().Name == "Blink")
-            {
-                var characterBody = self.GetComponent<CharacterBody>();
-                if (characterBody != null && characterBody.bodyIndex == BodyCatalog.FindBodyIndex("SeamstressVariantBody"))
-                {
-                    var healthComponent = characterBody.healthComponent;
-                    if (healthComponent != null)
-                    {
-                        float totalCost = Mathf.Max(SeamstressVariantConfig.utilityBlinkHealthCost.Value, 0f);
-                        if (totalCost > 0f)
-                        {
-                            float availableHealth = Mathf.Max(healthComponent.health - 1f, 0f);
-                            var heart = characterBody.GetComponent<BleedingHeartComponent>();
-                            float availableHeart = heart != null ? heart.GetHeart() : 0f;
-
-                            // Not enough combined resources — don't enter the state
-                            if (availableHealth + availableHeart < totalCost)
-                            {
-                                return;
-                            }
-                        }
-                    }
-                }
-            }
-
-            orig(self, newState);
-        }
     }
 }

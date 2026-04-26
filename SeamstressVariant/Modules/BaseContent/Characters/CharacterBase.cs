@@ -39,20 +39,23 @@ namespace SeamstressVariant.Modules.Characters
         public virtual void InitializeCharacter()
         {
             InitializeCharacterBodyPrefab();
-
             InitializeItemDisplays();
         }
 
         protected virtual void InitializeCharacterBodyPrefab()
         {
-            GameObject sourceModelPrefab = Prefabs.LoadCharacterModel(assetBundle, modelPrefabName);
-            characterModelObject = R2API.PrefabAPI.InstantiateClone(sourceModelPrefab, $"{modelPrefabName}{bodyName}", false);
+            characterModelObject = Prefabs.LoadCharacterModel(assetBundle, modelPrefabName);
+            characterModelObject = R2API.PrefabAPI.InstantiateClone(characterModelObject, "clonedCharacterModel", false);
 
-            bodyPrefab = Prefabs.CreateBodyPrefab(characterModelObject, bodyInfo);
+            bodyPrefab = Modules.Prefabs.CreateBodyPrefab(characterModelObject, bodyInfo);
             prefabCharacterBody = bodyPrefab.GetComponent<CharacterBody>();
 
-            bool modelIsPreconfigured = characterModelObject.GetComponent<CharacterModel>() != null;
-            prefabCharacterModel = Prefabs.SetupCharacterModel(bodyPrefab, modelIsPreconfigured ? null : customRendererInfos);
+            prefabCharacterModel = Modules.Prefabs.SetupCharacterModel(bodyPrefab, customRendererInfos);
+
+            //GameObject sourceModelPrefab = Prefabs.LoadCharacterModel(assetBundle, modelPrefabName);
+            //characterModelObject = R2API.PrefabAPI.InstantiateClone(sourceModelPrefab, $"{modelPrefabName}{bodyName}", false);
+            //bool modelIsPreconfigured = characterModelObject.GetComponent<CharacterModel>() != null;
+            //prefabCharacterModel = Prefabs.SetupCharacterModel(bodyPrefab, modelIsPreconfigured ? null : customRendererInfos);
         }
 
         public virtual void InitializeItemDisplays() {
