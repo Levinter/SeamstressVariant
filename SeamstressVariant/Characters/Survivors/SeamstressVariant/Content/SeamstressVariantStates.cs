@@ -8,11 +8,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         {
             Modules.Content.AddEntityState(typeof(ClawCombo));
 
-            Modules.Content.AddEntityState(typeof(Shoot));
-
             Modules.Content.AddEntityState(typeof(Blink));
 
             Modules.Content.AddEntityState(typeof(DefiantDash));
+
+            Modules.Content.AddEntityState(typeof(FireScissors));
         }
     }
 }

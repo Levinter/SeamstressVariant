@@ -14,7 +14,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         public static string beginSoundString = "Play_imp_attack_blink";
         public string animationLayer = "FullBody, Override";
-        public float duration = 0.15f;
+        public float duration = 0.1f;
         protected CameraTargetParams.AimRequest request;
         protected bool hasAimRequest;
         protected Vector3 blinkVector;
@@ -138,7 +138,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 }
             }
 
-            speedCoefficient = 0.5f * characterBody.jumpPower * Mathf.Clamp(characterBody.moveSpeed * sprintBonus / 4f, 5f, 20f);
+            speedCoefficient = 0.4f * characterBody.jumpPower * Mathf.Clamp(characterBody.moveSpeed * sprintBonus / 4f, 5f, 20f);
 
             gameObject.layer = LayerIndex.fakeActor.intVal;
             if (characterMotor)

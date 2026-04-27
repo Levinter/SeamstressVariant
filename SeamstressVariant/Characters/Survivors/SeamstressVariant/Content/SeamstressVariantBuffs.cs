@@ -1,5 +1,6 @@
 ﻿using RoR2;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant
 {
@@ -13,6 +14,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
         // active special buff: while present, damage cannot reduce health below 1
         public static BuffDef defianceBuff;
+
+        // scissor buffs for tracking left and right scissors
+        public static BuffDef scissorLeftBuff;
+        public static BuffDef scissorRightBuff;
 
         public static void Init(AssetBundle assetBundle)
         {
@@ -29,6 +34,19 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 new Color(0.9f, 0.1f, 0.1f),
                 false,
                 false);
+
+            // Create scissor buffs
+            scissorLeftBuff = Modules.Content.CreateAndAddBuff("SeamstressVariantScissorLeft",
+                Addressables.LoadAssetAsync<Sprite>((object)"RoR2/DLC1/VoidSurvivor/texBuffVoidSurvivorCorruptionIcon.tif").WaitForCompletion(),
+                new Color(31f / 51f, 11f / 51f, 11f / 51f),
+                false, // canStack = false
+                false); // not a debuff
+
+            scissorRightBuff = Modules.Content.CreateAndAddBuff("SeamstressVariantScissorRight",
+                Addressables.LoadAssetAsync<Sprite>((object)"RoR2/DLC1/VoidSurvivor/texBuffVoidSurvivorCorruptionIcon.tif").WaitForCompletion(),
+                new Color(31f / 51f, 11f / 51f, 11f / 51f),
+                false, // canStack = false
+                false); // not a debuff
         }
     }
 }

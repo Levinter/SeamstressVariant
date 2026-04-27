@@ -122,7 +122,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             // Add overlay controller to drive the Heart meter UI (reuses VoidSurvivor corruption bar)
             bodyPrefab.AddComponent<HeartOverlayController>();
 
-            //bodyPrefab.AddComponent<HuntressTrackerComopnent>();
+            // Add scissor controller — passive independent scissor state, not tied to any skill stock.
+            bodyPrefab.AddComponent<ScissorController>();
             //anything else here
         }
 
@@ -244,35 +245,34 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         {
             Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Secondary);
 
-            //here is a basic skill def with all fields accounted for
             SkillDef secondarySkillDef1 = Skills.CreateSkillDef(new SkillDefInfo
             {
-                skillName = "HenryGun",
-                skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "SECONDARY_GUN_NAME",
-                skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "SECONDARY_GUN_DESCRIPTION",
-                keywordTokens = new string[] { "KEYWORD_AGILE" },
+                skillName = "FireScissors",
+                skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "SECONDARY_SCISSORS_NAME",
+                skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "SECONDARY_SCISSORS_DESCRIPTION",
+                keywordTokens = new string[] { },
                 skillIcon = null,
 
-                activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.Shoot)),
-                activationStateMachineName = "Weapon2",
-                interruptPriority = EntityStates.InterruptPriority.Skill,
+                activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.FireScissors)),
+                activationStateMachineName = "Weapon",
+                interruptPriority = EntityStates.InterruptPriority.PrioritySkill,
 
-                baseRechargeInterval = 1f,
-                baseMaxStock = 1,
+                baseRechargeInterval = 8f,
+                baseMaxStock = 2,
 
-                rechargeStock = 1,
+                rechargeStock = 2,
                 requiredStock = 1,
                 stockToConsume = 1,
 
                 resetCooldownTimerOnUse = false,
                 fullRestockOnAssign = true,
                 dontAllowPastMaxStocks = false,
-                mustKeyPress = false,
+                mustKeyPress = true,
                 beginSkillCooldownOnSkillEnd = false,
 
                 isCombatSkill = true,
                 canceledFromSprinting = false,
-                cancelSprintingOnActivation = false,
+                cancelSprintingOnActivation = true,
                 forceSprintDuringState = false,
 
             });
@@ -296,7 +296,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 activationStateMachineName = "Body",
                 interruptPriority = EntityStates.InterruptPriority.PrioritySkill,
 
-                baseRechargeInterval = 0.5f,
+                baseRechargeInterval = 0.2f,
                 baseMaxStock = 1,
 
                 rechargeStock = 1,

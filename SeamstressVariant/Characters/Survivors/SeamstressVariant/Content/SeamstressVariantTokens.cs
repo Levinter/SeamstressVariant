@@ -52,8 +52,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             #endregion
 
             #region Secondary
-            Language.Add(prefix + "SECONDARY_GUN_NAME", "Handgun");
-            Language.Add(prefix + "SECONDARY_GUN_DESCRIPTION", Tokens.agilePrefix + $"Fire a handgun for <style=cIsDamage>{100f * SeamstressVariantStaticValues.gunDamageCoefficient}% damage</style>.");
+            Language.Add(prefix + "SECONDARY_SCISSORS_NAME", "Fire Scissors");
+            Language.Add(prefix + "SECONDARY_SCISSORS_DESCRIPTION", $"Throw a scissor blade for <style=cIsDamage>{100f * SeamstressVariantStaticValues.scissorDamageCoefficient}% damage</style>.");
             #endregion
 
             #region Utility

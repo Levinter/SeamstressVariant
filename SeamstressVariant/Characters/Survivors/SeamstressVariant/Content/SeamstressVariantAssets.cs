@@ -26,14 +26,17 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         //projectiles
         public static GameObject bombProjectilePrefab;
 
+        // Simplified scissor projectiles for the secondary skill (straight-line, no homing, no pickup).
+        // Ghost visuals are stolen from the OG Seamstress scissor prefabs.
+        public static GameObject scissorLProjectile;
+        public static GameObject scissorRProjectile;
+
         private static AssetBundle _assetBundle;
 
         public static void Init(AssetBundle assetBundle)
         {
 
             _assetBundle = assetBundle;
-
-            swordHitSoundEvent = Content.CreateAndAddNetworkSoundEventDef("HenrySwordHit");
 
             CreateEffects();
 
@@ -43,11 +46,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         #region effects
         private static void CreateEffects()
         {
-            CreateBombExplosionEffect();
             CreateDefianceEndEffect();
-
-            swordSwingEffect = _assetBundle.LoadEffect("HenrySwordSwingEffect", true);
-            swordHitImpactEffect = _assetBundle.LoadEffect("ImpactHenrySlash");
 
             // Register OG Seamstress effects used by ClawCombo so OverlapAttack can spawn them.
             Content.CreateAndAddEffectDef(SeamstressAssets.scissorsHitImpactEffect);
@@ -79,62 +78,99 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             Content.CreateAndAddEffectDef(defianceEndEffect);
         }
 
-        private static void CreateBombExplosionEffect()
-        {
-            bombExplosionEffect = _assetBundle.LoadEffect("BombExplosionEffect", "HenryBombExplosion");
-
-            if (!bombExplosionEffect)
-                return;
-
-            ShakeEmitter shakeEmitter = bombExplosionEffect.AddComponent<ShakeEmitter>();
-            shakeEmitter.amplitudeTimeDecay = true;
-            shakeEmitter.duration = 0.5f;
-            shakeEmitter.radius = 200f;
-            shakeEmitter.scaleShakeRadiusWithLocalScale = false;
-
-            shakeEmitter.wave = new Wave
-            {
-                amplitude = 1f,
-                frequency = 40f,
-                cycleOffset = 0f
-            };
-
-        }
         #endregion effects
 
         #region projectiles
         private static void CreateProjectiles()
         {
-            CreateBombProjectile();
-            Content.AddProjectilePrefab(bombProjectilePrefab);
+            CreateScissorProjectiles();
+            Content.AddProjectilePrefab(scissorLProjectile);
+            Content.AddProjectilePrefab(scissorRProjectile);
         }
 
-        private static void CreateBombProjectile()
+        private static void CreateScissorProjectiles()
         {
-            //highly recommend setting up projectiles in editor, but this is a quick and dirty way to prototype if you want
-            bombProjectilePrefab = Asset.CloneProjectilePrefab("CommandoGrenadeProjectile", "HenryBombProjectile");
+            // Use ImpVoidspikeProjectile as a clean, straight-line projectile base.
+            // It comes with ProjectileSingleTargetImpact (damage on hit) and ProjectileSimple (movement).
+            GameObject baseProjectile = Addressables.LoadAssetAsync<GameObject>(
+                "RoR2/Base/ImpBoss/ImpVoidspikeProjectile.prefab").WaitForCompletion();
 
-            //remove their ProjectileImpactExplosion component and start from default values
-            UnityEngine.Object.Destroy(bombProjectilePrefab.GetComponent<ProjectileImpactExplosion>());
-            ProjectileImpactExplosion bombImpactExplosion = bombProjectilePrefab.AddComponent<ProjectileImpactExplosion>();
-            
-            bombImpactExplosion.blastRadius = 16f;
-            bombImpactExplosion.blastDamageCoefficient = 1f;
-            bombImpactExplosion.falloffModel = BlastAttack.FalloffModel.None;
-            bombImpactExplosion.destroyOnEnemy = true;
-            bombImpactExplosion.lifetime = 12f;
-            bombImpactExplosion.impactEffect = bombExplosionEffect;
-            bombImpactExplosion.lifetimeExpiredSound = Content.CreateAndAddNetworkSoundEventDef("HenryBombExplosion");
-            bombImpactExplosion.timerAfterImpact = true;
-            bombImpactExplosion.lifetimeAfterImpact = 0.1f;
+            scissorLProjectile = PrefabAPI.InstantiateClone(baseProjectile, "SeamstressVariantScissorLProjectile");
+            scissorRProjectile = PrefabAPI.InstantiateClone(baseProjectile, "SeamstressVariantScissorRProjectile");
 
-            ProjectileController bombController = bombProjectilePrefab.GetComponent<ProjectileController>();
+            foreach (GameObject proj in new[] { scissorLProjectile, scissorRProjectile })
+            {
+                // Remove stick-on-impact so the projectile passes through without embedding.
+                ProjectileStickOnImpact stick = proj.GetComponent<ProjectileStickOnImpact>();
+                if (stick) UnityEngine.Object.Destroy(stick);
 
-            if (_assetBundle.LoadAsset<GameObject>("HenryBombGhost") != null)
-                bombController.ghostPrefab = _assetBundle.CreateProjectileGhostPrefab("HenryBombGhost");
-            
-            bombController.startSound = "";
+                // Match OG: disable root collider (unused) and keep rotation stable.
+                Rigidbody rb = proj.GetComponent<Rigidbody>();
+                if (rb)
+                {
+                    rb.useGravity = false;
+                    rb.freezeRotation = true;
+                }
+
+                // Root collider is not used for hit detection — disable it (OG does the same).
+                SphereCollider rootSc = proj.GetComponent<SphereCollider>();
+                if (rootSc)
+                {
+                    rootSc.radius = 1f;
+                    rootSc.enabled = false;
+                }
+
+                // The real hitbox is on the child at GetChild(0).GetChild(5), matching OG radius of 6.
+                SphereCollider childSc = proj.transform.GetChild(0).GetChild(5).GetComponent<SphereCollider>();
+                if (childSc) childSc.radius = 6f;
+
+                ProjectileSimple simple = proj.GetComponent<ProjectileSimple>();
+                if (simple)
+                {
+                    simple.desiredForwardSpeed = 150f;
+                    simple.lifetime = 5f;
+                }
+
+                // ImpVoidspikeProjectile's ProjectileImpactExplosion has dotIndex = Bleed.
+                // Clear it so the scissor hit does not apply a bleed dot.
+                // Also enable destroy-on-impact so the projectile disappears on hit.
+                ProjectileImpactExplosion pie = proj.GetComponent<ProjectileImpactExplosion>();
+                if (pie)
+                {
+                    pie.dotIndex = RoR2.DotController.DotIndex.None;
+                    pie.destroyOnEnemy = true;
+                    pie.destroyOnWorld = true;
+                }
+
+                // Also clear any inherited bleed/stun flags from the base damage type.
+                ProjectileDamage pd = proj.GetComponent<ProjectileDamage>();
+                if (pd) pd.damageType = DamageType.Generic;
+
+                // Homing — steer toward nearest target, same settings as OG.
+                ProjectileSteerTowardTarget steer = proj.AddComponent<ProjectileSteerTowardTarget>();
+                steer.yAxisOnly = false;
+                steer.rotationSpeed = 700f;
+                steer.enabled = true;
+
+                ProjectileDirectionalTargetFinder finder = proj.AddComponent<ProjectileDirectionalTargetFinder>();
+                finder.lookRange = 0f;
+                finder.lookCone = 0f;
+                finder.targetSearchInterval = 0.2f;
+                finder.onlySearchIfNoTarget = true;
+                finder.allowTargetLoss = false;
+                finder.testLoS = true;
+                finder.ignoreAir = false;
+                finder.flierAltitudeTolerance = float.PositiveInfinity;
+                finder.enabled = true;
+            }
+
+            // Swap in scissor ghost visuals from the OG Seamstress prefabs.
+            scissorLProjectile.GetComponent<ProjectileController>().ghostPrefab =
+                SeamstressAssets.scissorLPrefab.GetComponent<ProjectileController>().ghostPrefab;
+            scissorRProjectile.GetComponent<ProjectileController>().ghostPrefab =
+                SeamstressAssets.scissorRPrefab.GetComponent<ProjectileController>().ghostPrefab;
         }
+
         #endregion projectiles
     }
 }
