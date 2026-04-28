@@ -35,7 +35,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             bodyColor = Color.white,
             sortPosition = 100,
 
-            crosshair = Asset.LoadCrosshair("Standard"),
+            crosshair = Asset.LoadCrosshair("SimpleDot"),
             podPrefab = LegacyResourcesAPI.Load<GameObject>("Prefabs/NetworkedObjects/SurvivorPod"),
 
             maxHealth = 110f,
@@ -113,7 +113,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         private void AdditionalBodySetup()
         {
             AddHitboxes();
-            bodyPrefab.AddComponent<SeamstressVariantWeaponComponent>();
             
             // Add heart component for passive
             BleedingHeartComponent heart = bodyPrefab.AddComponent<BleedingHeartComponent>();
@@ -124,6 +123,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             // Add scissor controller — passive independent scissor state, not tied to any skill stock.
             bodyPrefab.AddComponent<ScissorController>();
+
+            // Add tracker — drives the Huntress tracking indicator and is read by FireScissors on cast.
+            bodyPrefab.AddComponent<SeamstressTracker>();
             //anything else here
         }
 

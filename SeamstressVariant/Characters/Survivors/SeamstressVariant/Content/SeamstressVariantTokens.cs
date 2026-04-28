@@ -48,7 +48,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             #region Primary
             Language.Add(prefix + "PRIMARY_SLASH_NAME", "Sword");
-            Language.Add(prefix + "PRIMARY_SLASH_DESCRIPTION", Tokens.agilePrefix + $"Swing forward for <style=cIsDamage>{100f * SeamstressVariantStaticValues.swordDamageCoefficient}% damage</style>.");
+            Language.Add(prefix + "PRIMARY_SLASH_DESCRIPTION", Tokens.agilePrefix + $"Swing forward for <style=cIsDamage>{100f * SeamstressVariantStaticValues.clawDamageCoefficient}% damage</style>.");
             #endregion
 
             #region Secondary

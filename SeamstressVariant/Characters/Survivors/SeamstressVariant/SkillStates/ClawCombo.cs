@@ -33,7 +33,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             hitboxGroupName = "Sword";
 
             damageType = DamageTypeCombo.GenericPrimary;
-            damageCoefficient = SeamstressVariantStaticValues.swordDamageCoefficient;
+            damageCoefficient = SeamstressVariantStaticValues.clawDamageCoefficient;
             procCoefficient = 1f;
             pushForce = 300f;
             bonusForce = Vector3.zero;
@@ -76,11 +76,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             scissorOverlapAttack.attacker = gameObject;
             scissorOverlapAttack.inflictor = gameObject;
             scissorOverlapAttack.teamIndex = GetTeam();
-            scissorOverlapAttack.damage = (damageCoefficient * 2) * damageStat;
+            scissorOverlapAttack.damage = SeamstressVariantStaticValues.meleeScissorDamageCoefficient * damageStat;
             scissorOverlapAttack.procCoefficient = procCoefficient;
             scissorOverlapAttack.hitEffectPrefab = hitEffectPrefab;
             scissorOverlapAttack.forceVector = bonusForce;
-            scissorOverlapAttack.pushAwayForce = 450f;
+            scissorOverlapAttack.pushAwayForce = pushForce * 2f;
             scissorOverlapAttack.hitBoxGroup = FindHitBoxGroup(scissorHitboxGroup);
             scissorOverlapAttack.isCrit = attack.isCrit;
             scissorOverlapAttack.impactSound = impactSound;

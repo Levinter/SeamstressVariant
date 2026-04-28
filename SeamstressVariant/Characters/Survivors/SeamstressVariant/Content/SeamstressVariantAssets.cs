@@ -127,7 +127,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 ProjectileSimple simple = proj.GetComponent<ProjectileSimple>();
                 if (simple)
                 {
-                    simple.desiredForwardSpeed = 150f;
+                    simple.desiredForwardSpeed = 80f;
                     simple.lifetime = 5f;
                 }
 
@@ -140,6 +140,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                     pie.dotIndex = RoR2.DotController.DotIndex.None;
                     pie.destroyOnEnemy = true;
                     pie.destroyOnWorld = true;
+                    pie.impactEffect = SeamstressAssets.scissorsHitImpactEffect;
                 }
 
                 // Also clear any inherited bleed/stun flags from the base damage type.

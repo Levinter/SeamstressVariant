@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using EntityStates;
 using RoR2;
 using SeamstressVariant.Survivors.SeamstressVariant.Components;
@@ -10,12 +11,20 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
     public class DefiantDash : BaseSkillState
     {
         // Dash phase parameters
-        public float baseDuration = 0.5f;
-        public float dashPower = 5f;
+        public float baseDuration = 0.2f;
+        public float dashPower = 4f;
 
         // Sustained phase parameters (from DefiantHeart)
-        public static float heartDrainPerTick = 5f;
+        public static float heartDrainPerTick = 1f;
         public static float heartDrainInterval = 0.25f;
+
+        // Dash attack parameters
+        public float damageCoefficient = SeamstressVariantStaticValues.dashDamageCoefficient;
+        private OverlapAttack attack;
+        private List<HurtBox> victimsStruck = new List<HurtBox>();
+        private bool hasHit;
+        private GameObject uppercutEffect;
+        private GameObject scissorHitImpactEffect;
 
         // OG VFX assets — null-safe, fall back to no-op if unavailable.
         private GameObject impDashEffect;
@@ -39,6 +48,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         private BleedingHeartComponent heart;
         private SetStateOnHurt setStateOnHurt;
         private float nextDrainAt;
+        private float currentDrainPerTick;
         private bool canReactivate;
         private bool originalCanBeHitStunned;
         private bool originalCanBeStunned;
@@ -56,15 +66,19 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             bloodSplatterEffect = SeamstressAssets.bloodSplatterEffect;
             destealthMaterial = SeamstressAssets.destealthMaterial;
             mainColor = SeamstressAssets.coolRed;
+            uppercutEffect = SeamstressAssets.uppercutEffect;
+            scissorHitImpactEffect = SeamstressAssets.scissorsHitImpactEffect;
 
             // Dash phase initialization
             hasDelayed = false;
             dashCompleted = false;
+            hasHit = false;
 
             // Sustained phase initialization
             heart = GetComponent<BleedingHeartComponent>();
             setStateOnHurt = GetComponent<SetStateOnHurt>();
             nextDrainAt = heartDrainInterval;
+            currentDrainPerTick = heartDrainPerTick;
             canReactivate = false;
 
             if (characterMotor)
@@ -189,6 +203,19 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                         }, false);
                     }
 
+                    // Set up the dash OverlapAttack.
+                    attack = new OverlapAttack();
+                    attack.attacker = gameObject;
+                    attack.inflictor = gameObject;
+                    attack.damageType = DamageType.Stun1s;
+                    attack.procCoefficient = 1f;
+                    attack.teamIndex = GetTeam();
+                    attack.isCrit = RollCrit();
+                    attack.forceVector = Vector3.up * 2000f;
+                    attack.damage = damageCoefficient * damageStat;
+                    attack.hitBoxGroup = FindHitBoxGroup("Sword");
+                    attack.hitEffectPrefab = scissorHitImpactEffect;
+
                     // Launch.
                     if (characterMotor)
                     {
@@ -202,7 +229,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 return;
             }
 
-            // Phase 2: dashing — steer and wait for duration.
+            // Phase 2: dashing — steer, fire attack, and wait for duration.
             if (characterDirection)
             {
                 characterDirection.forward = dashVector;
@@ -211,6 +238,26 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             if (characterBody)
             {
                 characterBody.isSprinting = true;
+            }
+
+            if (isAuthority && attack != null && attack.Fire(victimsStruck))
+            {
+                hasHit = true;
+                Transform upperCutTransform = FindModelChild("UpperCut");
+                if (upperCutTransform && uppercutEffect)
+                {
+                    Object.Instantiate(uppercutEffect, upperCutTransform);
+                }
+                if (characterMotor)
+                {
+                    characterMotor.velocity = Vector3.zero;
+                }
+                SmallHop(characterMotor, 4f);
+
+                // Transition to sustained Defiance phase.
+                dashCompleted = true;
+                EnterSustainedPhase();
+                return;
             }
 
             if (fixedAge >= baseDuration / attackSpeedStat)
@@ -287,8 +334,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
                 if (NetworkServer.active)
                 {
-                    heart.ConsumeHeart(heartDrainPerTick);
+                    heart.ConsumeHeart(currentDrainPerTick);
                 }
+
+                currentDrainPerTick += 1f;
 
                 if (!heart.CanSustainDefiantHeart())
                 {
@@ -299,7 +348,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         private void ReactivateSustainedPhase()
         {
-
             if (!NetworkServer.active || heart == null || healthComponent == null)
             {
                 outer.SetNextStateToMain();
@@ -307,6 +355,47 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             }
 
             float storedHeart = heart.GetHeart();
+
+            // Blast attack — flat 20 damage per 100 heart, fixed 20m radius.
+            if (isAuthority)
+            {
+                BlastAttack blastAttack = new BlastAttack();
+                blastAttack.position = characterBody.corePosition;
+                blastAttack.baseDamage = (storedHeart / 100f) * SeamstressVariantStaticValues.explodeDamagePerHundredHeart;
+                blastAttack.baseForce = 800f;
+                blastAttack.bonusForce = Vector3.zero;
+                blastAttack.radius = SeamstressVariantStaticValues.explodeRadius;
+                blastAttack.attacker = gameObject;
+                blastAttack.inflictor = gameObject;
+                blastAttack.teamIndex = GetTeam();
+                blastAttack.crit = RollCrit();
+                blastAttack.procChainMask = default(ProcChainMask);
+                blastAttack.procCoefficient = 1f;
+                blastAttack.falloffModel = BlastAttack.FalloffModel.Linear;
+                blastAttack.damageColorIndex = DamageColorIndex.Default;
+                blastAttack.Fire();
+            }
+
+            // VFX
+            if (SeamstressAssets.genericImpactExplosionEffect)
+            {
+                EffectManager.SpawnEffect(SeamstressAssets.genericImpactExplosionEffect, new EffectData
+                {
+                    origin = characterBody.corePosition,
+                    rotation = Quaternion.identity,
+                    color = (Color32)SeamstressAssets.coolRed
+                }, true);
+            }
+            if (SeamstressAssets.slamEffect)
+            {
+                EffectManager.SpawnEffect(SeamstressAssets.slamEffect, new EffectData
+                {
+                    origin = characterBody.corePosition,
+                    rotation = Quaternion.identity
+                }, true);
+            }
+
+            Util.PlaySound("Play_imp_overlord_teleport_end", gameObject);
 
             heart.ConsumeHeart(storedHeart);
             healthComponent.health = Mathf.Clamp(healthComponent.health + storedHeart, 1f, healthComponent.fullHealth);
@@ -486,8 +575,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 }
             }
 
-            // Bleed off velocity if dash did not complete (e.g. interrupted).
-            if (!hasDelayed && characterMotor)
+            // Bleed off velocity if dash did not hit (same as HealthCostDash).
+            if (!hasHit && characterMotor)
             {
                 characterMotor.velocity *= 0.2f;
             }
