@@ -38,7 +38,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             // If the authority doesn't have enough health + heart to cover the cost, cancel immediately.
             if (isAuthority)
             {
-                float requiredCost = Mathf.Max(SeamstressVariantConfig.utilityBlinkHealthCost.Value, 0f);
+                float level = characterBody ? characterBody.level : 0f;
+                float requiredCost = SeamstressVariantConfig.GetBlinkHealthCostForLevel(level);
+                Log.Fatal ($"Calculated Blink Health Cost for Level {level}: {requiredCost}");
                 if (requiredCost > 0f && healthComponent)
                 {
                     float availableHealth = Mathf.Max(healthComponent.health - 1f, 0f);
@@ -55,7 +57,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             if (NetworkServer.active && healthComponent)
             {
-                float totalCost = Mathf.Max(SeamstressVariantConfig.utilityBlinkHealthCost.Value, 0f);
+                float level = characterBody ? characterBody.level : 0f;
+                float totalCost = SeamstressVariantConfig.GetBlinkHealthCostForLevel(level);
                 if (totalCost > 0f)
                 {
                     float availableHealth = Mathf.Max(healthComponent.health - 1f, 0f);
@@ -138,7 +141,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 }
             }
 
-            speedCoefficient = 0.4f * characterBody.jumpPower * Mathf.Clamp(characterBody.moveSpeed * sprintBonus / 4f, 5f, 20f);
+            speedCoefficient = 0.5f * characterBody.jumpPower * Mathf.Clamp(characterBody.moveSpeed * sprintBonus / 4f, 5f, 20f);
 
             gameObject.layer = LayerIndex.fakeActor.intVal;
             if (characterMotor)

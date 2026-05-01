@@ -12,6 +12,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             Modules.Content.AddEntityState(typeof(DefiantDash));
 
+            Modules.Content.AddEntityState(typeof(DefiantDashReactivate));
+
             Modules.Content.AddEntityState(typeof(FireScissors));
         }
     }

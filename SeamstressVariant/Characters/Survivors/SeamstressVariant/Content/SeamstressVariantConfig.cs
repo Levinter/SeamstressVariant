@@ -1,12 +1,17 @@
 ﻿using BepInEx.Configuration;
 using SeamstressVariant.Modules;
+using UnityEngine;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant
 {
     public static class SeamstressVariantConfig
     {
+        // Blink movement time in seconds.
         public static ConfigEntry<float> utilityBlinkDuration;
+        // Flat health cost paid on every blink.
         public static ConfigEntry<float> utilityBlinkHealthCost;
+        // Additional health cost applied per level (level 1 uses 1x).
+        public static ConfigEntry<float> utilityBlinkHealthCostPerLevel;
 
         public static void Init()
         {
@@ -23,10 +28,29 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             utilityBlinkHealthCost = Config.BindAndOptions(
                 section,
                 "Utility Blink Health Cost",
-                10f,
+                20f,
                 0f,
-                30f,
+                20f,
                 "Health drained each time Blink is used. Non-lethal (will not reduce below 1 HP).");
+
+            utilityBlinkHealthCostPerLevel = Config.BindAndOptions(
+                section,
+                "Utility Blink Health Cost Per Level",
+                5f,
+                0f,
+                5f,
+                "Additional health drained per level when Blink is used. Starts applying at level 1.");
+        }
+
+        public static float GetBlinkHealthCostForLevel(float level)
+        {
+            float baseCost = Mathf.Max(utilityBlinkHealthCost.Value, 0f);
+            float perLevelCost = Mathf.Max(utilityBlinkHealthCostPerLevel.Value, 0f);
+            float levelMultiplier = Mathf.Max(level, 0f);
+    
+            // Total blink cost = base + perLevel * level.
+            // Example with base=10 and perLevel=10: level1=20, level2=30.
+            return baseCost + perLevelCost * levelMultiplier;
         }
     }
 }

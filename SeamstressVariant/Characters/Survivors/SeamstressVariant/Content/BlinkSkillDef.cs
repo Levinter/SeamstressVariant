@@ -12,12 +12,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             if (!base.CanExecute(skillSlot))
                 return false;
 
-            float cost = Mathf.Max(SeamstressVariantConfig.utilityBlinkHealthCost.Value, 0f);
-            if (cost <= 0f)
-                return true;
-
             CharacterBody body = skillSlot.characterBody;
             if (body == null)
+                return true;
+
+            float cost = SeamstressVariantConfig.GetBlinkHealthCostForLevel(body.level);
+            if (cost <= 0f)
                 return true;
 
             HealthComponent hc = body.healthComponent;
