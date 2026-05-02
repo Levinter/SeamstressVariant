@@ -5,6 +5,7 @@ using SeamstressMod.Seamstress.Content;
 using SeamstressVariant.Survivors.SeamstressVariant;
 using SeamstressVariant.Survivors.SeamstressVariant.Components;
 using UnityEngine;
+using OGSeamstressController = SeamstressMod.Seamstress.Components.SeamstressController;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 {
@@ -31,6 +32,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         private string chosenAnim;
         private string muzzleString;
         private GameObject projectilePrefab;
+        private GameObject scissorFiringPrefab = SeamstressAssets.impDashEffect;
         private HurtBox _lockedTarget;
 
         public override void OnEnter()
@@ -39,6 +41,13 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             duration = baseDuration / attackSpeedStat;
             aimRay = GetAimRay();
             StartAimMode(aimRay);
+
+            // Match OG Seamstress: use alternate firing VFX while the blue variant is active.
+            OGSeamstressController seamstressController = GetComponent<OGSeamstressController>();
+            if (seamstressController != null && seamstressController.blue && SeamstressAssets.impDashEffect2 != null)
+            {
+                scissorFiringPrefab = SeamstressAssets.impDashEffect2;
+            }
 
             // Snapshot the current target from the persistent tracker (same cone the indicator shows).
             var tracker = characterBody.GetComponent<SeamstressTracker>();
@@ -98,7 +107,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             // Spawn the imp-dash muzzle flash at the scissor hand position.
             Transform muzzle = FindModelChild(muzzleString);
-            if (muzzle != null && SeamstressAssets.impDashEffect != null)
+            if (muzzle != null && scissorFiringPrefab != null)
             {
                 EffectData effectData = new EffectData
                 {
@@ -106,7 +115,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     origin   = muzzle.position,
                     scale    = 0.5f
                 };
-                EffectManager.SpawnEffect(SeamstressAssets.impDashEffect, effectData, true);
+                EffectManager.SpawnEffect(scissorFiringPrefab, effectData, true);
             }
 
             if (isAuthority)

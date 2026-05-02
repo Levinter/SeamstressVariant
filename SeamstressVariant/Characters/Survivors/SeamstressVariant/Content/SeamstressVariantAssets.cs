@@ -7,6 +7,7 @@ using SeamstressVariant.Modules;
 using SeamstressMod.Seamstress.Content;
 using System;
 using RoR2.Projectile;
+using SeamstressVariant.Characters.Survivors.SeamstressVariant.Components;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant
 {
@@ -100,76 +101,72 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             foreach (GameObject proj in new[] { scissorLProjectile, scissorRProjectile })
             {
-                // Remove stick-on-impact so the projectile passes through without embedding.
-                ProjectileStickOnImpact stick = proj.GetComponent<ProjectileStickOnImpact>();
-                if (stick) UnityEngine.Object.Destroy(stick);
-
-                // Match OG: disable root collider (unused) and keep rotation stable.
-                Rigidbody rb = proj.GetComponent<Rigidbody>();
-                if (rb)
+                ProjectileImpactVFXSFX impactProbe = proj.GetComponent<ProjectileImpactVFXSFX>();
+                if (!impactProbe)
                 {
-                    rb.useGravity = false;
-                    rb.freezeRotation = true;
+                    impactProbe = proj.AddComponent<ProjectileImpactVFXSFX>();
                 }
+                impactProbe.logOnly = true;
 
-                // Root collider is not used for hit detection — disable it (OG does the same).
-                SphereCollider rootSc = proj.GetComponent<SphereCollider>();
-                if (rootSc)
-                {
-                    rootSc.radius = 1f;
-                    rootSc.enabled = false;
-                }
-
-                // The real hitbox is on the child at GetChild(0).GetChild(5), matching OG radius of 6.
-                SphereCollider childSc = proj.transform.GetChild(0).GetChild(5).GetComponent<SphereCollider>();
-                if (childSc) childSc.radius = 6f;
-
-                ProjectileSimple simple = proj.GetComponent<ProjectileSimple>();
-                if (simple)
-                {
-                    simple.desiredForwardSpeed = 80f;
-                    simple.lifetime = 5f;
-                }
-
-                // ImpVoidspikeProjectile's ProjectileImpactExplosion has dotIndex = Bleed.
-                // Clear it so the scissor hit does not apply a bleed dot.
-                // Also enable destroy-on-impact so the projectile disappears on hit.
+                // OG sets ProjectileImpactExplosion.impactEffect to pickupScissorEffect
+                // (MercSwordSlashWhirlwind clone). That effect carries an embedded
+                // EffectComponent.soundName (sword swing sound) which fires automatically
+                // via EffectManager.SpawnEffect — this is the suspected missing impact SFX.
                 ProjectileImpactExplosion pie = proj.GetComponent<ProjectileImpactExplosion>();
                 if (pie)
                 {
-                    pie.dotIndex = RoR2.DotController.DotIndex.None;
-                    pie.destroyOnEnemy = true;
-                    pie.destroyOnWorld = true;
-                    pie.impactEffect = SeamstressAssets.scissorsHitImpactEffect;
+                    pie.impactEffect = SeamstressAssets.pickupScissorEffect;
+                    LogEffectSoundInfo($"{proj.name}.ProjectileImpactExplosion.impactEffect", pie.impactEffect);
                 }
 
-                // Also clear any inherited bleed/stun flags from the base damage type.
-                ProjectileDamage pd = proj.GetComponent<ProjectileDamage>();
-                if (pd) pd.damageType = DamageType.Generic;
+                ProjectileStickOnImpact stick = proj.GetComponent<ProjectileStickOnImpact>();
+                LogStickEventInfo(proj.name, stick);
+            }
+        }
 
-                // Homing — steer toward nearest target, same settings as OG.
-                ProjectileSteerTowardTarget steer = proj.AddComponent<ProjectileSteerTowardTarget>();
-                steer.yAxisOnly = false;
-                steer.rotationSpeed = 700f;
-                steer.enabled = true;
-
-                ProjectileDirectionalTargetFinder finder = proj.AddComponent<ProjectileDirectionalTargetFinder>();
-                finder.lookRange = 0f;
-                finder.lookCone = 0f;
-                finder.targetSearchInterval = 0.2f;
-                finder.onlySearchIfNoTarget = true;
-                finder.allowTargetLoss = false;
-                finder.testLoS = true;
-                finder.ignoreAir = false;
-                finder.flierAltitudeTolerance = float.PositiveInfinity;
-                finder.enabled = true;
+        private static void LogEffectSoundInfo(string label, GameObject effectPrefab)
+        {
+            if (!effectPrefab)
+            {
+                Log.Info($"[SFX DEBUG] {label}: effect prefab is null");
+                return;
             }
 
-            // Swap in scissor ghost visuals from the OG Seamstress prefabs.
-            scissorLProjectile.GetComponent<ProjectileController>().ghostPrefab =
-                SeamstressAssets.scissorLPrefab.GetComponent<ProjectileController>().ghostPrefab;
-            scissorRProjectile.GetComponent<ProjectileController>().ghostPrefab =
-                SeamstressAssets.scissorRPrefab.GetComponent<ProjectileController>().ghostPrefab;
+            EffectComponent effectComponent = effectPrefab.GetComponent<EffectComponent>();
+            if (!effectComponent)
+            {
+                Log.Info($"[SFX DEBUG] {label}: prefab '{effectPrefab.name}' has no EffectComponent");
+                return;
+            }
+
+            Log.Info($"[SFX DEBUG] {label}: prefab '{effectPrefab.name}' soundName='{effectComponent.soundName}'");
+        }
+
+        private static void LogStickEventInfo(string projectileName, ProjectileStickOnImpact stick)
+        {
+            if (!stick)
+            {
+                Log.Info($"[SFX DEBUG] {projectileName}: no ProjectileStickOnImpact component found");
+                return;
+            }
+
+            if (stick.stickEvent == null)
+            {
+                Log.Info($"[SFX DEBUG] {projectileName}: stickEvent is null");
+                return;
+            }
+
+            int listenerCount = stick.stickEvent.GetPersistentEventCount();
+            Log.Info($"[SFX DEBUG] {projectileName}: stickEvent listeners={listenerCount}");
+
+            for (int i = 0; i < listenerCount; i++)
+            {
+                UnityEngine.Object target = stick.stickEvent.GetPersistentTarget(i);
+                string method = stick.stickEvent.GetPersistentMethodName(i);
+                string targetName = target ? target.name : "<null>";
+                string targetType = target ? target.GetType().Name : "<null>";
+                Log.Info($"[SFX DEBUG] {projectileName}: stickEvent[{i}] target='{targetName}' type='{targetType}' method='{method}'");
+            }
         }
 
         #endregion projectiles

@@ -179,44 +179,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 keywordToken = "KEYWORD_HEART",
                 icon = null,
             };
-
-            //option 2. a new SkillFamily for a passive, used if you want multiple selectable passives
-            GenericSkill passiveGenericSkill = Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, "PassiveSkill");
-            SkillDef passiveSkillDef1 = Skills.CreateSkillDef(new SkillDefInfo
-            {
-                skillName = "HenryPassive",
-                skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "PASSIVE_NAME",
-                skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "PASSIVE_DESCRIPTION",
-                keywordTokens = new string[] { "KEYWORD_AGILE" },
-                skillIcon = null,
-
-                //unless you're somehow activating your passive like a skill, none of the following is needed.
-                //but that's just me saying things. the tools are here at your disposal to do whatever you like with
-
-                //activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.Shoot)),
-                //activationStateMachineName = "Weapon1",
-                //interruptPriority = EntityStates.InterruptPriority.Skill,
-
-                //baseRechargeInterval = 1f,
-                //baseMaxStock = 1,
-
-                //rechargeStock = 1,
-                //requiredStock = 1,
-                //stockToConsume = 1,
-
-                //resetCooldownTimerOnUse = false,
-                //fullRestockOnAssign = true,
-                //dontAllowPastMaxStocks = false,
-                //mustKeyPress = false,
-                //beginSkillCooldownOnSkillEnd = false,
-
-                //isCombatSkill = true,
-                //canceledFromSprinting = false,
-                //cancelSprintingOnActivation = false,
-                //forceSprintDuringState = false,
-
-            });
-            Skills.AddSkillsToFamily(passiveGenericSkill.skillFamily, passiveSkillDef1);
         }
 
         //if this is your first look at skilldef creation, take a look at Secondary first
@@ -262,12 +224,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 baseRechargeInterval = 8f,
                 baseMaxStock = 2,
 
-                rechargeStock = 2,
+                rechargeStock = 1,
                 requiredStock = 1,
                 stockToConsume = 1,
 
                 resetCooldownTimerOnUse = false,
-                fullRestockOnAssign = true,
+                fullRestockOnAssign = false,
                 dontAllowPastMaxStocks = false,
                 mustKeyPress = true,
                 beginSkillCooldownOnSkillEnd = false,
@@ -391,14 +353,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             if (heart != null)
             {
                 //base bleed chance
-                args.bleedChanceAdd = 5;
+                args.bleedChanceAdd = 10;
                 // 1% bleed chance per x(config) Heart.
                 args.bleedChanceAdd += heart.GetBleedChanceBonusFromHeart();
-
-                if (heart.IsHeartFull())
-                {
-                    args.bleedChanceAdd += 5; // Extra 5% bleed chance on full heart
-                }
             }
         }
 

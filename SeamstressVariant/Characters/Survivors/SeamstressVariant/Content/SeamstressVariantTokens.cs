@@ -26,8 +26,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
              + "< ! > Blink is a short invulnerable reposition tool that rewards precise timing and spacing." + Environment.NewLine + Environment.NewLine
              + "< ! > Defiant Heart drains Heart each second and grants Defiance, preventing death while active." + Environment.NewLine + Environment.NewLine;
 
-            string outro = "..and so he left, searching for a new identity.";
-            string outroFailure = "..and so he vanished, forever a blank slate.";
+            string outro = "..and so she left, her heart still beating.";
+            string outroFailure = "..and so she vanished, a silent heart, finally at rest.";
 
             Language.Add(prefix + "NAME", "Henry");
             Language.Add(prefix + "DESCRIPTION", desc);
@@ -42,8 +42,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             #region Passive
             Language.Add(prefix + "PASSIVE_NAME", "Her Bleeding Heart");
-            Language.Add(prefix + "PASSIVE_DESCRIPTION", "All healing is transfered to the <style=cKeywordName>Heart</style> instead of restoring health. Every second, gain <style=cIsHealing>5 Heart</style> per active <style=cIsDamage>Bleed</style> stack on nearby enemies. Gain <style=cIsDamage>+5% Bleed chance</style> and an extra <style=cIsDamage>+5%</style> while Heart is full.");
-            Language.Add("KEYWORD_HEART", "<style=cKeywordName>Heart</style><style=cSub>Stores healing. Capacity is equal to your maximum health. Increases Bleed chance by +1% per 100 Heart. At full Heart, gain an additional +5% Bleed chance.</style>");
+            Language.Add(prefix + "PASSIVE_DESCRIPTION", "All healing is transfered to the <style=cKeywordName>Heart</style>instead of restoring health. Every second, gain <style=cIsHealing>5 Heart</style> per active <style=cIsDamage>Bleed</style> stack on nearby enemies.");
+            Language.Add("KEYWORD_HEART", "<style=cKeywordName>Heart</style><style=cSub>Stores healing. Capacity is equal to your maximum health. Grants 10% bleed chance + 1% per 20 Heart.</style>");
             #endregion
 
             #region Primary
@@ -67,6 +67,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             Language.Add(prefix + "SPECIAL_DEFIANT_DASH_NAME", "Defiant Dash");
             Language.Add(prefix + "SPECIAL_DEFIANT_DASH_DESCRIPTION", "Dash forward and gain <style=cIsUtility>Defiance</style>. While Defiance is active, incoming damage <style=cIsUtility>cannot reduce you below 1 health</style>. <style=cIsHealing>Drains Heart while active.</style>");
+            Language.Add("KEYWORD_DEFIANCE", "<style=cKeywordName>Defiance</style><style=cSub>While active, incoming damage cannot reduce you below 1 health.</style>");
             #endregion
 
             #region Achievements
