@@ -6,7 +6,7 @@ namespace SeamstressVariant.Modules
 {
     public static class Config
     {
-        public static ConfigFile MyConfig = SeamstressPlugin.instance.Config;
+        public static ConfigFile MyConfig = SeamstressVariantPlugin.instance.Config;
 
         /// <summary>
         /// automatically makes config entries for disabling survivors

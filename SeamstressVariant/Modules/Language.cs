@@ -20,7 +20,7 @@ namespace SeamstressVariant.Modules {
         }
 
         private static void Language_collectLanguageRootFolders(List<string> obj) {
-            string path = Path.Combine(Path.GetDirectoryName(SeamstressPlugin.instance.Info.Location), "Language");
+            string path = Path.Combine(Path.GetDirectoryName(SeamstressVariantPlugin.instance.Info.Location), "Language");
             if (Directory.Exists(path)) {
                 obj.Add(path);
             }
@@ -48,7 +48,7 @@ namespace SeamstressVariant.Modules {
 
             //write a language file next to your mod. must have a folder called Language next to your mod dll.
             if (!string.IsNullOrEmpty(fileName)) {
-                string path = Path.Combine(Directory.GetParent(SeamstressPlugin.instance.Info.Location).FullName, "Language", "en", fileName);
+                string path = Path.Combine(Directory.GetParent(SeamstressVariantPlugin.instance.Info.Location).FullName, "Language", "en", fileName);
                 File.WriteAllText(path, strings);
             }
 

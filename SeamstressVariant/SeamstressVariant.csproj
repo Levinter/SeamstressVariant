@@ -29,11 +29,16 @@
 		<PackageReference Include="MMHOOK.RoR2" Version="2025.12.9" NoWarn="NU1701" />
 		<PackageReference Include="RoR2BepInExPack" Version="1.41.0" />
 		
+		<Reference Include="SeamstressMod">
+			<HintPath>..\libs\SeamstressMod.dll</HintPath>
+		</Reference>
+		
 		<PackageReference Include="R2API.Core" Version="5.*" />
 		<PackageReference Include="R2API.Prefab" Version="1.*" />
 		<PackageReference Include="R2API.RecalculateStats" Version="1.*" />
 		<PackageReference Include="R2API.Language" Version="1.*" />
 		<PackageReference Include="R2API.Sound" Version="1.*" />
+		<PackageReference Include="R2API.Skins" Version="1.*" />
 	</ItemGroup>
 
 </Project>

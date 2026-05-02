@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using RoR2;
 
-namespace SeamstressVariant.Survivors.Seamstress.Components
+namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 {
     /// <summary>
     /// Redirects incoming healing into Heart that can be used as a resource for skills.
@@ -20,8 +20,11 @@ namespace SeamstressVariant.Survivors.Seamstress.Components
         private int nearbyEnemyCount = 0;
         private const float NearbyEnemyRadius = 20f;
         private float scanTimer = 0f;
+        private float healTimer = 0f;
         private const float ScanInterval = 1f;
-        private const float HealPerBleedStack = 5f;
+        private const float HealInterval = 0.25f;
+        private const float HealPerBleedStack = 2f;
+        private const int HeartPerBleedChancePercent = 25;
 
         private bool isInitialized = false;
 
@@ -39,18 +42,25 @@ namespace SeamstressVariant.Survivors.Seamstress.Components
 
         private void Update()
         {
-            if (!NetworkServer.active || body == null)
+            if (!NetworkServer.active || body == null || healthComponent == null || !healthComponent.alive)
             {
                 return;
             }
 
             scanTimer -= Time.deltaTime;
+            healTimer -= Time.deltaTime;
+
             if (scanTimer <= 0f)
             {
                 scanTimer = ScanInterval;
                 ScanNearbyEnemies();
                 Log.Debug("NEARBY ENEMIES = " + nearbyEnemyCount + " | BLEED STACKS = " + activeBleedStacks);
                 UpdateBleedStackBuff();
+            }
+
+            if (healTimer <= 0f)
+            {
+                healTimer = HealInterval;
                 ApplyPassiveHeal();
             }
         }
@@ -81,7 +91,7 @@ namespace SeamstressVariant.Survivors.Seamstress.Components
         // Add Health to heart from healing
         public void AddToHeart(float amount)
         {
-            if (isInitialized)
+            if (isInitialized && healthComponent != null && healthComponent.alive)
             {
                 currentHeart = Mathf.Min(currentHeart + amount, MaxHeart);
                 Log.Debug("AMOUNT IN HEART = " + currentHeart);
@@ -93,6 +103,46 @@ namespace SeamstressVariant.Survivors.Seamstress.Components
         public float GetHeart()
         {
             return currentHeart;
+        }
+
+        public float ConsumeHeart(float amount)
+        {
+            if (!isInitialized || amount <= 0f)
+            {
+                return 0f;
+            }
+
+            float previousHeart = currentHeart;
+            currentHeart = Mathf.Max(0f, currentHeart - amount);
+            float consumed = previousHeart - currentHeart;
+
+            if (consumed > 0f)
+            {
+                Log.Debug("CONSUMED HEART = " + consumed + " | REMAINING = " + currentHeart);
+                body.MarkAllStatsDirty();
+            }
+
+            return consumed;
+        }
+
+        public bool CanSustainDefiantHeart()
+        {
+            return currentHeart > 1f;
+        }
+
+        public float GetMaxHeart()
+        {
+            return MaxHeart;
+        }
+
+        public int GetBleedChanceBonusFromHeart()
+        {
+            return (int)(currentHeart / HeartPerBleedChancePercent);
+        }
+
+        public bool IsHeartFull()
+        {
+            return currentHeart >= MaxHeart;
         }
 
         public int GetActiveBleedStacks()
@@ -139,7 +189,7 @@ namespace SeamstressVariant.Survivors.Seamstress.Components
 
         private void ApplyPassiveHeal()
         {
-            if (activeBleedStacks <= 0 || healthComponent == null)
+            if (activeBleedStacks <= 0 || healthComponent == null || !healthComponent.alive)
             {
                 return;
             }
@@ -168,19 +218,19 @@ namespace SeamstressVariant.Survivors.Seamstress.Components
             }
 
             // Get the buff count before updating
-            int currentBuffCount = body.GetBuffCount(SeamstressBuffs.bleedStackCounterBuff);
+            int currentBuffCount = body.GetBuffCount(SeamstressVariantBuffs.bleedStackCounterBuff);
             
             // Set the buff count to match the active bleed stacks on enemies
             if (activeBleedStacks > 0)
             {
                 // Set exact buff count to match bleed stacks
-                body.SetBuffCount(SeamstressBuffs.bleedStackCounterBuff.buffIndex, activeBleedStacks);
+                body.SetBuffCount(SeamstressVariantBuffs.bleedStackCounterBuff.buffIndex, activeBleedStacks);
                 Log.Debug("Updated bleed stack visualization buff to " + activeBleedStacks);
             }
             else if (currentBuffCount > 0)
             {
                 // Clear the buff if no bleeds are active
-                body.SetBuffCount(SeamstressBuffs.bleedStackCounterBuff.buffIndex, 0);
+                body.SetBuffCount(SeamstressVariantBuffs.bleedStackCounterBuff.buffIndex, 0);
                 Log.Debug("Cleared bleed stack visualization buff");
             }
         }

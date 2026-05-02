@@ -7,42 +7,35 @@ using SeamstressVariant;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using SeamstressVariant.Survivors.Seamstress.Components;
+using SeamstressVariant.Survivors.SeamstressVariant.Components;
 using System.Runtime.CompilerServices;
 
-namespace SeamstressVariant.Survivors.Seamstress
+namespace SeamstressVariant.Survivors.SeamstressVariant
 {
-    public class SeamstressSurvivor : SurvivorBase<SeamstressSurvivor>
+    public class SeamstressVariantSurvivor : SurvivorBase<SeamstressVariantSurvivor>
     {
-        //used to load the assetbundle for this character. must be unique
-        public override string assetBundleName => "whatassetbundlelmao"; //if you do not change this, you are giving permission to deprecate the mod
+        public override string assetBundleName => "none";
+        public override string bodyName => "SeamstressVariantBody";
+        public override string masterName => "SeamstressVariantMonsterMaster";
+        public override string modelPrefabName => "mdlseamstress";
+        public override string displayPrefabName => "SeamstressDisplay";
 
-        //the name of the prefab we will create. conventionally ending in "Body". must be unique
-        public override string bodyName => "SeamstressVariantBody"; //if you do not change this, you get the point by now
-
-        //name of the ai master for vengeance and goobo. must be unique
-        public override string masterName => "SeamstressVariantMonsterMaster"; //if you do not
-
-        //the names of the prefabs you set up in unity that we will use to build your character
-        public override string modelPrefabName => "mdlHenry";
-        public override string displayPrefabName => "HenryDisplay";
-
-        public const string HENRY_PREFIX = SeamstressPlugin.DEVELOPER_PREFIX + "_SEAMSTRESS_";
+        public const string SEAMSTRESS_VARIANT_PREFIX = SeamstressVariantPlugin.DEVELOPER_PREFIX + "_SEAMSTRESS_";
 
         //used when registering your survivor's language tokens
-        public override string survivorTokenPrefix => HENRY_PREFIX;
+        public override string survivorTokenPrefix => SEAMSTRESS_VARIANT_PREFIX;
         
         public override BodyInfo bodyInfo => new BodyInfo
         {
             bodyName = bodyName,
-            bodyNameToken = HENRY_PREFIX + "NAME",
-            subtitleNameToken = HENRY_PREFIX + "SUBTITLE",
+            bodyNameToken = SEAMSTRESS_VARIANT_PREFIX + "NAME",
+            subtitleNameToken = SEAMSTRESS_VARIANT_PREFIX + "SUBTITLE",
 
-            characterPortrait = assetBundle.LoadAsset<Texture>("texHenryIcon"),
+            characterPortrait = null,
             bodyColor = Color.white,
             sortPosition = 100,
 
-            crosshair = Asset.LoadCrosshair("Standard"),
+            crosshair = Asset.LoadCrosshair("SimpleDot"),
             podPrefab = LegacyResourcesAPI.Load<GameObject>("Prefabs/NetworkedObjects/SurvivorPod"),
 
             maxHealth = 110f,
@@ -57,7 +50,7 @@ namespace SeamstressVariant.Survivors.Seamstress
                 new CustomRendererInfo
                 {
                     childName = "SwordModel",
-                    material = assetBundle.LoadMaterial("matHenry"),
+                    material = null,
                 },
                 new CustomRendererInfo
                 {
@@ -69,9 +62,9 @@ namespace SeamstressVariant.Survivors.Seamstress
                 }
         };
 
-        public override UnlockableDef characterUnlockableDef => SeamstressUnlockables.characterUnlockableDef;
+        public override UnlockableDef characterUnlockableDef => SeamstressVariantUnlockables.characterUnlockableDef;
         
-        public override ItemDisplaysBase itemDisplays => new SeamstressItemDisplays();
+        public override ItemDisplaysBase itemDisplays => new SeamstressVariantItemDisplays();
 
         //set in base classes
         public override AssetBundle assetBundle { get; protected set; }
@@ -92,20 +85,20 @@ namespace SeamstressVariant.Survivors.Seamstress
 
             base.Initialize();
         }
-
+        
         public override void InitializeCharacter()
         {
             //need the character unlockable before you initialize the survivordef
-            SeamstressUnlockables.Init();
+            SeamstressVariantUnlockables.Init();
 
             base.InitializeCharacter();
 
-            SeamstressConfig.Init();
-            SeamstressStates.Init();
-            SeamstressTokens.Init();
+            SeamstressVariantConfig.Init();
+            SeamstressVariantStates.Init();
+            SeamstressVariantTokens.Init();
 
-            SeamstressAssets.Init(assetBundle);
-            SeamstressBuffs.Init(assetBundle);
+            SeamstressVariantAssets.Init(assetBundle);
+            SeamstressVariantBuffs.Init(assetBundle);
 
             InitializeEntityStateMachines();
             InitializeSkills();
@@ -120,20 +113,30 @@ namespace SeamstressVariant.Survivors.Seamstress
         private void AdditionalBodySetup()
         {
             AddHitboxes();
-            bodyPrefab.AddComponent<SeamstressWeaponComponent>();
             
             // Add heart component for passive
             BleedingHeartComponent heart = bodyPrefab.AddComponent<BleedingHeartComponent>();
             // maxHeart will be set to character's max health in Start()
 
-            //bodyPrefab.AddComponent<HuntressTrackerComopnent>();
+            // Add overlay controller to drive the Heart meter UI (reuses VoidSurvivor corruption bar)
+            bodyPrefab.AddComponent<HeartOverlayController>();
+
+            // Add scissor controller — passive independent scissor state, not tied to any skill stock.
+            bodyPrefab.AddComponent<ScissorController>();
+
+            // Add tracker — drives the Huntress tracking indicator and is read by FireScissors on cast.
+            bodyPrefab.AddComponent<SeamstressTracker>();
             //anything else here
         }
 
         public void AddHitboxes()
         {
-            //example of how to create a HitBoxGroup. see summary for more details
-            Prefabs.SetupHitBoxGroup(characterModelObject, "SwordGroup", "SwordHitbox");
+            Prefabs.SetupHitBoxGroup(characterModelObject, "Sword", "SwordHitbox");
+            Prefabs.SetupHitBoxGroup(characterModelObject, "SwordBig", "SwordHitboxBig");
+            Prefabs.SetupHitBoxGroup(characterModelObject, "Weave", "WeaveHitbox");
+            Prefabs.SetupHitBoxGroup(characterModelObject, "WeaveBig", "WeaveHitboxBig");
+            Prefabs.SetupHitBoxGroup(characterModelObject, "Right", "RightScissorHitbox");
+            Prefabs.SetupHitBoxGroup(characterModelObject, "Left", "LeftScissorHitbox");
         }
 
         public override void InitializeEntityStateMachines() 
@@ -149,6 +152,7 @@ namespace SeamstressVariant.Survivors.Seamstress
 
             Prefabs.AddEntityStateMachine(bodyPrefab, "Weapon");
             Prefabs.AddEntityStateMachine(bodyPrefab, "Weapon2");
+            Prefabs.AddEntityStateMachine(bodyPrefab, "Special");
         }
 
         #region skills
@@ -160,7 +164,7 @@ namespace SeamstressVariant.Survivors.Seamstress
             AddPassiveSkill();
             AddPrimarySkills();
             AddSecondarySkills();
-            AddUtiitySkills();
+            AddUtilitySkills();
             AddSpecialSkills();
         }
 
@@ -170,10 +174,10 @@ namespace SeamstressVariant.Survivors.Seamstress
             bodyPrefab.GetComponent<SkillLocator>().passiveSkill = new SkillLocator.PassiveSkill
             {
                 enabled = true,
-                skillNameToken = HENRY_PREFIX + "PASSIVE_NAME",
-                skillDescriptionToken = HENRY_PREFIX + "PASSIVE_DESCRIPTION",
+                skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "PASSIVE_NAME",
+                skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "PASSIVE_DESCRIPTION",
                 keywordToken = "KEYWORD_HEART",
-                icon = assetBundle.LoadAsset<Sprite>("texPassiveIcon"),
+                icon = null,
             };
 
             //option 2. a new SkillFamily for a passive, used if you want multiple selectable passives
@@ -181,10 +185,10 @@ namespace SeamstressVariant.Survivors.Seamstress
             SkillDef passiveSkillDef1 = Skills.CreateSkillDef(new SkillDefInfo
             {
                 skillName = "HenryPassive",
-                skillNameToken = HENRY_PREFIX + "PASSIVE_NAME",
-                skillDescriptionToken = HENRY_PREFIX + "PASSIVE_DESCRIPTION",
+                skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "PASSIVE_NAME",
+                skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "PASSIVE_DESCRIPTION",
                 keywordTokens = new string[] { "KEYWORD_AGILE" },
-                skillIcon = assetBundle.LoadAsset<Sprite>("texPassiveIcon"),
+                skillIcon = null,
 
                 //unless you're somehow activating your passive like a skill, none of the following is needed.
                 //but that's just me saying things. the tools are here at your disposal to do whatever you like with
@@ -225,10 +229,10 @@ namespace SeamstressVariant.Survivors.Seamstress
             SteppedSkillDef primarySkillDef1 = Skills.CreateSkillDef<SteppedSkillDef>(new SkillDefInfo
                 (
                     "HenrySlash",
-                    HENRY_PREFIX + "PRIMARY_SLASH_NAME",
-                    HENRY_PREFIX + "PRIMARY_SLASH_DESCRIPTION",
-                    assetBundle.LoadAsset<Sprite>("texPrimaryIcon"),
-                    new EntityStates.SerializableEntityStateType(typeof(SkillStates.SlashCombo)),
+                    SEAMSTRESS_VARIANT_PREFIX + "PRIMARY_SLASH_NAME",
+                    SEAMSTRESS_VARIANT_PREFIX + "PRIMARY_SLASH_DESCRIPTION",
+                    null,
+                    new EntityStates.SerializableEntityStateType(typeof(SkillStates.ClawCombo)),
                     "Weapon",
                     true
                 ));
@@ -243,35 +247,34 @@ namespace SeamstressVariant.Survivors.Seamstress
         {
             Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Secondary);
 
-            //here is a basic skill def with all fields accounted for
             SkillDef secondarySkillDef1 = Skills.CreateSkillDef(new SkillDefInfo
             {
-                skillName = "HenryGun",
-                skillNameToken = HENRY_PREFIX + "SECONDARY_GUN_NAME",
-                skillDescriptionToken = HENRY_PREFIX + "SECONDARY_GUN_DESCRIPTION",
-                keywordTokens = new string[] { "KEYWORD_AGILE" },
-                skillIcon = assetBundle.LoadAsset<Sprite>("texSecondaryIcon"),
+                skillName = "FireScissors",
+                skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "SECONDARY_SCISSORS_NAME",
+                skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "SECONDARY_SCISSORS_DESCRIPTION",
+                keywordTokens = new string[] { },
+                skillIcon = null,
 
-                activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.Shoot)),
-                activationStateMachineName = "Weapon2",
-                interruptPriority = EntityStates.InterruptPriority.Skill,
+                activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.FireScissors)),
+                activationStateMachineName = "Weapon",
+                interruptPriority = EntityStates.InterruptPriority.PrioritySkill,
 
-                baseRechargeInterval = 1f,
-                baseMaxStock = 1,
+                baseRechargeInterval = 8f,
+                baseMaxStock = 2,
 
-                rechargeStock = 1,
+                rechargeStock = 2,
                 requiredStock = 1,
                 stockToConsume = 1,
 
                 resetCooldownTimerOnUse = false,
                 fullRestockOnAssign = true,
                 dontAllowPastMaxStocks = false,
-                mustKeyPress = false,
+                mustKeyPress = true,
                 beginSkillCooldownOnSkillEnd = false,
 
                 isCombatSkill = true,
                 canceledFromSprinting = false,
-                cancelSprintingOnActivation = false,
+                cancelSprintingOnActivation = true,
                 forceSprintDuringState = false,
 
             });
@@ -279,23 +282,23 @@ namespace SeamstressVariant.Survivors.Seamstress
             Skills.AddSecondarySkills(bodyPrefab, secondarySkillDef1);
         }
 
-        private void AddUtiitySkills()
+        private void AddUtilitySkills()
         {
             Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Utility);
 
             //here's a skilldef of a typical movement skill.
-            SkillDef utilitySkillDef1 = Skills.CreateSkillDef(new SkillDefInfo
+            SkillDef utilitySkillDef1 = Skills.CreateSkillDef<BlinkSkillDef>(new SkillDefInfo
             {
-                skillName = "HenryRoll",
-                skillNameToken = HENRY_PREFIX + "UTILITY_ROLL_NAME",
-                skillDescriptionToken = HENRY_PREFIX + "UTILITY_ROLL_DESCRIPTION",
-                skillIcon = assetBundle.LoadAsset<Sprite>("texUtilityIcon"),
+                skillName = "HenryBlink",
+                skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "UTILITY_BLINK_NAME",
+                skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "UTILITY_BLINK_DESCRIPTION",
+                skillIcon = null,
 
-                activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.Roll)),
+                activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.Blink)),
                 activationStateMachineName = "Body",
                 interruptPriority = EntityStates.InterruptPriority.PrioritySkill,
 
-                baseRechargeInterval = 4f,
+                baseRechargeInterval = 0.2f,
                 baseMaxStock = 1,
 
                 rechargeStock = 1,
@@ -321,100 +324,43 @@ namespace SeamstressVariant.Survivors.Seamstress
         {
             Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Special);
 
-            //a basic skill. some fields are omitted and will just have default values
-            SkillDef specialSkillDef1 = Skills.CreateSkillDef(new SkillDefInfo
+            // DefiantDash is now the unified special skill (Dash + Sustained Defiance)
+            SkillDef specialSkillDef = Skills.CreateSkillDef(new SkillDefInfo
             {
-                skillName = "HenryBomb",
-                skillNameToken = HENRY_PREFIX + "SPECIAL_BOMB_NAME",
-                skillDescriptionToken = HENRY_PREFIX + "SPECIAL_BOMB_DESCRIPTION",
-                skillIcon = assetBundle.LoadAsset<Sprite>("texSpecialIcon"),
+                skillName = "HenryDefiantDash",
+                skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "SPECIAL_DEFIANT_DASH_NAME",
+                skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "SPECIAL_DEFIANT_DASH_DESCRIPTION",
+                skillIcon = null,
 
-                activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.ThrowBomb)),
-                //setting this to the "weapon2" EntityStateMachine allows us to cast this skill at the same time primary, which is set to the "weapon" EntityStateMachine
-                activationStateMachineName = "Weapon2", interruptPriority = EntityStates.InterruptPriority.Skill,
+                activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.DefiantDash)),
+                activationStateMachineName = "Special",
+                interruptPriority = EntityStates.InterruptPriority.Skill,
 
                 baseMaxStock = 1,
-                baseRechargeInterval = 10f,
+                baseRechargeInterval = 16f,
+                beginSkillCooldownOnSkillEnd = true,
 
                 isCombatSkill = true,
-                mustKeyPress = false,
+                mustKeyPress = true,
+                cancelSprintingOnActivation = false,
+                forceSprintDuringState = true,
             });
 
-            Skills.AddSpecialSkills(bodyPrefab, specialSkillDef1);
+            Skills.AddSpecialSkills(bodyPrefab, specialSkillDef);
         }
         #endregion skills
         
         #region skins
         public override void InitializeSkins()
         {
-            ModelSkinController skinController = prefabCharacterModel.gameObject.AddComponent<ModelSkinController>();
-            ChildLocator childLocator = prefabCharacterModel.GetComponent<ChildLocator>();
+            ModelSkinController skinController = prefabCharacterModel.gameObject.GetComponent<ModelSkinController>()
+                ?? prefabCharacterModel.gameObject.AddComponent<ModelSkinController>();
 
-            CharacterModel.RendererInfo[] defaultRendererinfos = prefabCharacterModel.baseRendererInfos;
-
-            List<SkinDef> skins = new List<SkinDef>();
-
-            #region DefaultSkin
-            //this creates a SkinDef with all default fields
-            SkinDef defaultSkin = Skins.CreateSkinDef("DEFAULT_SKIN",
-                assetBundle.LoadAsset<Sprite>("texMainSkin"),
-                defaultRendererinfos,
-                prefabCharacterModel.gameObject);
-
-            //these are your Mesh Replacements. The order here is based on your CustomRendererInfos from earlier
-                //pass in meshes as they are named in your assetbundle
-            //currently not needed as with only 1 skin they will simply take the default meshes
-                //uncomment this when you have another skin
-            //defaultSkin.meshReplacements = Modules.Skins.getMeshReplacements(assetBundle, defaultRendererinfos,
-            //    "meshHenrySword",
-            //    "meshHenryGun",
-            //    "meshHenry");
-
-            //add new skindef to our list of skindefs. this is what we'll be passing to the SkinController
-            skins.Add(defaultSkin);
-            #endregion
-
-            //uncomment this when you have a mastery skin
-            #region MasterySkin
-            
-            ////creating a new skindef as we did before
-            //SkinDef masterySkin = Modules.Skins.CreateSkinDef(HENRY_PREFIX + "MASTERY_SKIN_NAME",
-            //    assetBundle.LoadAsset<Sprite>("texMasteryAchievement"),
-            //    defaultRendererinfos,
-            //    prefabCharacterModel.gameObject,
-            //    HenryUnlockables.masterySkinUnlockableDef);
-
-            ////adding the mesh replacements as above. 
-            ////if you don't want to replace the mesh (for example, you only want to replace the material), pass in null so the order is preserved
-            //masterySkin.meshReplacements = Modules.Skins.getMeshReplacements(assetBundle, defaultRendererinfos,
-            //    "meshHenrySwordAlt",
-            //    null,//no gun mesh replacement. use same gun mesh
-            //    "meshHenryAlt");
-
-            ////masterySkin has a new set of RendererInfos (based on default rendererinfos)
-            ////you can simply access the RendererInfos' materials and set them to the new materials for your skin.
-            //masterySkin.rendererInfos[0].defaultMaterial = assetBundle.LoadMaterial("matHenryAlt");
-            //masterySkin.rendererInfos[1].defaultMaterial = assetBundle.LoadMaterial("matHenryAlt");
-            //masterySkin.rendererInfos[2].defaultMaterial = assetBundle.LoadMaterial("matHenryAlt");
-
-            ////here's a barebones example of using gameobjectactivations that could probably be streamlined or rewritten entirely, truthfully, but it works
-            //masterySkin.gameObjectActivations = new SkinDef.GameObjectActivation[]
-            //{
-            //    new SkinDef.GameObjectActivation
-            //    {
-            //        gameObject = childLocator.FindChildGameObject("GunModel"),
-            //        shouldActivate = false,
-            //    }
-            //};
-            ////simply find an object on your child locator you want to activate/deactivate and set if you want to activate/deacitvate it with this skin
-
-            //skins.Add(masterySkin);
-            
-            #endregion
-
-            skinController.skins = skins.ToArray();
+            SkinDef defaultSkin = Skins.CreateSkinDef("DEFAULT_SKIN", null, prefabCharacterModel.baseRendererInfos, prefabCharacterModel.gameObject);
+            skinController.skins = new[] { defaultSkin };
         }
         #endregion skins
+
 
         //Character Master is what governs the AI of your character when it is not controlled by a player (artifact of vengeance, goobo)
         public override void InitializeCharacterMaster()
@@ -425,7 +371,7 @@ namespace SeamstressVariant.Survivors.Seamstress
             //Modules.Prefabs.CloneDopplegangerMaster(bodyPrefab, masterName, "Merc");
 
             //how to set up AI in code
-            SeamstressAI.Init(bodyPrefab, masterName);
+            SeamstressVariantAI.Init(bodyPrefab, masterName);
 
             //how to load a master set up in unity, can be an empty gameobject with just AISkillDriver components
             //assetBundle.LoadMaster(bodyPrefab, masterName);
@@ -434,6 +380,7 @@ namespace SeamstressVariant.Survivors.Seamstress
         private void AddHooks()
         {
             On.RoR2.HealthComponent.Heal += HealthComponent_Heal;
+            On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
             R2API.RecalculateStatsAPI.GetStatCoefficients += RecalculateStatsAPI_GetStatCoefficients;
         }
 
@@ -445,24 +392,31 @@ namespace SeamstressVariant.Survivors.Seamstress
             {
                 //base bleed chance
                 args.bleedChanceAdd = 5;
-                //increase bleedchance by amount on heart
-                args.bleedChanceAdd += heart.GetHeart() / 2;
+                // 1% bleed chance per x(config) Heart.
+                args.bleedChanceAdd += heart.GetBleedChanceBonusFromHeart();
+
+                if (heart.IsHeartFull())
+                {
+                    args.bleedChanceAdd += 5; // Extra 5% bleed chance on full heart
+                }
             }
         }
 
         private float HealthComponent_Heal(On.RoR2.HealthComponent.orig_Heal orig, HealthComponent self, float amount, ProcChainMask procChainMask, bool nonRegen)
         {
-            if (self.body.bodyIndex == BodyCatalog.FindBodyIndex("SeamstressVariantBody")){
+            if (self.body.bodyIndex == BodyCatalog.FindBodyIndex("SeamstressVariantBody") && self.alive){
                 float previousHealth = self.health;
+                float incomingHeal = Mathf.Max(0f, amount);
                 float healed = orig(self, amount, procChainMask, nonRegen);
 
-                if (healed > 0)
+                if (incomingHeal > 0f)
                 {
                     var heart = self.GetComponent<BleedingHeartComponent>();
                     
                     if (heart != null)
                     {
-                        heart.AddToHeart(healed);
+                        // Redirect attempted healing into Heart, even when HP is already full.
+                        heart.AddToHeart(incomingHeal);
                         self.health = previousHealth;
                     }
                 }
@@ -472,5 +426,23 @@ namespace SeamstressVariant.Survivors.Seamstress
                 return orig (self, amount, procChainMask, nonRegen);
             }
         }
+
+        private void HealthComponent_TakeDamage(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo damageInfo)
+        {
+            if (self != null
+                && self.body != null
+                && self.body.bodyIndex == BodyCatalog.FindBodyIndex("SeamstressVariantBody")
+                && self.body.HasBuff(SeamstressVariantBuffs.defianceBuff)
+                && damageInfo != null
+                && damageInfo.damage > 0f)
+            {
+                damageInfo.damageType |= DamageType.NonLethal;
+                float maxAllowedDamage = Mathf.Max(0f, self.health - 1f);
+                damageInfo.damage = Mathf.Min(damageInfo.damage, maxAllowedDamage);
+            }
+
+            orig(self, damageInfo);
+        }
+
     }
 }

@@ -9,7 +9,7 @@ namespace SeamstressVariant.Modules {
     internal class ContentPacks : IContentPackProvider
     {
         internal ContentPack contentPack = new ContentPack();
-        public string identifier => SeamstressPlugin.MODUID;
+        public string identifier => SeamstressVariantPlugin.MODUID;
 
         public static List<GameObject> bodyPrefabs = new List<GameObject>();
         public static List<GameObject> masterPrefabs = new List<GameObject>();

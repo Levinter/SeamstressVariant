@@ -1,7 +1,7 @@
 ﻿using BepInEx;
 using R2API.Utils;
 using SeamstressVariant.Modules;
-using SeamstressVariant.Survivors.Seamstress;
+using SeamstressVariant.Survivors.SeamstressVariant;
 using System.Security;
 using System.Security.Permissions;
 
@@ -12,9 +12,10 @@ using System.Security.Permissions;
 namespace SeamstressVariant
 {
     [BepInDependency("com.rune580.riskofoptions")]
+    [BepInDependency("com.kenko.Seamstress", BepInDependency.DependencyFlags.HardDependency)]
     [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.EveryoneNeedSameModVersion)]
     [BepInPlugin(MODUID, MODNAME, MODVERSION)]
-    public class SeamstressPlugin : BaseUnityPlugin
+    public class SeamstressVariantPlugin : BaseUnityPlugin
     {
         public const string MODUID = "com.levinter.SeamstressVariant";
         public const string MODNAME = "SeamstressVariant";
@@ -23,7 +24,7 @@ namespace SeamstressVariant
         // a prefix for name tokens to prevent conflicts- please capitalize all name tokens for convention
         public const string DEVELOPER_PREFIX = "LEVINTER";
 
-        public static SeamstressPlugin instance;
+        public static SeamstressVariantPlugin instance;
 
         void Awake()
         {
@@ -36,7 +37,7 @@ namespace SeamstressVariant
             Language.Init();
 
             // character initialization
-            new SeamstressSurvivor().Initialize();
+            new SeamstressVariantSurvivor().Initialize();
 
             // make a content pack and add it. this has to be last
             new ContentPacks().Initialize();
