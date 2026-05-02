@@ -94,7 +94,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             Util.PlaySound("Play_imp_overlord_teleport_end", gameObject);
 
             heart.ConsumeHeart(storedHeart);
-            healthComponent.Heal(Mathf.Clamp(healthComponent.health + storedHeart, 1f, healthComponent.fullHealth), default(ProcChainMask));
+            float currentMaxHealth = healthComponent.fullHealth;
+            Log.Fatal($"Current Max Health: {currentMaxHealth} | Attempting to heal for {storedHeart} (capped at max health)");
+            healthComponent.Heal(Mathf.Clamp(healthComponent.health + storedHeart, 1f, currentMaxHealth), default(ProcChainMask));
         }
 
         public override InterruptPriority GetMinimumInterruptPriority()
