@@ -36,13 +36,23 @@
 		<Reference Include="Survariants">
   			<HintPath>..\libs\Survariants.dll</HintPath>
 		</Reference>
+
+		<PackageReference Include="Krafs.Publicizer" Version="2.3.0">
+  			<PrivateAssets>all</PrivateAssets>
+  			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
 		
 		<PackageReference Include="R2API.Core" Version="5.*" />
 		<PackageReference Include="R2API.Prefab" Version="1.*" />
 		<PackageReference Include="R2API.RecalculateStats" Version="1.*" />
 		<PackageReference Include="R2API.Language" Version="1.*" />
 		<PackageReference Include="R2API.Sound" Version="1.*" />
-		<PackageReference Include="R2API.Skins" Version="1.*" />
+		<!-- <PackageReference Include="R2API.Skins" Version="1.*" /> -->
 	</ItemGroup>
 
+	<ItemGroup>
+		<Publicize Include="SeamstressMod"/>
+		<Publicize Include="SeamstressMod.Modules"/>
+		<Publicize Include="SeamstressMod.Modules.Content"/>
+	</ItemGroup>
 </Project>

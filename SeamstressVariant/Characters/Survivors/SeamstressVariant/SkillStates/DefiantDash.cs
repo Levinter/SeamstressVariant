@@ -12,7 +12,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
     {
         // Dash phase parameters
         public float baseDuration = 0.1f;
-        public float dashPower = 3f;
+        public float dashPower = 5f;
 
         // Sustained phase parameters (from DefiantHeart)
         public static float heartDrainPerTick = 1f;

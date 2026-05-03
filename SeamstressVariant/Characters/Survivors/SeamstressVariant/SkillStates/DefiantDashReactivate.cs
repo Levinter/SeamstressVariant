@@ -58,7 +58,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             BlastAttack blastAttack = new BlastAttack();
             blastAttack.position = characterBody.corePosition;
             float baseDamage = damageCoefficient * damageStat;
-            float additionalDamage = (storedHeart / 100f) * damageStat;
+            float additionalDamage = (storedHeart * 0.01f) * damageStat;
             Log.Fatal("BASE DAMAGE: " + baseDamage + " | ADDITIONAL DAMAGE: " + additionalDamage);
             blastAttack.baseDamage = baseDamage + additionalDamage;
             blastAttack.damageType = DamageType.Stun1s;
