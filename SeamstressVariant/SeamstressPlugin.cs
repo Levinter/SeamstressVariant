@@ -13,6 +13,7 @@ namespace SeamstressVariant
 {
     [BepInDependency("com.rune580.riskofoptions")]
     [BepInDependency("com.kenko.Seamstress", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInDependency("com.pseudopulse.Survariants", BepInDependency.DependencyFlags.HardDependency)]
     [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.EveryoneNeedSameModVersion)]
     [BepInPlugin(MODUID, MODNAME, MODVERSION)]
     public class SeamstressVariantPlugin : BaseUnityPlugin

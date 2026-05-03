@@ -11,6 +11,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
     public class DefiantDashReactivate : BaseSkillState
     {
         private BleedingHeartComponent heart;
+        public float damageCoefficient = SeamstressVariantStaticValues.dashDamageCoefficient;
         private bool hasExecuted;
 
         public override void OnEnter()
@@ -56,9 +57,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             BlastAttack blastAttack = new BlastAttack();
             blastAttack.position = characterBody.corePosition;
-            blastAttack.baseDamage = (400f * damageStat) + ((storedHeart/100) * damageStat);
+            float baseDamage = damageCoefficient * damageStat;
+            float additionalDamage = (storedHeart / 100f) * damageStat;
+            Log.Fatal("BASE DAMAGE: " + baseDamage + " | ADDITIONAL DAMAGE: " + additionalDamage);
+            blastAttack.baseDamage = baseDamage + additionalDamage;
             blastAttack.damageType = DamageType.Stun1s;
-            Log.Fatal($"Calculated Defiant Dash Explosion Damage: {blastAttack.baseDamage} (Stored Heart: {storedHeart})");
             blastAttack.baseForce = 800f;
             blastAttack.bonusForce = Vector3.zero;
             blastAttack.radius = SeamstressVariantStaticValues.explodeRadius;
@@ -95,8 +98,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             heart.ConsumeHeart(storedHeart);
             float currentMaxHealth = healthComponent.fullHealth;
-            Log.Fatal($"Current Max Health: {currentMaxHealth} | Attempting to heal for {storedHeart} (capped at max health)");
-            healthComponent.Heal(Mathf.Clamp(healthComponent.health + storedHeart, 1f, currentMaxHealth), default(ProcChainMask));
+            healthComponent.health = Mathf.Clamp(healthComponent.health + storedHeart, 1f, currentMaxHealth);
         }
 
         public override InterruptPriority GetMinimumInterruptPriority()

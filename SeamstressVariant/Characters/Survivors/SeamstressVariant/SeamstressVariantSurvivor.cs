@@ -3,6 +3,7 @@ using SeamstressVariant.Modules;
 using SeamstressVariant.Modules.Characters;
 using RoR2;
 using RoR2.Skills;
+
 using SeamstressVariant;
 using System;
 using System.Collections.Generic;
@@ -31,7 +32,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             bodyNameToken = SEAMSTRESS_VARIANT_PREFIX + "NAME",
             subtitleNameToken = SEAMSTRESS_VARIANT_PREFIX + "SUBTITLE",
 
-            characterPortrait = null,
+            characterPortrait = SeamstressMod.Seamstress.Content.SeamstressAssets.mainAssetBundle.LoadAsset<Sprite>("texSeamstressIcon").texture,
             bodyColor = Color.white,
             sortPosition = 100,
 
@@ -84,6 +85,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             //    return;
 
             base.Initialize();
+
         }
         
         public override void InitializeCharacter()
@@ -356,6 +358,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 args.bleedChanceAdd = 10;
                 // 1% bleed chance per x(config) Heart.
                 args.bleedChanceAdd += heart.GetBleedChanceBonusFromHeart();
+                //args.regenMultAdd = heart.GetMaxHeart() / 200f; // hidden health regen so stacking health and not having healing items doesnt feels like ass
             }
         }
 

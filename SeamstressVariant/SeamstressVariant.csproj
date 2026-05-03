@@ -32,6 +32,10 @@
 		<Reference Include="SeamstressMod">
 			<HintPath>..\libs\SeamstressMod.dll</HintPath>
 		</Reference>
+
+		<Reference Include="Survariants">
+  			<HintPath>..\libs\Survariants.dll</HintPath>
+		</Reference>
 		
 		<PackageReference Include="R2API.Core" Version="5.*" />
 		<PackageReference Include="R2API.Prefab" Version="1.*" />

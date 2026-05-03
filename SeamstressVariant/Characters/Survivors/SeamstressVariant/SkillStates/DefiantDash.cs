@@ -355,7 +355,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             foreach (BuffIndex buffIndex in BuffCatalog.debuffBuffIndices)
             {
-                if (characterBody.HasBuff(buffIndex))
+                if (characterBody.HasBuff(buffIndex) && buffIndex != (BuffIndex)236) // Index 236 is from the extra life shrine
                 {
                     characterBody.SetBuffCount(buffIndex, 0);
                 }
@@ -511,7 +511,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     int defianceCount = characterBody.GetBuffCount(SeamstressVariantBuffs.defianceBuff);
                     if (defianceCount > 0)
                     {
-                        Log.Fatal("DEFIANT HEART ONEXIT CALL");
                         characterBody.SetBuffCount(SeamstressVariantBuffs.defianceBuff.buffIndex, 0);
                         RemoveDefianceVisuals();
                     }
