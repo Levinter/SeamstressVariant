@@ -42,8 +42,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             #region Passive
             Language.Add(prefix + "PASSIVE_NAME", "Her Bleeding Heart");
-            Language.Add(prefix + "PASSIVE_DESCRIPTION", "Nearby <color=#9B3737>Bleeding</color> enemies heal you for <style=cIsHealing>5 health</style> per second, per stack. All healing is stored in your <color=#9B3737>Heart</color> instead of restoring health.");
-            Language.Add("KEYWORD_HEART", "<style=cKeywordName>Heart</style><style=cSub>Stores healing. Capacity is equal to your <style=cIsHealing>maximum health</style>. Grants <style=cIsDamage>10% bleed chance</style> plus <style=cIsDamage>1% bleed chance</style> per <style=cIsHealing>20 health</style> stored in the Heart.</style>");
+            Language.Add(prefix + "PASSIVE_DESCRIPTION", "Nearby <color=#9B3737>Bleeding</color> enemies heal you for <style=cIsHealing>4 health</style> per second, per stack. All healing is stored in your <color=#9B3737>Heart</color> instead of restoring health.");
+            Language.Add("KEYWORD_HEART", "<style=cKeywordName>Heart</style><style=cSub>Stores healing. Capacity is equal to your <style=cIsHealing>maximum health</style>. Grants <style=cIsDamage>1% hemorrhage chance</style> per <style=cIsHealing>100 health</style> stored in the Heart.</style>");
+            Language.Add("KEYWORD_HEMORRHAGE", "<style=cKeywordName>Hemorrhage</style><style=cSub>Deals <style=cIsDamage>2000% base damage</style> over <style=cIsDamage>15 seconds</style>.</style>");
+            Language.Add("KEYWORD_HEART_HEMORRHAGE", "<style=cKeywordName>Heart</style><style=cSub>Stores healing. Capacity is equal to your <style=cIsHealing>maximum health</style>. Grants <style=cIsDamage>1% hemorrhage chance</style> per <style=cIsHealing>100 health</style> stored in the Heart.</style><style=cStack>\n\n</style><style=cKeywordName>Hemorrhage</style><style=cSub>Deals <style=cIsDamage>2000% base damage</style> over <style=cIsDamage>15 seconds</style>.</style>");
             #endregion
 
             #region Primary

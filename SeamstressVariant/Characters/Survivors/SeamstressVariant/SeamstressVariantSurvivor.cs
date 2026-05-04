@@ -178,7 +178,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 enabled = true,
                 skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "PASSIVE_NAME",
                 skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "PASSIVE_DESCRIPTION",
-                keywordToken = "KEYWORD_HEART",
+                keywordToken = "KEYWORD_HEART_HEMORRHAGE",
                 icon = assetBundle.LoadAsset<Sprite>("texItHungersIcon"),
             };
         }
@@ -347,21 +347,62 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         {
             On.RoR2.HealthComponent.Heal += HealthComponent_Heal;
             On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
-            R2API.RecalculateStatsAPI.GetStatCoefficients += RecalculateStatsAPI_GetStatCoefficients;
+            GlobalEventManager.onServerDamageDealt += GlobalEventManager_onServerDamageDealt;
         }
 
         private void RecalculateStatsAPI_GetStatCoefficients(CharacterBody sender, R2API.RecalculateStatsAPI.StatHookEventArgs args)
         {
-            var heart = sender.GetComponent<BleedingHeartComponent>();
+        }
 
-            if (heart != null)
+        private void GlobalEventManager_onServerDamageDealt(DamageReport report)
+        {
+            DamageInfo damageInfo = report?.damageInfo;
+            CharacterBody attackerBody = report?.attackerBody;
+            CharacterBody victimBody = report?.victimBody;
+
+            if (attackerBody == null || victimBody == null || damageInfo == null)
             {
-                //base bleed chance
-                args.bleedChanceAdd = 10;
-                // 1% bleed chance per x(config) Heart.
-                args.bleedChanceAdd += heart.GetBleedChanceBonusFromHeart();
-                //args.regenMultAdd = heart.GetMaxHeart() / 200f; // hidden health regen so stacking health and not having healing items doesnt feels like ass
+                return;
             }
+
+            if (attackerBody.bodyIndex != BodyCatalog.FindBodyIndex(bodyName))
+            {
+                return;
+            }
+
+            if (damageInfo.damage <= 0f || damageInfo.procCoefficient <= 0f)
+            {
+                return;
+            }
+
+            if ((damageInfo.damageType & DamageType.DoT) != 0 || damageInfo.dotIndex != DotController.DotIndex.None)
+            {
+                return;
+            }
+
+            BleedingHeartComponent heart = attackerBody.GetComponent<BleedingHeartComponent>();
+            if (heart == null)
+            {
+                return;
+            }
+
+            float hemorrhageChance = 10f + heart.GetBleedChanceBonusFromHeart();
+            if (!Util.CheckRoll(hemorrhageChance * damageInfo.procCoefficient, attackerBody.master))
+            {
+                return;
+            }
+
+            InflictDotInfo inflictDotInfo = new InflictDotInfo
+            {
+                victimObject = victimBody.gameObject,
+                attackerObject = attackerBody.gameObject,
+                hitHurtBox = damageInfo.inflictedHurtbox,
+                dotIndex = DotController.DotIndex.SuperBleed,
+                duration = 15f * damageInfo.procCoefficient,
+                damageMultiplier = 1f
+            };
+
+            DotController.InflictDot(ref inflictDotInfo);
         }
 
         private float HealthComponent_Heal(On.RoR2.HealthComponent.orig_Heal orig, HealthComponent self, float amount, ProcChainMask procChainMask, bool nonRegen)

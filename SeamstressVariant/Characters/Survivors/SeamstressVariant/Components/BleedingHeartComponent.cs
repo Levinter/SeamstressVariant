@@ -23,8 +23,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private float healTimer = 0f;
         private const float ScanInterval = 1f;
         private const float HealInterval = 0.25f;
-        private const float HealPerBleedStack = 2f;
-        private const int HeartPerBleedChancePercent = 25;
+        private const float HealPerBleedStack = 1f;
+        private const int HeartPerBleedChancePercent = 100;
 
         private bool isInitialized = false;
 
@@ -180,6 +180,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 {
                     enemyCount++;
                     bleedCount += otherBody.GetBuffCount(RoR2Content.Buffs.Bleeding);
+                    bleedCount += otherBody.GetBuffCount(RoR2Content.Buffs.SuperBleed);
                 }
             }
 
