@@ -12,25 +12,29 @@ namespace SeamstressVariant.Characters.Survivors.SeamstressVariant.Components
         public GameObject explosionEffect;
         public string impactSoundString;
         public bool logOnly;
+        public bool debugLogging;
         private bool _didDump;
 
         public void OnProjectileImpact(ProjectileImpactInfo impactInfo)
         {
-            string impactPoint = impactInfo.estimatedPointOfImpact.ToString();
-            Log.Info($"[SFX DEBUG] Projectile impact on '{gameObject.name}' at {impactPoint}");
-
-            ProjectileImpactExplosion pie = GetComponent<ProjectileImpactExplosion>();
-            if (pie && pie.impactEffect)
+            if (debugLogging || logOnly)
             {
-                EffectComponent fx = pie.impactEffect.GetComponent<EffectComponent>();
-                string fxSound = fx ? fx.soundName : "<no EffectComponent>";
-                Log.Info($"[SFX DEBUG] PIE impactEffect='{pie.impactEffect.name}' soundName='{fxSound}'");
-            }
+                string impactPoint = impactInfo.estimatedPointOfImpact.ToString();
+                Log.Info($"[SFX DEBUG] Projectile impact on '{gameObject.name}' at {impactPoint}");
 
-            if (!_didDump)
-            {
-                _didDump = true;
-                DumpProjectileAudioHints();
+                ProjectileImpactExplosion pie = GetComponent<ProjectileImpactExplosion>();
+                if (pie && pie.impactEffect)
+                {
+                    EffectComponent fx = pie.impactEffect.GetComponent<EffectComponent>();
+                    string fxSound = fx ? fx.soundName : "<no EffectComponent>";
+                    Log.Info($"[SFX DEBUG] PIE impactEffect='{pie.impactEffect.name}' soundName='{fxSound}'");
+                }
+
+                if (!_didDump)
+                {
+                    _didDump = true;
+                    DumpProjectileAudioHints();
+                }
             }
 
             if (logOnly)
@@ -41,8 +45,12 @@ namespace SeamstressVariant.Characters.Survivors.SeamstressVariant.Components
             // Play SFX
             if (!string.IsNullOrEmpty(impactSoundString))
             {
-                Util.PlaySound(impactSoundString, gameObject);
-                Log.Info($"[SFX DEBUG] Played impact sound '{impactSoundString}' at {transform.position}");
+                GameObject soundTarget = impactInfo.collider ? impactInfo.collider.gameObject : gameObject;
+                Util.PlaySound(impactSoundString, soundTarget);
+                if (debugLogging)
+                {
+                    Log.Info($"[SFX DEBUG] Played impact sound '{impactSoundString}' on '{soundTarget.name}' at {impactInfo.estimatedPointOfImpact}");
+                }
             }
 
             // Spawn impact VFX

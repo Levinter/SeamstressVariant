@@ -1,4 +1,5 @@
 using RoR2;
+using SeamstressMod.Seamstress.Content;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -15,7 +16,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
     {
         // Search parameters — match FireScissors static fields so the cone is identical.
         public float maxTrackingDistance = 60f;
-        public float maxTrackingAngle    = 20f;
+        public float maxTrackingAngle    = 30f;
 
         // How many times per second the search is refreshed.
         public float trackerUpdateFrequency = 10f;
@@ -28,6 +29,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private Indicator _indicator;
 
         private float _trackerUpdateStopwatch;
+        private readonly BullseyeSearch _search = new BullseyeSearch();
 
         // Prefab loaded once and shared across all instances.
         private static GameObject _trackingPrefab;
@@ -38,9 +40,16 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             _teamComponent = GetComponent<TeamComponent>();
             _inputBank     = GetComponent<InputBankTest>();
 
-            // Use the same indicator prefab as HuntressTracker.
+            // Use OG Seamstress normal tracker visuals.
             if (_trackingPrefab == null)
-                _trackingPrefab = LegacyResourcesAPI.Load<GameObject>("Prefabs/HuntressTrackingIndicator");
+            {
+                _trackingPrefab = SeamstressAssets.telekinesisTracker;
+                if (_trackingPrefab == null)
+                {
+                    _trackingPrefab = LegacyResourcesAPI.Load<GameObject>("Prefabs/HuntressTrackingIndicator");
+                    Log.Warning("SeamstressTracker: SeamstressAssets.telekinesisTracker was null, falling back to HuntressTrackingIndicator.");
+                }
+            }
 
             _indicator = new Indicator(gameObject, _trackingPrefab);
         }
@@ -60,7 +69,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             _trackerUpdateStopwatch += Time.fixedDeltaTime;
             if (_trackerUpdateStopwatch >= 1f / trackerUpdateFrequency)
             {
-                _trackerUpdateStopwatch = 0f;
+                _trackerUpdateStopwatch -= 1f / trackerUpdateFrequency;
                 SearchForTarget();
             }
 
@@ -75,18 +84,17 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             // Server/authority still needs to track so FireScissors can read the target.
             Ray aimRay = GetAimRay();
 
-            BullseyeSearch search = new BullseyeSearch();
-            search.searchOrigin      = aimRay.origin;
-            search.searchDirection   = aimRay.direction;
-            search.maxDistanceFilter = maxTrackingDistance;
-            search.maxAngleFilter    = maxTrackingAngle;
-            search.teamMaskFilter    = TeamMask.allButNeutral;
-            search.teamMaskFilter.RemoveTeam(TeamComponent.GetObjectTeam(gameObject));
-            search.filterByLoS = true;
-            search.sortMode    = BullseyeSearch.SortMode.DistanceAndAngle;
-            search.RefreshCandidates();
+            _search.searchOrigin      = aimRay.origin;
+            _search.searchDirection   = aimRay.direction;
+            _search.maxDistanceFilter = maxTrackingDistance;
+            _search.maxAngleFilter    = maxTrackingAngle;
+            _search.teamMaskFilter    = TeamMask.allButNeutral;
+            _search.teamMaskFilter.RemoveTeam(TeamComponent.GetObjectTeam(gameObject));
+            _search.filterByLoS = true;
+            _search.sortMode    = BullseyeSearch.SortMode.DistanceAndAngle;
+            _search.RefreshCandidates();
 
-            System.Collections.Generic.IEnumerable<HurtBox> results = search.GetResults();
+            System.Collections.Generic.IEnumerable<HurtBox> results = _search.GetResults();
             HurtBox newTarget = null;
             foreach (HurtBox hb in results)
             {

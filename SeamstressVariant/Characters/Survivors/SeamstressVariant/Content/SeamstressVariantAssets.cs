@@ -4,10 +4,9 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Networking;
 using SeamstressVariant.Modules;
-using SeamstressMod.Seamstress.Content;
-using System;
-using RoR2.Projectile;
 using SeamstressVariant.Characters.Survivors.SeamstressVariant.Components;
+using SeamstressMod.Seamstress.Content;
+using RoR2.Projectile;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant
 {
@@ -21,16 +20,20 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
         public static GameObject defianceEndEffect;
 
-        // networked hit sounds
-        public static NetworkSoundEventDef swordHitSoundEvent;
-
         //projectiles
         public static GameObject bombProjectilePrefab;
 
-        // Simplified scissor projectiles for the secondary skill (straight-line, no homing, no pickup).
+        // Simplified scissor projectiles for the secondary skill.
         // Ghost visuals are stolen from the OG Seamstress scissor prefabs.
         public static GameObject scissorLProjectile;
         public static GameObject scissorRProjectile;
+
+        // Homing tuning: lower rotation speed produces wider, smoother arcs.
+        private const float ScissorHomingRotationSpeed = 200f;
+        // Lower travel speed gives the projectile more time to arc into the target.
+        private const float ScissorProjectileTravelSpeed = 100f;
+        // This only matters when no target is already assigned at spawn.
+        private const float ScissorTargetSearchInterval = 0.5f;
 
         private static AssetBundle _assetBundle;
 
@@ -101,71 +104,81 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             foreach (GameObject proj in new[] { scissorLProjectile, scissorRProjectile })
             {
-                ProjectileImpactVFXSFX impactProbe = proj.GetComponent<ProjectileImpactVFXSFX>();
-                if (!impactProbe)
+                ProjectileTargetComponent targetComponent = proj.GetComponent<ProjectileTargetComponent>();
+                if (!targetComponent)
                 {
-                    impactProbe = proj.AddComponent<ProjectileImpactVFXSFX>();
-                }
-                impactProbe.logOnly = true;
-
-                // OG sets ProjectileImpactExplosion.impactEffect to pickupScissorEffect
-                // (MercSwordSlashWhirlwind clone). That effect carries an embedded
-                // EffectComponent.soundName (sword swing sound) which fires automatically
-                // via EffectManager.SpawnEffect — this is the suspected missing impact SFX.
-                ProjectileImpactExplosion pie = proj.GetComponent<ProjectileImpactExplosion>();
-                if (pie)
-                {
-                    pie.impactEffect = SeamstressAssets.pickupScissorEffect;
-                    LogEffectSoundInfo($"{proj.name}.ProjectileImpactExplosion.impactEffect", pie.impactEffect);
+                    targetComponent = proj.AddComponent<ProjectileTargetComponent>();
                 }
 
-                ProjectileStickOnImpact stick = proj.GetComponent<ProjectileStickOnImpact>();
-                LogStickEventInfo(proj.name, stick);
-            }
-        }
+                ProjectileSteerTowardTarget steerTowardTarget = proj.GetComponent<ProjectileSteerTowardTarget>();
+                if (!steerTowardTarget)
+                {
+                    steerTowardTarget = proj.AddComponent<ProjectileSteerTowardTarget>();
+                }
+                steerTowardTarget.yAxisOnly = false;
+                steerTowardTarget.rotationSpeed = ScissorHomingRotationSpeed;
+                steerTowardTarget.enabled = true;
 
-        private static void LogEffectSoundInfo(string label, GameObject effectPrefab)
-        {
-            if (!effectPrefab)
-            {
-                Log.Info($"[SFX DEBUG] {label}: effect prefab is null");
-                return;
-            }
+                ProjectileSimple projectileSimple = proj.GetComponent<ProjectileSimple>();
+                if (projectileSimple)
+                {
+                    projectileSimple.desiredForwardSpeed = ScissorProjectileTravelSpeed;
+                }
 
-            EffectComponent effectComponent = effectPrefab.GetComponent<EffectComponent>();
-            if (!effectComponent)
-            {
-                Log.Info($"[SFX DEBUG] {label}: prefab '{effectPrefab.name}' has no EffectComponent");
-                return;
-            }
+                ProjectileDamage projectileDamage = proj.GetComponent<ProjectileDamage>();
+                if (projectileDamage)
+                {
+                    // Strip inherited damage flags from ImpVoidspike so the projectile is pure direct hit.
+                    projectileDamage.damageType = DamageType.Generic;
+                }
 
-            Log.Info($"[SFX DEBUG] {label}: prefab '{effectPrefab.name}' soundName='{effectComponent.soundName}'");
-        }
+                ProjectileStickOnImpact stickOnImpact = proj.GetComponent<ProjectileStickOnImpact>();
+                if (stickOnImpact)
+                {
+                    UnityEngine.Object.Destroy(stickOnImpact);
+                }
 
-        private static void LogStickEventInfo(string projectileName, ProjectileStickOnImpact stick)
-        {
-            if (!stick)
-            {
-                Log.Info($"[SFX DEBUG] {projectileName}: no ProjectileStickOnImpact component found");
-                return;
-            }
+                ProjectileDirectionalTargetFinder targetFinder = proj.GetComponent<ProjectileDirectionalTargetFinder>();
+                if (!targetFinder)
+                {
+                    targetFinder = proj.AddComponent<ProjectileDirectionalTargetFinder>();
+                }
+                targetFinder.lookRange = 0f;
+                targetFinder.lookCone = 0f;
+                targetFinder.targetSearchInterval = ScissorTargetSearchInterval;
+                targetFinder.onlySearchIfNoTarget = true;
+                targetFinder.allowTargetLoss = false;
+                targetFinder.testLoS = true;
+                targetFinder.ignoreAir = false;
+                targetFinder.flierAltitudeTolerance = float.PositiveInfinity;
+                targetFinder.enabled = true;
 
-            if (stick.stickEvent == null)
-            {
-                Log.Info($"[SFX DEBUG] {projectileName}: stickEvent is null");
-                return;
-            }
+                // Add OG-matching trail VFX as a child of the projectile.
+                if (SeamstressAssets.trailEffect)
+                {
+                    UnityEngine.Object.Instantiate(SeamstressAssets.trailEffect, proj.transform);
+                }
 
-            int listenerCount = stick.stickEvent.GetPersistentEventCount();
-            Log.Info($"[SFX DEBUG] {projectileName}: stickEvent listeners={listenerCount}");
+                ProjectileImpactExplosion impactExplosion = proj.GetComponent<ProjectileImpactExplosion>();
+                if (impactExplosion)
+                {
+                    impactExplosion.impactEffect = SeamstressAssets.blinkEffect;
+                    impactExplosion.explosionEffect = SeamstressAssets.genericImpactExplosionEffect;
+                    impactExplosion.blastDamageCoefficient = SeamstressVariantStaticValues.scissorDamageCoefficient;
+                    impactExplosion.blastProcCoefficient = 1f;
+                    impactExplosion.blastRadius = 5f;
+                    // Explode on terrain; enemy hits are handled by ProjectileSingleTargetImpact.
+                    impactExplosion.destroyOnWorld = true;
+                    impactExplosion.destroyOnEnemy = true;
+                }
 
-            for (int i = 0; i < listenerCount; i++)
-            {
-                UnityEngine.Object target = stick.stickEvent.GetPersistentTarget(i);
-                string method = stick.stickEvent.GetPersistentMethodName(i);
-                string targetName = target ? target.name : "<null>";
-                string targetType = target ? target.GetType().Name : "<null>";
-                Log.Info($"[SFX DEBUG] {projectileName}: stickEvent[{i}] target='{targetName}' type='{targetType}' method='{method}'");
+                ProjectileImpactVFXSFX impactVfxSfx = proj.GetComponent<ProjectileImpactVFXSFX>();
+                if (!impactVfxSfx)
+                {
+                    impactVfxSfx = proj.AddComponent<ProjectileImpactVFXSFX>();
+                }
+
+                impactVfxSfx.impactSoundString = "sfx_seamstress_scissor_land";
             }
         }
 

@@ -211,7 +211,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         {
             Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Secondary);
 
-            SkillDef secondarySkillDef1 = Skills.CreateSkillDef(new SkillDefInfo
+            SkillDef secondarySkillDef1 = Skills.CreateSkillDef<SeamstressTrackingSkillDef>(new SkillDefInfo
             {
                 skillName = "FireScissors",
                 skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "SECONDARY_SCISSORS_NAME",
@@ -223,7 +223,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 activationStateMachineName = "Weapon",
                 interruptPriority = EntityStates.InterruptPriority.PrioritySkill,
 
-                baseRechargeInterval = 10f,
+                baseRechargeInterval = 1f,
                 baseMaxStock = 2,
 
                 rechargeStock = 2,
