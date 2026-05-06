@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Networking;
 using SeamstressVariant.Modules;
-using SeamstressVariant.Characters.Survivors.SeamstressVariant.Components;
 using SeamstressMod.Seamstress.Content;
 using RoR2.Projectile;
 
@@ -15,13 +14,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         // particle effects
         public static GameObject swordSwingEffect;
         public static GameObject swordHitImpactEffect;
-
-        public static GameObject bombExplosionEffect;
-
         public static GameObject defianceEndEffect;
-
-        //projectiles
-        public static GameObject bombProjectilePrefab;
+        public static GameObject scissorImpactEffect;
 
         // Simplified scissor projectiles for the secondary skill.
         // Ghost visuals are stolen from the OG Seamstress scissor prefabs.
@@ -31,7 +25,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         // Homing tuning: lower rotation speed produces wider, smoother arcs.
         private const float ScissorHomingRotationSpeed = 200f;
         // Lower travel speed gives the projectile more time to arc into the target.
-        private const float ScissorProjectileTravelSpeed = 100f;
+        private const float ScissorProjectileTravelSpeed = 90f;
         // This only matters when no target is already assigned at spawn.
         private const float ScissorTargetSearchInterval = 0.5f;
 
@@ -43,7 +37,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             _assetBundle = assetBundle;
 
             CreateEffects();
-
             CreateProjectiles();
         }
 
@@ -51,9 +44,23 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         private static void CreateEffects()
         {
             CreateDefianceEndEffect();
+            CreateScissorImpactEffect();
 
             // Register OG Seamstress effects used by ClawCombo so OverlapAttack can spawn them.
             Content.CreateAndAddEffectDef(SeamstressAssets.scissorsHitImpactEffect);
+        }
+
+        private static void CreateScissorImpactEffect()
+        {
+            scissorImpactEffect = PrefabAPI.InstantiateClone(SeamstressAssets.blinkEffect, "SeamstressVariantScissorImpactEffect");
+
+            EffectComponent effectComponent = scissorImpactEffect.GetComponent<EffectComponent>();
+            if (effectComponent)
+            {
+                effectComponent.soundName = "sfx_seamstress_scissor_land";
+            }
+
+            Content.CreateAndAddEffectDef(scissorImpactEffect);
         }
 
         private static void CreateDefianceEndEffect()
@@ -102,83 +109,82 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             scissorLProjectile = PrefabAPI.InstantiateClone(baseProjectile, "SeamstressVariantScissorLProjectile");
             scissorRProjectile = PrefabAPI.InstantiateClone(baseProjectile, "SeamstressVariantScissorRProjectile");
 
-            foreach (GameObject proj in new[] { scissorLProjectile, scissorRProjectile })
+            SetupScissorProjectile(scissorLProjectile);
+            SetupScissorProjectile(scissorRProjectile);
+        }
+
+        private static void SetupScissorProjectile(GameObject proj)
+        {
+            ProjectileTargetComponent targetComponent = proj.GetComponent<ProjectileTargetComponent>();
+            if (!targetComponent)
             {
-                ProjectileTargetComponent targetComponent = proj.GetComponent<ProjectileTargetComponent>();
-                if (!targetComponent)
-                {
-                    targetComponent = proj.AddComponent<ProjectileTargetComponent>();
-                }
+                targetComponent = proj.AddComponent<ProjectileTargetComponent>();
+            }
 
-                ProjectileSteerTowardTarget steerTowardTarget = proj.GetComponent<ProjectileSteerTowardTarget>();
-                if (!steerTowardTarget)
-                {
-                    steerTowardTarget = proj.AddComponent<ProjectileSteerTowardTarget>();
-                }
-                steerTowardTarget.yAxisOnly = false;
-                steerTowardTarget.rotationSpeed = ScissorHomingRotationSpeed;
-                steerTowardTarget.enabled = true;
+            ProjectileSteerTowardTarget steerTowardTarget = proj.GetComponent<ProjectileSteerTowardTarget>();
+            if (!steerTowardTarget)
+            {
+                steerTowardTarget = proj.AddComponent<ProjectileSteerTowardTarget>();
+            }
+            steerTowardTarget.yAxisOnly = false;
+            steerTowardTarget.rotationSpeed = ScissorHomingRotationSpeed;
+            steerTowardTarget.enabled = true;
 
-                ProjectileSimple projectileSimple = proj.GetComponent<ProjectileSimple>();
-                if (projectileSimple)
-                {
-                    projectileSimple.desiredForwardSpeed = ScissorProjectileTravelSpeed;
-                }
+            ProjectileSimple projectileSimple = proj.GetComponent<ProjectileSimple>();
+            if (projectileSimple)
+            {
+                projectileSimple.desiredForwardSpeed = ScissorProjectileTravelSpeed;
+            }
 
-                ProjectileDamage projectileDamage = proj.GetComponent<ProjectileDamage>();
-                if (projectileDamage)
-                {
-                    // Strip inherited damage flags from ImpVoidspike so the projectile is pure direct hit.
-                    projectileDamage.damageType = DamageType.Generic;
-                }
+            ProjectileDamage projectileDamage = proj.GetComponent<ProjectileDamage>();
+            if (projectileDamage)
+            {
+                // Strip inherited damage flags from ImpVoidspike so the projectile is pure direct hit.
+                projectileDamage.damageType = DamageType.Generic;
+            }
 
-                ProjectileStickOnImpact stickOnImpact = proj.GetComponent<ProjectileStickOnImpact>();
-                if (stickOnImpact)
-                {
-                    UnityEngine.Object.Destroy(stickOnImpact);
-                }
+            ProjectileStickOnImpact stickOnImpact = proj.GetComponent<ProjectileStickOnImpact>();
+            if (stickOnImpact)
+            {
+                UnityEngine.Object.Destroy(stickOnImpact);
+            }
 
-                ProjectileDirectionalTargetFinder targetFinder = proj.GetComponent<ProjectileDirectionalTargetFinder>();
-                if (!targetFinder)
-                {
-                    targetFinder = proj.AddComponent<ProjectileDirectionalTargetFinder>();
-                }
-                targetFinder.lookRange = 0f;
-                targetFinder.lookCone = 0f;
-                targetFinder.targetSearchInterval = ScissorTargetSearchInterval;
-                targetFinder.onlySearchIfNoTarget = true;
-                targetFinder.allowTargetLoss = false;
-                targetFinder.testLoS = true;
-                targetFinder.ignoreAir = false;
-                targetFinder.flierAltitudeTolerance = float.PositiveInfinity;
-                targetFinder.enabled = true;
+            ProjectileDirectionalTargetFinder targetFinder = proj.GetComponent<ProjectileDirectionalTargetFinder>();
+            if (!targetFinder)
+            {
+                targetFinder = proj.AddComponent<ProjectileDirectionalTargetFinder>();
+            }
+            targetFinder.lookRange = 30f;
+            targetFinder.lookCone = 60f;
+            targetFinder.targetSearchInterval = ScissorTargetSearchInterval;
+            targetFinder.onlySearchIfNoTarget = true;
+            targetFinder.allowTargetLoss = false;
+            targetFinder.testLoS = true;
+            targetFinder.ignoreAir = false;
+            targetFinder.flierAltitudeTolerance = float.PositiveInfinity;
+            targetFinder.enabled = true;
 
-                // Add OG-matching trail VFX as a child of the projectile.
-                if (SeamstressAssets.trailEffect)
-                {
-                    UnityEngine.Object.Instantiate(SeamstressAssets.trailEffect, proj.transform);
-                }
+            // Add OG-matching trail VFX as a child of the projectile.
+            if (SeamstressAssets.trailEffect)
+            {
+                UnityEngine.Object.Instantiate(SeamstressAssets.trailEffect, proj.transform);
+            }
 
-                ProjectileImpactExplosion impactExplosion = proj.GetComponent<ProjectileImpactExplosion>();
-                if (impactExplosion)
-                {
-                    impactExplosion.impactEffect = SeamstressAssets.blinkEffect;
-                    impactExplosion.explosionEffect = SeamstressAssets.genericImpactExplosionEffect;
-                    impactExplosion.blastDamageCoefficient = SeamstressVariantStaticValues.scissorDamageCoefficient;
-                    impactExplosion.blastProcCoefficient = 1f;
-                    impactExplosion.blastRadius = 5f;
-                    // Explode on terrain; enemy hits are handled by ProjectileSingleTargetImpact.
-                    impactExplosion.destroyOnWorld = true;
-                    impactExplosion.destroyOnEnemy = true;
-                }
+            ProjectileSingleTargetImpact singleTargetImpact = proj.GetComponent<ProjectileSingleTargetImpact>();
+            if (singleTargetImpact)
+            {
+                singleTargetImpact.destroyOnWorld = true;
+            }
 
-                ProjectileImpactVFXSFX impactVfxSfx = proj.GetComponent<ProjectileImpactVFXSFX>();
-                if (!impactVfxSfx)
-                {
-                    impactVfxSfx = proj.AddComponent<ProjectileImpactVFXSFX>();
-                }
-
-                impactVfxSfx.impactSoundString = "sfx_seamstress_scissor_land";
+            ProjectileImpactExplosion impactExplosion = proj.GetComponent<ProjectileImpactExplosion>();
+            if (impactExplosion)
+            {
+                impactExplosion.impactEffect = scissorImpactEffect ? scissorImpactEffect : SeamstressAssets.blinkEffect;
+                //impactExplosion.explosionEffect = SeamstressAssets.genericImpactExplosionEffect;
+                impactExplosion.blastDamageCoefficient = SeamstressVariantStaticValues.scissorDamageCoefficient;
+                impactExplosion.blastProcCoefficient = 1f;
+                impactExplosion.blastRadius = 5f;
+                impactExplosion.destroyOnWorld = true;
             }
         }
 

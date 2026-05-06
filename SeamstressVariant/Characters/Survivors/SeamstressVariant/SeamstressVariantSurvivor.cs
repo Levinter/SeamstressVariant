@@ -223,7 +223,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 activationStateMachineName = "Weapon",
                 interruptPriority = EntityStates.InterruptPriority.PrioritySkill,
 
-                baseRechargeInterval = 1f,
+                baseRechargeInterval = 10f,
                 baseMaxStock = 2,
 
                 rechargeStock = 2,
@@ -386,7 +386,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 return;
             }
 
-            float hemorrhageChance = 10f + heart.GetBleedChanceBonusFromHeart();
+            float hemorrhageChance = heart.GetBleedChanceBonusFromHeart();
             if (!Util.CheckRoll(hemorrhageChance * damageInfo.procCoefficient, attackerBody.master))
             {
                 return;
