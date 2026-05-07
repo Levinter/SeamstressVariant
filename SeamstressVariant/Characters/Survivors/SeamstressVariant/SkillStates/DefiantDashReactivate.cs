@@ -109,6 +109,15 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 heart.ConsumeHeart(storedHeart);
                 float currentMaxHealth = healthComponent.fullHealth;
                 healthComponent.health = Mathf.Clamp(healthComponent.health + storedHeart, 1f, currentMaxHealth);
+
+                if (characterBody != null)
+                {
+                    int defianceCount = characterBody.GetBuffCount(SeamstressVariantBuffs.defianceBuff);
+                    if (defianceCount > 0)
+                    {
+                        characterBody.SetBuffCount(SeamstressVariantBuffs.defianceBuff.buffIndex, 0);
+                    }
+                }
             }
 
             base.OnExit();

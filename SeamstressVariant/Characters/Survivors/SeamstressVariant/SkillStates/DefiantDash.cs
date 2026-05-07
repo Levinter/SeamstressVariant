@@ -47,10 +47,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         // Sustained phase state
         private BleedingHeartComponent heart;
+        private HeartOverlayController heartOverlayController;
         private SetStateOnHurt setStateOnHurt;
         private float nextDrainAt;
         private float currentDrainPerTick;
         private bool canReactivate;
+        private bool transitioningToReactivate;
         private bool originalCanBeHitStunned;
         private bool originalCanBeStunned;
         private bool originalCanBeFrozen;
@@ -76,10 +78,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             // Sustained phase initialization
             heart = GetComponent<BleedingHeartComponent>();
+            heartOverlayController = GetComponent<HeartOverlayController>();
             setStateOnHurt = GetComponent<SetStateOnHurt>();
             nextDrainAt = heartDrainInterval;
             currentDrainPerTick = heartDrainPerTick;
             canReactivate = false;
+            transitioningToReactivate = false;
 
             if (characterMotor)
             {
@@ -335,6 +339,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 PlayAnimation("Gesture, Override", "BufferEmpty");
                 ApplyDefianceVisuals();
             }
+
+            if (heartOverlayController != null)
+            {
+                heartOverlayController.SetHeartDrainActive(true);
+            }
         }
 
         private void UpdateSustainedPhase()
@@ -357,6 +366,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             if (canReactivate && inputBank != null && inputBank.skill4.down)
             {
+                transitioningToReactivate = true;
                 outer.SetNextState(new DefiantDashReactivate());
                 return;
             }
@@ -535,6 +545,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         public override void OnExit()
         {
+            if (heartOverlayController != null)
+            {
+                heartOverlayController.SetHeartDrainActive(false);
+            }
+
             RemoveDefianceBleedEffect();
 
             if (persistentDefianceOverlay != null)
@@ -552,7 +567,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     int defianceCount = characterBody.GetBuffCount(SeamstressVariantBuffs.defianceBuff);
                     if (defianceCount > 0)
                     {
-                        characterBody.SetBuffCount(SeamstressVariantBuffs.defianceBuff.buffIndex, 0);
+                        if (!transitioningToReactivate)
+                        {
+                            characterBody.SetBuffCount(SeamstressVariantBuffs.defianceBuff.buffIndex, 0);
+                        }
                         RemoveDefianceVisuals();
                     }
                 }

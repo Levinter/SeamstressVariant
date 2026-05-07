@@ -18,6 +18,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             public GameObject instance;
             public Image[] filledImages;
             public TextMeshProUGUI[] texts;
+            public ChildLocator childLocator;
+            public Animator animator;
         }
 
         private BleedingHeartComponent heartComponent;
@@ -29,8 +31,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private static GameObject overlayPrefab;
         private static string overlayChildLocatorEntry;
         private static bool overlayAssetsLoaded = false;
-        private static bool EnableThemePerfLogging = true;
+        private static bool EnableThemePerfLogging = false;
         private const float ThemePerfLogInterval = 10f;
+        private static readonly int overlayValueParamHash = Animator.StringToHash("corruption");
+        private static readonly int overlayDrainStateParamHash = Animator.StringToHash("isCorrupted");
         // Use high-contrast defaults to validate runtime recolor; tune these once confirmed.
         private static readonly Color overlayFillColor = Color.red;
         private static readonly Color overlayTextColor = Color.red;
@@ -39,6 +43,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private float themeApplyTotalMs;
         private float themeApplyMaxMs;
         private float nextThemePerfLogTime;
+        private bool heartDrainActive;
 
         private void Awake()
         {
@@ -51,6 +56,17 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             RegisterOverlay();
 
             nextThemePerfLogTime = Time.unscaledTime + ThemePerfLogInterval;
+        }
+
+        internal void SetHeartDrainActive(bool active)
+        {
+            if (heartDrainActive == active)
+            {
+                return;
+            }
+
+            heartDrainActive = active;
+            ApplyOverlayStateToTrackedInstances();
         }
 
         private static void EnsureOverlayAssetsLoaded()
@@ -139,6 +155,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 HudOverlayManager.RemoveOverlay(overlayController);
                 overlayController = null;
             }
+
+            heartDrainActive = false;
         }
 
         private void Update()
@@ -159,6 +177,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             {
                 text.SetText(displayValue.ToString());
             }
+
+            ApplyOverlayStateToTrackedInstances();
         }
 
         private void LateUpdate()
@@ -213,11 +233,14 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 {
                     instance = instance,
                     filledImages = filledImages.ToArray(),
-                    texts = instance.GetComponentsInChildren<TextMeshProUGUI>(true)
+                    texts = instance.GetComponentsInChildren<TextMeshProUGUI>(true),
+                    childLocator = instance.GetComponent<ChildLocator>(),
+                    animator = instance.GetComponent<Animator>()
                 });
             }
 
             ApplyThemeToOverlayInstance(instance);
+            ApplyOverlayStateToTrackedInstances();
         }
 
         private void OnOverlayInstanceRemoved(OverlayController controller, GameObject instance)
@@ -345,6 +368,49 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 }
 
                 valueText.canvasRenderer.SetColor(themedTextColor);
+            }
+        }
+
+        private void ApplyOverlayStateToTrackedInstances()
+        {
+            float maxHeart = heartComponent != null ? heartComponent.GetMaxHeart() : 0f;
+            float currentHeart = heartComponent != null ? heartComponent.GetHeart() : 0f;
+            float normalizedHeart = maxHeart > 0f ? currentHeart / maxHeart : 0f;
+
+            for (int i = overlayThemeCaches.Count - 1; i >= 0; i--)
+            {
+                OverlayThemeCache cache = overlayThemeCaches[i];
+                if (cache.instance == null)
+                {
+                    overlayThemeCaches.RemoveAt(i);
+                    continue;
+                }
+
+                ApplyOverlayState(cache, currentHeart, normalizedHeart);
+            }
+        }
+
+        private void ApplyOverlayState(OverlayThemeCache cache, float currentHeart, float normalizedHeart)
+        {
+            if (cache.childLocator != null)
+            {
+                Transform heartThreshold = cache.childLocator.FindChild("CorruptionThreshold");
+                if (heartThreshold != null)
+                {
+                    heartThreshold.rotation = Quaternion.Euler(0f, 0f, normalizedHeart * -360f);
+                }
+
+                Transform minimumThreshold = cache.childLocator.FindChild("MinCorruptionThreshold");
+                if (minimumThreshold != null)
+                {
+                    minimumThreshold.rotation = Quaternion.identity;
+                }
+            }
+
+            if (cache.animator != null)
+            {
+                cache.animator.SetFloat(overlayValueParamHash, currentHeart);
+                cache.animator.SetBool(overlayDrainStateParamHash, heartDrainActive);
             }
         }
 
