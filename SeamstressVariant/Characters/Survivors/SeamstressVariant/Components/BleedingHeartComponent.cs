@@ -54,7 +54,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             {
                 scanTimer = ScanInterval;
                 ScanNearbyEnemies();
-                Log.Debug("NEARBY ENEMIES = " + nearbyEnemyCount + " | BLEED STACKS = " + activeBleedStacks);
+                //Log.Debug("NEARBY ENEMIES = " + nearbyEnemyCount + " | BLEED STACKS = " + activeBleedStacks);
                 UpdateBleedStackBuff();
             }
 
@@ -85,7 +85,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private void OnBodyRecalculateStates(CharacterBody body)
         {
             MaxHeart = body.maxHealth;
-            Log.Debug("MaxHeart = " + MaxHeart);
+            //Log.Debug("MaxHeart = " + MaxHeart);
         }
 
         // Add Health to heart from healing
@@ -94,7 +94,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             if (isInitialized && healthComponent != null && healthComponent.alive)
             {
                 currentHeart = Mathf.Min(currentHeart + amount, MaxHeart);
-                Log.Debug("AMOUNT IN HEART = " + currentHeart);
+                //Log.Debug("AMOUNT IN HEART = " + currentHeart);
                 body.MarkAllStatsDirty();
             }
         }
@@ -118,7 +118,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
             if (consumed > 0f)
             {
-                Log.Debug("CONSUMED HEART = " + consumed + " | REMAINING = " + currentHeart);
+                //Log.Debug("CONSUMED HEART = " + consumed + " | REMAINING = " + currentHeart);
                 body.MarkAllStatsDirty();
             }
 
@@ -197,7 +197,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
             float healAmount = HealPerBleedStack * activeBleedStacks;
             healthComponent.Heal(healAmount, default);
-            Log.Debug("Passive heal: " + healAmount + " (" + activeBleedStacks + " stacks)");
+            //Log.Debug("Passive heal: " + healAmount + " (" + activeBleedStacks + " stacks)");
         }
 
         private bool CountsAsNearbyEnemy(CharacterBody otherBody, TeamIndex myTeam)
@@ -226,13 +226,13 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             {
                 // Set exact buff count to match bleed stacks
                 body.SetBuffCount(SeamstressVariantBuffs.bleedStackCounterBuff.buffIndex, activeBleedStacks);
-                Log.Debug("Updated bleed stack visualization buff to " + activeBleedStacks);
+                //Log.Debug("Updated bleed stack visualization buff to " + activeBleedStacks);
             }
             else if (currentBuffCount > 0)
             {
                 // Clear the buff if no bleeds are active
                 body.SetBuffCount(SeamstressVariantBuffs.bleedStackCounterBuff.buffIndex, 0);
-                Log.Debug("Cleared bleed stack visualization buff");
+                //Log.Debug("Cleared bleed stack visualization buff");
             }
         }
     }

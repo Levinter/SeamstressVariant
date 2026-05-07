@@ -350,10 +350,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             GlobalEventManager.onServerDamageDealt += GlobalEventManager_onServerDamageDealt;
         }
 
-        private void RecalculateStatsAPI_GetStatCoefficients(CharacterBody sender, R2API.RecalculateStatsAPI.StatHookEventArgs args)
-        {
-        }
-
         private void GlobalEventManager_onServerDamageDealt(DamageReport report)
         {
             DamageInfo damageInfo = report?.damageInfo;

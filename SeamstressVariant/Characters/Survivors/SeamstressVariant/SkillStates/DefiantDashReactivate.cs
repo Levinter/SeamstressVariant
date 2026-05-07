@@ -1,5 +1,4 @@
 using EntityStates;
-using EntityStates.JunkCube;
 using RoR2;
 using SeamstressMod.Seamstress.Content;
 using SeamstressVariant.Survivors.SeamstressVariant.Components;
@@ -10,9 +9,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 {
     public class DefiantDashReactivate : BaseSkillState
     {
+        public float baseDuration = 0.5f;
+
         private BleedingHeartComponent heart;
         public float damageCoefficient = SeamstressVariantStaticValues.dashDamageCoefficient;
-        private bool hasExecuted;
+        private BlastAttack blastAttack;
+        private float storedHeart;
 
         public override void OnEnter()
         {
@@ -20,46 +22,43 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             heart = GetComponent<BleedingHeartComponent>();
 
-            if (!isAuthority)
+            if (heart == null || healthComponent == null || characterBody == null)
             {
+                outer.SetNextStateToMain();
                 return;
             }
 
-            ExecuteReactivation();
-            hasExecuted = true;
+            storedHeart = heart.GetHeart();
+            blastAttack = CreateBlastAttack(storedHeart);
+
+            PlayCrossfade("FullBody, Override", "RipHeart", "Dash.playbackRate",
+                baseDuration / attackSpeedStat * 1.8f,
+                baseDuration / attackSpeedStat * 0.05f);
+
+            Util.PlayAttackSpeedSound("Play_imp_overlord_attack2_tell", gameObject, attackSpeedStat);
         }
 
         public override void FixedUpdate()
         {
             base.FixedUpdate();
 
-            if (!isAuthority || !hasExecuted)
+            if (!isAuthority)
             {
                 return;
             }
 
-            // Hold this follow-up state until button release to prevent immediate recast.
-            if (inputBank == null || !inputBank.skill4.down)
+            if (fixedAge >= baseDuration / attackSpeedStat)
             {
                 outer.SetNextStateToMain();
             }
         }
 
-        private void ExecuteReactivation()
+        private BlastAttack CreateBlastAttack(float heartValue)
         {
-            if (!NetworkServer.active || heart == null || healthComponent == null || characterBody == null)
-            {
-                outer.SetNextStateToMain();
-                return;
-            }
-
-            float storedHeart = heart.GetHeart();
-
             BlastAttack blastAttack = new BlastAttack();
             blastAttack.position = characterBody.corePosition;
             float baseDamage = damageCoefficient * damageStat;
-            float additionalDamage = (storedHeart * 0.01f) * damageStat;
-            Log.Fatal("BASE DAMAGE: " + baseDamage + " | ADDITIONAL DAMAGE: " + additionalDamage);
+            float additionalDamage = (heartValue * 0.01f) * damageStat;
             blastAttack.baseDamage = baseDamage + additionalDamage;
             blastAttack.damageType = DamageType.Stun1s;
             blastAttack.baseForce = 800f;
@@ -73,7 +72,18 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             blastAttack.procCoefficient = 1f;
             blastAttack.falloffModel = BlastAttack.FalloffModel.Linear;
             blastAttack.damageColorIndex = DamageColorIndex.Default;
-            blastAttack.Fire();
+
+            return blastAttack;
+        }
+
+        public override void OnExit()
+        {
+            Util.PlaySound("Play_imp_overlord_teleport_end", gameObject);
+
+            if (isAuthority && blastAttack != null)
+            {
+                blastAttack.Fire();
+            }
 
             if (SeamstressAssets.genericImpactExplosionEffect)
             {
@@ -94,11 +104,14 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 }, true);
             }
 
-            Util.PlaySound("Play_imp_overlord_teleport_end", gameObject);
+            if (NetworkServer.active && heart != null && healthComponent != null)
+            {
+                heart.ConsumeHeart(storedHeart);
+                float currentMaxHealth = healthComponent.fullHealth;
+                healthComponent.health = Mathf.Clamp(healthComponent.health + storedHeart, 1f, currentMaxHealth);
+            }
 
-            heart.ConsumeHeart(storedHeart);
-            float currentMaxHealth = healthComponent.fullHealth;
-            healthComponent.health = Mathf.Clamp(healthComponent.health + storedHeart, 1f, currentMaxHealth);
+            base.OnExit();
         }
 
         public override InterruptPriority GetMinimumInterruptPriority()
