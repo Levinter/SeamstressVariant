@@ -7,10 +7,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 {
     /// <summary>
     /// Owns the survivor's independent scissor state.
-    /// Fires are tracked via OnScissorFired(bool isLeft), which removes the respective buff
-    /// immediately. FixedUpdate watches the secondary skill stock on the server; each time a
-    /// stock restores, it adds back the opposite-of-last-fired scissor buff first (mirroring
-    /// the OG Seamstress pattern).
+    /// Fires are tracked via OnScissorFired(bool isLeft). FixedUpdate watches the secondary skill
+    /// stock on the server; each time a stock restores, it re-enables the opposite-of-last-fired
+    /// scissor first (mirroring the OG Seamstress pattern).
     /// </summary>
     public class ScissorController : MonoBehaviour
     {
@@ -54,7 +53,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             // Apply both scissor buffs on spawn so buff bar and ClawCombo see them immediately.
             if (NetworkServer.active && characterBody != null)
             {
-                SyncBuffs();
+                if (_scissorLModel) _scissorLModel.SetActive(HasLeftScissor);
+                if (_scissorRModel) _scissorRModel.SetActive(HasRightScissor);
             }
         }
 
@@ -120,31 +120,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         {
             HasLeftScissor = active;
             if (_scissorLModel) _scissorLModel.SetActive(active);
-            if (NetworkServer.active && characterBody != null)
-                SyncBuffs();
         }
 
         public void SetRightScissor(bool active)
         {
             HasRightScissor = active;
             if (_scissorRModel) _scissorRModel.SetActive(active);
-            if (NetworkServer.active && characterBody != null)
-                SyncBuffs();
-        }
-
-        private void SyncBuffs()
-        {
-            SetBuff(SeamstressVariantBuffs.scissorLeftBuff, HasLeftScissor);
-            SetBuff(SeamstressVariantBuffs.scissorRightBuff, HasRightScissor);
-        }
-
-        private void SetBuff(BuffDef buff, bool shouldHave)
-        {
-            bool hasBuff = characterBody.HasBuff(buff);
-            if (shouldHave && !hasBuff)
-                characterBody.AddBuff(buff);
-            else if (!shouldHave && hasBuff)
-                characterBody.RemoveBuff(buff);
         }
     }
 }

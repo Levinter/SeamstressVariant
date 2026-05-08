@@ -218,7 +218,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     attack.teamIndex = GetTeam();
                     attack.isCrit = RollCrit();
                     attack.forceVector = Vector3.up * 1000f;
-                    attack.damage = damageCoefficient * damageStat;
+                    float heartValue = heart != null ? heart.GetHeart() : 0f;
+                    attack.damage = damageCoefficient * damageStat + 0.25f * heartValue;
                     attack.hitBoxGroup = FindHitBoxGroup("Sword");
                     attack.hitEffectPrefab = scissorHitImpactEffect;
 

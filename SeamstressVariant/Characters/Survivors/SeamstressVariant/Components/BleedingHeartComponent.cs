@@ -55,7 +55,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 scanTimer = ScanInterval;
                 ScanNearbyEnemies();
                 //Log.Debug("NEARBY ENEMIES = " + nearbyEnemyCount + " | BLEED STACKS = " + activeBleedStacks);
-                UpdateBleedStackBuff();
             }
 
             if (healTimer <= 0f)
@@ -209,31 +208,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
             TeamIndex otherTeam = TeamComponent.GetObjectTeam(otherBody.gameObject);
             return otherTeam != TeamIndex.None && otherTeam != myTeam;
-        }
-
-        private void UpdateBleedStackBuff()
-        {
-            if (!NetworkServer.active || body == null)
-            {
-                return;
-            }
-
-            // Get the buff count before updating
-            int currentBuffCount = body.GetBuffCount(SeamstressVariantBuffs.bleedStackCounterBuff);
-            
-            // Set the buff count to match the active bleed stacks on enemies
-            if (activeBleedStacks > 0)
-            {
-                // Set exact buff count to match bleed stacks
-                body.SetBuffCount(SeamstressVariantBuffs.bleedStackCounterBuff.buffIndex, activeBleedStacks);
-                //Log.Debug("Updated bleed stack visualization buff to " + activeBleedStacks);
-            }
-            else if (currentBuffCount > 0)
-            {
-                // Clear the buff if no bleeds are active
-                body.SetBuffCount(SeamstressVariantBuffs.bleedStackCounterBuff.buffIndex, 0);
-                //Log.Debug("Cleared bleed stack visualization buff");
-            }
         }
     }
 }

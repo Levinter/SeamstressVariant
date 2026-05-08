@@ -53,8 +53,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             var tracker = characterBody.GetComponent<SeamstressTracker>();
             _lockedTarget = tracker != null ? tracker.GetTrackingTarget() : null;
 
-            bool hasLeft  = characterBody.HasBuff(SeamstressVariantBuffs.scissorLeftBuff);
-            bool hasRight = characterBody.HasBuff(SeamstressVariantBuffs.scissorRightBuff);
+            var scissors = characterBody != null ? characterBody.GetComponent<ScissorController>() : null;
+            bool hasLeft = scissors != null && scissors.HasLeftScissor;
+            bool hasRight = scissors != null && scissors.HasRightScissor;
 
             if (hasRight && !hasLeft)
             {

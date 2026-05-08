@@ -69,7 +69,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             Language.Add(prefix + "SPECIAL_DEFIANT_HEART_DESCRIPTION", $"Requires <style=cKeywordName>Heart</style> above 0. Drain <style=cIsHealing>1 Heart per second</style> to gain <style=cKeywordName>Defiance</style>. While active, incoming damage <style=cIsUtility>cannot reduce you below 1 health</style>.");
 
             Language.Add(prefix + "SPECIAL_DEFIANT_DASH_NAME", "Defiant Dash");
-            Language.Add(prefix + "SPECIAL_DEFIANT_DASH_DESCRIPTION", $"Dash forward, dealing <style=cIsDamage>{100f * SeamstressVariantStaticValues.dashDamageCoefficient}% damage</style> to enemies in your path and gaining <style=cIsUtility>Defiance</style>. Recast to end early, converting all <color=#9B3737>Heart</color> to <style=cIsHealing>health</style> and dealing <style=cIsDamage>{100f * SeamstressVariantStaticValues.dashDamageCoefficient}% + 10% damage per 100 Heart consumed</style> to nearby enemies.");
+            Language.Add(prefix + "SPECIAL_DEFIANT_DASH_DESCRIPTION", $"Dash forward, dealing <style=cIsDamage>{100f * SeamstressVariantStaticValues.dashDamageCoefficient}% damage + 25% of current <color=#9B3737>Heart</color></style> to enemies in your path and gaining <style=cIsUtility>Defiance</style>. Recast to end early, converting all <color=#9B3737>Heart</color> to <style=cIsHealing>health</style>.");
             Language.Add("KEYWORD_DEFIANCE", "<style=cKeywordName>Defiance</style><style=cSub>While active, incoming damage <style=cIsUtility>cannot reduce you below 1 health</style> and you are <style=cIsUtility>unstoppable</style>, but <style=cIsHealth>drains an increasing amount of Heart per second active</style>.</style>");
             #endregion
 
