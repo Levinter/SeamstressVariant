@@ -40,7 +40,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             {
                 float level = characterBody ? characterBody.level : 0f;
                 float requiredCost = SeamstressVariantConfig.GetBlinkHealthCostForLevel(level);
-                Log.Fatal ($"Calculated Blink Health Cost for Level {level}: {requiredCost}");
                 if (requiredCost > 0f && healthComponent)
                 {
                     float availableHealth = Mathf.Max(healthComponent.health - 1f, 0f);

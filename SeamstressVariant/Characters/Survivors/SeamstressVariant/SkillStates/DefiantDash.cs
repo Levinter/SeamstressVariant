@@ -11,8 +11,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
     public class DefiantDash : BaseSkillState
     {
         // Dash phase parameters
-        public float baseDuration = 0.1f;
-        public float dashPower = 3f;
+        public float baseDuration = 0.8f;
+        public float dashPower = 6f;
 
         // Sustained phase parameters (from DefiantHeart)
         public static float heartDrainPerTick = 1f;
@@ -23,7 +23,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         private OverlapAttack attack;
         private List<HurtBox> victimsStruck = new List<HurtBox>();
         private bool hasHit;
-        private GameObject uppercutEffect;
         private GameObject scissorHitImpactEffect;
 
         // OG VFX assets — null-safe, fall back to no-op if unavailable.
@@ -38,6 +37,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         private GameObject trailEffectR;
         private GameObject trailEffectL;
         private bool sustainedVisualActive;
+        private TemporaryOverlayInstance persistentDefianceOverlay;
+        private EffectManagerHelper defianceBleedEffect;
 
         // Dash phase state
         private Vector3 dashVector;
@@ -46,10 +47,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         // Sustained phase state
         private BleedingHeartComponent heart;
+        private HeartOverlayController heartOverlayController;
         private SetStateOnHurt setStateOnHurt;
         private float nextDrainAt;
         private float currentDrainPerTick;
         private bool canReactivate;
+        private bool transitioningToReactivate;
         private bool originalCanBeHitStunned;
         private bool originalCanBeStunned;
         private bool originalCanBeFrozen;
@@ -66,7 +69,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             bloodSplatterEffect = SeamstressAssets.bloodSplatterEffect;
             destealthMaterial = SeamstressAssets.destealthMaterial;
             mainColor = SeamstressAssets.coolRed;
-            uppercutEffect = SeamstressAssets.uppercutEffect;
             scissorHitImpactEffect = SeamstressAssets.scissorsHitImpactEffect;
 
             // Dash phase initialization
@@ -76,30 +78,32 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             // Sustained phase initialization
             heart = GetComponent<BleedingHeartComponent>();
+            heartOverlayController = GetComponent<HeartOverlayController>();
             setStateOnHurt = GetComponent<SetStateOnHurt>();
             nextDrainAt = heartDrainInterval;
             currentDrainPerTick = heartDrainPerTick;
             canReactivate = false;
+            transitioningToReactivate = false;
 
             if (characterMotor)
             {
                 characterMotor.disableAirControlUntilCollision = false;
             }
 
-            // Destealth overlay — same as OG.
+            // Keep destealth material active for the full Defiance state.
             Transform modelTransform = GetModelTransform();
             if (modelTransform)
             {
                 Animator anim = modelTransform.GetComponent<Animator>();
                 if (destealthMaterial && anim)
                 {
-                    TemporaryOverlayInstance overlay = TemporaryOverlayManager.AddOverlay(gameObject);
-                    overlay.duration = 1.2f;
-                    overlay.destroyComponentOnEnd = true;
-                    overlay.originalMaterial = destealthMaterial;
-                    overlay.inspectorCharacterModel = anim.gameObject.GetComponent<CharacterModel>();
-                    overlay.alphaCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
-                    overlay.animateShaderAlpha = true;
+                    persistentDefianceOverlay = TemporaryOverlayManager.AddOverlay(gameObject);
+                    persistentDefianceOverlay.duration = 9999f;
+                    persistentDefianceOverlay.destroyComponentOnEnd = true;
+                    persistentDefianceOverlay.originalMaterial = destealthMaterial;
+                    persistentDefianceOverlay.inspectorCharacterModel = anim.gameObject.GetComponent<CharacterModel>();
+                    persistentDefianceOverlay.alphaCurve = AnimationCurve.Linear(0f, 1f, 1f, 1f);
+                    persistentDefianceOverlay.animateShaderAlpha = true;
                 }
             }
 
@@ -152,6 +156,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     {
                         characterBody.AddBuff(SeamstressVariantBuffs.defianceBuff);
                     }
+
+                    ApplyDefianceBleedEffect();
 
                     dashVector = inputBank ? inputBank.aimDirection : characterDirection.forward;
 
@@ -243,11 +249,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             if (isAuthority && attack != null && attack.Fire(victimsStruck))
             {
                 hasHit = true;
-                Transform upperCutTransform = FindModelChild("UpperCut");
-                if (upperCutTransform && uppercutEffect)
-                {
-                    Object.Instantiate(uppercutEffect, upperCutTransform);
-                }
                 if (characterMotor)
                 {
                     characterMotor.velocity = Vector3.zero;
@@ -283,6 +284,42 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         // ============ Sustained Defiance Phase (formerly DefiantHeart) ============
 
+        private void ApplyDefianceBleedEffect()
+        {
+            if (defianceBleedEffect)
+            {
+                return;
+            }
+
+            GameObject bleedEffectPrefab = LegacyResourcesAPI.Load<GameObject>("Prefabs/BleedEffect");
+            if (!bleedEffectPrefab)
+            {
+                return;
+            }
+
+            defianceBleedEffect = EffectManager.GetAndActivatePooledEffect(bleedEffectPrefab, transform, true);
+        }
+
+        private void RemoveDefianceBleedEffect()
+        {
+            if (!defianceBleedEffect)
+            {
+                return;
+            }
+
+            if (defianceBleedEffect.OwningPool != null)
+            {
+                defianceBleedEffect.transform.SetParent(null);
+                defianceBleedEffect.ReturnToPool();
+            }
+            else
+            {
+                Object.Destroy(defianceBleedEffect.gameObject);
+            }
+
+            defianceBleedEffect = null;
+        }
+
         private void EnterSustainedPhase()
         {
             if (heart == null || !heart.CanSustainDefiantHeart())
@@ -301,6 +338,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             {
                 PlayAnimation("Gesture, Override", "BufferEmpty");
                 ApplyDefianceVisuals();
+            }
+
+            if (heartOverlayController != null)
+            {
+                heartOverlayController.SetHeartDrainActive(true);
             }
         }
 
@@ -324,6 +366,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             if (canReactivate && inputBank != null && inputBank.skill4.down)
             {
+                transitioningToReactivate = true;
                 outer.SetNextState(new DefiantDashReactivate());
                 return;
             }
@@ -355,7 +398,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             foreach (BuffIndex buffIndex in BuffCatalog.debuffBuffIndices)
             {
-                if (characterBody.HasBuff(buffIndex))
+                if (characterBody.HasBuff(buffIndex) && buffIndex != (BuffIndex)236) // Index 236 is from the extra life shrine
                 {
                     characterBody.SetBuffCount(buffIndex, 0);
                 }
@@ -502,6 +545,19 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         public override void OnExit()
         {
+            if (heartOverlayController != null)
+            {
+                heartOverlayController.SetHeartDrainActive(false);
+            }
+
+            RemoveDefianceBleedEffect();
+
+            if (persistentDefianceOverlay != null)
+            {
+                persistentDefianceOverlay.Destroy();
+                persistentDefianceOverlay = null;
+            }
+
             if (NetworkServer.active)
             {
                 RestoreStateImmunities();
@@ -511,8 +567,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     int defianceCount = characterBody.GetBuffCount(SeamstressVariantBuffs.defianceBuff);
                     if (defianceCount > 0)
                     {
-                        Log.Fatal("DEFIANT HEART ONEXIT CALL");
-                        characterBody.SetBuffCount(SeamstressVariantBuffs.defianceBuff.buffIndex, 0);
+                        if (!transitioningToReactivate)
+                        {
+                            characterBody.SetBuffCount(SeamstressVariantBuffs.defianceBuff.buffIndex, 0);
+                        }
                         RemoveDefianceVisuals();
                     }
                 }

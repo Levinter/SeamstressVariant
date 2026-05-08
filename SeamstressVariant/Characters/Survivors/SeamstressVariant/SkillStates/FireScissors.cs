@@ -120,13 +120,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             if (isAuthority)
             {
-                // Aim toward the locked target when available; otherwise use the raw aim ray.
+                // Launch along the aim ray. Homing is handled by projectile steering components.
                 Quaternion fireRotation = Util.QuaternionSafeLookRotation(aimRay.direction);
                 GameObject targetObject = null;
                 if (_lockedTarget)
                 {
-                    fireRotation = Util.QuaternionSafeLookRotation(
-                        _lockedTarget.transform.position - aimRay.origin);
                     targetObject = _lockedTarget.healthComponent.body.gameObject;
                 }
 

@@ -1,5 +1,7 @@
-﻿using RoR2;
+﻿using Mono.Cecil;
+using RoR2;
 using RoR2.Skills;
+using Survariants;
 using System;
 using UnityEngine;
 
@@ -48,6 +50,29 @@ namespace SeamstressVariant.Modules
             survivorDef.unlockableDef = unlockableDef;
 
             Modules.Content.AddSurvivorDef(survivorDef);
+
+            if (bodyPrefab != null)
+            {
+                SurvivorVariantDef variant = ScriptableObject.CreateInstance<SurvivorVariantDef>();
+
+                (variant as ScriptableObject).name = "SeamstressVariant";
+
+                variant.DisplayName = "Seamstress Variant";
+                variant.VariantSurvivor = survivorDef;
+                variant.Color = charColor;
+                SurvivorDef ogSeamstressDef = SeamstressMod.Modules.ContentPacks.survivorDefs[0];
+                variant.TargetSurvivor = ogSeamstressDef;
+                variant.Description = "Seamstress Variant";
+
+                SurvivorVariantCatalog.AddSurvivorVariant(variant);
+
+                survivorDef.hidden = true;
+            }
+            else
+            {
+                Log.Error("SeamstressVariant: bodyPrefab is null, skipping SurvivorVariantDef registration.");
+            }
+
         }
 
         internal static void AddUnlockableDef(UnlockableDef unlockableDef)

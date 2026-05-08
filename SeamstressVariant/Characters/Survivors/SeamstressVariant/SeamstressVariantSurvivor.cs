@@ -3,6 +3,7 @@ using SeamstressVariant.Modules;
 using SeamstressVariant.Modules.Characters;
 using RoR2;
 using RoR2.Skills;
+
 using SeamstressVariant;
 using System;
 using System.Collections.Generic;
@@ -31,7 +32,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             bodyNameToken = SEAMSTRESS_VARIANT_PREFIX + "NAME",
             subtitleNameToken = SEAMSTRESS_VARIANT_PREFIX + "SUBTITLE",
 
-            characterPortrait = null,
+            characterPortrait = SeamstressMod.Seamstress.Content.SeamstressAssets.mainAssetBundle.LoadAsset<Sprite>("texSeamstressIcon").texture,
             bodyColor = Color.white,
             sortPosition = 100,
 
@@ -84,6 +85,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             //    return;
 
             base.Initialize();
+
         }
         
         public override void InitializeCharacter()
@@ -126,6 +128,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             // Add tracker — drives the Huntress tracking indicator and is read by FireScissors on cast.
             bodyPrefab.AddComponent<SeamstressTracker>();
+
+            // Add Defiance knockback controller for body flag toggling during buff.
+            bodyPrefab.AddComponent<DefianceKnockbackController>();
             //anything else here
         }
 
@@ -176,8 +181,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 enabled = true,
                 skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "PASSIVE_NAME",
                 skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "PASSIVE_DESCRIPTION",
-                keywordToken = "KEYWORD_HEART",
-                icon = null,
+                keywordToken = "KEYWORD_HEART_HEMORRHAGE",
+                icon = assetBundle.LoadAsset<Sprite>("texItHungersIcon"),
             };
         }
 
@@ -193,7 +198,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                     "HenrySlash",
                     SEAMSTRESS_VARIANT_PREFIX + "PRIMARY_SLASH_NAME",
                     SEAMSTRESS_VARIANT_PREFIX + "PRIMARY_SLASH_DESCRIPTION",
-                    null,
+                    assetBundle.LoadAsset<Sprite>("texFlurryIcon"),
                     new EntityStates.SerializableEntityStateType(typeof(SkillStates.ClawCombo)),
                     "Weapon",
                     true
@@ -209,22 +214,22 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         {
             Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Secondary);
 
-            SkillDef secondarySkillDef1 = Skills.CreateSkillDef(new SkillDefInfo
+            SkillDef secondarySkillDef1 = Skills.CreateSkillDef<SeamstressTrackingSkillDef>(new SkillDefInfo
             {
                 skillName = "FireScissors",
                 skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "SECONDARY_SCISSORS_NAME",
                 skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "SECONDARY_SCISSORS_DESCRIPTION",
-                keywordTokens = new string[] { },
-                skillIcon = null,
+                keywordTokens = new string[] { "KEYWORD_SYMBIOTIC" },
+                skillIcon =  assetBundle.LoadAsset<Sprite>("texSkewerIcon"),
 
                 activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.FireScissors)),
                 activationStateMachineName = "Weapon",
                 interruptPriority = EntityStates.InterruptPriority.PrioritySkill,
 
-                baseRechargeInterval = 8f,
+                baseRechargeInterval = 10f,
                 baseMaxStock = 2,
 
-                rechargeStock = 1,
+                rechargeStock = 2,
                 requiredStock = 1,
                 stockToConsume = 1,
 
@@ -254,7 +259,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 skillName = "HenryBlink",
                 skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "UTILITY_BLINK_NAME",
                 skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "UTILITY_BLINK_DESCRIPTION",
-                skillIcon = null,
+                skillIcon = assetBundle.LoadAsset<Sprite>("texImpTouchedIcon"),
 
                 activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.Blink)),
                 activationStateMachineName = "Body",
@@ -292,11 +297,13 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 skillName = "HenryDefiantDash",
                 skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "SPECIAL_DEFIANT_DASH_NAME",
                 skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "SPECIAL_DEFIANT_DASH_DESCRIPTION",
-                skillIcon = null,
+                skillIcon = assetBundle.LoadAsset<Sprite>("texGlimpseOfPurityIcon"),
 
                 activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.DefiantDash)),
                 activationStateMachineName = "Special",
                 interruptPriority = EntityStates.InterruptPriority.Skill,
+
+                keywordTokens = new string[] { "KEYWORD_DEFIANCE", "KEYWORD_HEART" },
 
                 baseMaxStock = 1,
                 baseRechargeInterval = 16f,
@@ -318,7 +325,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             ModelSkinController skinController = prefabCharacterModel.gameObject.GetComponent<ModelSkinController>()
                 ?? prefabCharacterModel.gameObject.AddComponent<ModelSkinController>();
 
-            SkinDef defaultSkin = Skins.CreateSkinDef("DEFAULT_SKIN", null, prefabCharacterModel.baseRendererInfos, prefabCharacterModel.gameObject);
+            SkinDef defaultSkin = Skins.CreateSkinDef("DEFAULT_SKIN", assetBundle.LoadAsset<Sprite>("texMainSkin"), prefabCharacterModel.baseRendererInfos, prefabCharacterModel.gameObject);
             skinController.skins = new[] { defaultSkin };
         }
         #endregion skins
@@ -343,20 +350,58 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         {
             On.RoR2.HealthComponent.Heal += HealthComponent_Heal;
             On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
-            R2API.RecalculateStatsAPI.GetStatCoefficients += RecalculateStatsAPI_GetStatCoefficients;
+            GlobalEventManager.onServerDamageDealt += GlobalEventManager_onServerDamageDealt;
         }
 
-        private void RecalculateStatsAPI_GetStatCoefficients(CharacterBody sender, R2API.RecalculateStatsAPI.StatHookEventArgs args)
+        private void GlobalEventManager_onServerDamageDealt(DamageReport report)
         {
-            var heart = sender.GetComponent<BleedingHeartComponent>();
+            DamageInfo damageInfo = report?.damageInfo;
+            CharacterBody attackerBody = report?.attackerBody;
+            CharacterBody victimBody = report?.victimBody;
 
-            if (heart != null)
+            if (attackerBody == null || victimBody == null || damageInfo == null)
             {
-                //base bleed chance
-                args.bleedChanceAdd = 10;
-                // 1% bleed chance per x(config) Heart.
-                args.bleedChanceAdd += heart.GetBleedChanceBonusFromHeart();
+                return;
             }
+
+            if (attackerBody.bodyIndex != BodyCatalog.FindBodyIndex(bodyName))
+            {
+                return;
+            }
+
+            if (damageInfo.damage <= 0f || damageInfo.procCoefficient <= 0f)
+            {
+                return;
+            }
+
+            if ((damageInfo.damageType & DamageType.DoT) != 0 || damageInfo.dotIndex != DotController.DotIndex.None)
+            {
+                return;
+            }
+
+            BleedingHeartComponent heart = attackerBody.GetComponent<BleedingHeartComponent>();
+            if (heart == null)
+            {
+                return;
+            }
+
+            float hemorrhageChance = heart.GetBleedChanceBonusFromHeart();
+            if (!Util.CheckRoll(hemorrhageChance * damageInfo.procCoefficient, attackerBody.master))
+            {
+                return;
+            }
+
+            InflictDotInfo inflictDotInfo = new InflictDotInfo
+            {
+                victimObject = victimBody.gameObject,
+                attackerObject = attackerBody.gameObject,
+                hitHurtBox = damageInfo.inflictedHurtbox,
+                dotIndex = DotController.DotIndex.SuperBleed,
+                duration = 15f * damageInfo.procCoefficient,
+                damageMultiplier = 1f
+            };
+
+            DotController.InflictDot(ref inflictDotInfo);
         }
 
         private float HealthComponent_Heal(On.RoR2.HealthComponent.orig_Heal orig, HealthComponent self, float amount, ProcChainMask procChainMask, bool nonRegen)

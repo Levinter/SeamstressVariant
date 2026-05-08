@@ -97,13 +97,19 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         }
 
         /// <summary>
-        /// Called by FireScissors when a blade is launched. Removes the corresponding buff
-        /// immediately and records which side was fired for restoration ordering.
+        /// Called by FireScissors when a blade is launched. Records which side was fired for
+        /// restoration ordering, and only removes a scissor if we're in the final two stocks.
+        /// This keeps both scissors available while surplus stocks (3+) are being spent.
         /// </summary>
         public void OnScissorFired(bool isLeft)
         {
             if (!NetworkServer.active) return;
             lastFiredLeft = isLeft;
+
+            GenericSkill secondary = characterBody?.skillLocator?.secondary;
+            if (secondary != null && secondary.stock >= 2)
+                return;
+
             if (isLeft)
                 SetLeftScissor(false);
             else
