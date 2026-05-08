@@ -23,7 +23,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         public static GameObject scissorRProjectile;
 
         // Homing tuning: lower rotation speed produces wider, smoother arcs.
-        private const float ScissorHomingRotationSpeed = 200f;
+        private const float ScissorHomingRotationSpeed = 250f;
         // Lower travel speed gives the projectile more time to arc into the target.
         private const float ScissorProjectileTravelSpeed = 90f;
         // This only matters when no target is already assigned at spawn.
@@ -181,7 +181,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             {
                 impactExplosion.impactEffect = scissorImpactEffect ? scissorImpactEffect : SeamstressAssets.blinkEffect;
                 //impactExplosion.explosionEffect = SeamstressAssets.genericImpactExplosionEffect;
-                impactExplosion.blastDamageCoefficient = SeamstressVariantStaticValues.scissorDamageCoefficient;
+                impactExplosion.blastDamageCoefficient = SeamstressVariantStaticValues.scissorExplosionFromImpactMultiplier;
                 impactExplosion.blastProcCoefficient = 1f;
                 impactExplosion.blastRadius = 5f;
                 impactExplosion.destroyOnWorld = true;
