@@ -35,9 +35,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private const float ThemePerfLogInterval = 10f;
         private static readonly int overlayValueParamHash = Animator.StringToHash("corruption");
         private static readonly int overlayDrainStateParamHash = Animator.StringToHash("isCorrupted");
-        // Use high-contrast defaults to validate runtime recolor; tune these once confirmed.
-        private static readonly Color overlayFillColor = Color.red;
-        private static readonly Color overlayTextColor = Color.red;
+        private static readonly Color overlayWineColor = new Color32(196, 66, 82, 255);
+        private static readonly Color overlayDrainColor = Color.red;
 
         private int themeApplyCallCount;
         private float themeApplyTotalMs;
@@ -66,6 +65,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             }
 
             heartDrainActive = active;
+            ApplyThemeToOverlayInstances();
             ApplyOverlayStateToTrackedInstances();
         }
 
@@ -110,7 +110,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 if (image.type == Image.Type.Filled)
                 {
                     Color fillColor = image.color;
-                    image.color = new Color(overlayFillColor.r, overlayFillColor.g, overlayFillColor.b, fillColor.a);
+                    image.color = new Color(overlayWineColor.r, overlayWineColor.g, overlayWineColor.b, fillColor.a);
                 }
             }
 
@@ -119,7 +119,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 if (valueText != null)
                 {
                     Color textColor = valueText.color;
-                    valueText.color = new Color(overlayTextColor.r, overlayTextColor.g, overlayTextColor.b, textColor.a);
+                    valueText.color = new Color(overlayWineColor.r, overlayWineColor.g, overlayWineColor.b, textColor.a);
                 }
             }
         }
@@ -265,6 +265,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
         private void ApplyThemeToOverlayInstances()
         {
+            Color targetColor = heartDrainActive ? overlayDrainColor : overlayWineColor;
+
             for (int i = overlayThemeCaches.Count - 1; i >= 0; i--)
             {
                 OverlayThemeCache cache = overlayThemeCaches[i];
@@ -274,7 +276,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                     continue;
                 }
 
-                ApplyThemeToOverlayCache(cache);
+                ApplyThemeToOverlayCache(cache, targetColor, targetColor);
             }
         }
 
@@ -307,7 +309,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             return -1;
         }
 
-        private static void ApplyThemeToOverlayInstance(GameObject instance)
+        private void ApplyThemeToOverlayInstance(GameObject instance)
         {
             Image[] allImages = instance.GetComponentsInChildren<Image>(true);
             List<Image> filledImages = new List<Image>();
@@ -326,17 +328,18 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 texts = instance.GetComponentsInChildren<TextMeshProUGUI>(true)
             };
 
-            ApplyThemeToOverlayCache(tempCache);
+            Color targetColor = heartDrainActive ? overlayDrainColor : overlayWineColor;
+            ApplyThemeToOverlayCache(tempCache, targetColor, targetColor);
         }
 
-        private static void ApplyThemeToOverlayCache(OverlayThemeCache cache)
+        private static void ApplyThemeToOverlayCache(OverlayThemeCache cache, Color fillTargetColor, Color textTargetColor)
         {
             foreach (Image image in cache.filledImages)
             {
                 if (image == null) continue;
 
                 Color fillColor = image.color;
-                Color themedFillColor = new Color(overlayFillColor.r, overlayFillColor.g, overlayFillColor.b, fillColor.a);
+                Color themedFillColor = new Color(fillTargetColor.r, fillTargetColor.g, fillTargetColor.b, fillColor.a);
                 if (fillColor != themedFillColor)
                 {
                     image.color = themedFillColor;
@@ -350,7 +353,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 if (valueText == null) continue;
 
                 Color textColor = valueText.color;
-                Color themedTextColor = new Color(overlayTextColor.r, overlayTextColor.g, overlayTextColor.b, textColor.a);
+                Color themedTextColor = new Color(textTargetColor.r, textTargetColor.g, textTargetColor.b, textColor.a);
                 if (textColor != themedTextColor)
                 {
                     valueText.color = themedTextColor;
@@ -358,9 +361,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
                 Color32 faceColor = valueText.faceColor;
                 Color32 themedFaceColor = new Color32(
-                    (byte)Mathf.RoundToInt(overlayTextColor.r * 255f),
-                    (byte)Mathf.RoundToInt(overlayTextColor.g * 255f),
-                    (byte)Mathf.RoundToInt(overlayTextColor.b * 255f),
+                    (byte)Mathf.RoundToInt(textTargetColor.r * 255f),
+                    (byte)Mathf.RoundToInt(textTargetColor.g * 255f),
+                    (byte)Mathf.RoundToInt(textTargetColor.b * 255f),
                     faceColor.a);
                 if (!faceColor.Equals(themedFaceColor))
                 {

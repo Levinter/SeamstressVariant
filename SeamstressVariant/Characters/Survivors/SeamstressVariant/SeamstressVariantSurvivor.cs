@@ -128,6 +128,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             // Add tracker — drives the Huntress tracking indicator and is read by FireScissors on cast.
             bodyPrefab.AddComponent<SeamstressTracker>();
+
+            // Add Defiance knockback controller for body flag toggling during buff.
+            bodyPrefab.AddComponent<DefianceKnockbackController>();
             //anything else here
         }
 
