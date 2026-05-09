@@ -417,7 +417,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
         private float HealthComponent_Heal(On.RoR2.HealthComponent.orig_Heal orig, HealthComponent self, float amount, ProcChainMask procChainMask, bool nonRegen)
         {
-            if (self.body.bodyIndex == BodyCatalog.FindBodyIndex("SeamstressVariantBody") && self.alive){
+            if (self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName) && self.alive){
                 float previousHealth = self.health;
                 float incomingHeal = Mathf.Max(0f, amount);
                 float healed = orig(self, amount, procChainMask, nonRegen);
@@ -444,7 +444,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         {
             if (self != null
                 && self.body != null
-                && self.body.bodyIndex == BodyCatalog.FindBodyIndex("SeamstressVariantBody")
+                && self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName)
                 && self.body.HasBuff(SeamstressVariantBuffs.defianceBuff)
                 && damageInfo != null
                 && damageInfo.damage > 0f)
