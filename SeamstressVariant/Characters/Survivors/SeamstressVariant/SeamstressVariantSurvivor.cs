@@ -351,6 +351,17 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             On.RoR2.HealthComponent.Heal += HealthComponent_Heal;
             On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
             GlobalEventManager.onServerDamageDealt += GlobalEventManager_onServerDamageDealt;
+            On.RoR2.HealthComponent.GetHealthBarValues += HealthComponent_GetHealthBarValues;
+        }
+
+        private HealthComponent.HealthBarValues HealthComponent_GetHealthBarValues(On.RoR2.HealthComponent.orig_GetHealthBarValues orig, HealthComponent self)
+        {
+            HealthComponent.HealthBarValues values = orig(self);
+            if (self.body != null && self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName))
+            {
+                values.hasInfusion = true;
+            }
+            return values;
         }
 
         private void GlobalEventManager_onServerDamageDealt(DamageReport report)

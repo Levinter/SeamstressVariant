@@ -540,8 +540,18 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 exitOverlay.animateShaderAlpha = true;
             }
 
+            if (SeamstressVariantAssets.defianceEndEffect && characterBody)
+            {
+                EffectManager.SpawnEffect(SeamstressVariantAssets.defianceEndEffect, new EffectData
+                {
+                    origin = characterBody.corePosition,
+                    rotation = Quaternion.identity,
+                    scale = 1f
+                }, true);
+            }
+
             // End sound
-            Util.PlaySound("Play_voidman_transform_return", gameObject);
+            //Util.PlaySound("Play_voidman_transform_return", gameObject);
         }
 
         public override void OnExit()
