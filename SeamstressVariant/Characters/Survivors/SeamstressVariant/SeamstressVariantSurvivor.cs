@@ -1,15 +1,11 @@
-﻿using BepInEx.Configuration;
-using SeamstressVariant.Modules;
+﻿using SeamstressVariant.Modules;
 using SeamstressVariant.Modules.Characters;
 using RoR2;
 using RoR2.Skills;
 
 using SeamstressVariant;
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 using SeamstressVariant.Survivors.SeamstressVariant.Components;
-using System.Runtime.CompilerServices;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant
 {
@@ -37,7 +33,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             sortPosition = 100,
 
             crosshair = Asset.LoadCrosshair("SimpleDot"),
-            podPrefab = LegacyResourcesAPI.Load<GameObject>("Prefabs/NetworkedObjects/SurvivorPod"),
+            podPrefab = null,
 
             maxHealth = 110f,
             healthRegen = 1.5f,
@@ -117,7 +113,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             AddHitboxes();
             
             // Add heart component for passive
-            BleedingHeartComponent heart = bodyPrefab.AddComponent<BleedingHeartComponent>();
+            bodyPrefab.AddComponent<BleedingHeartComponent>();
             // maxHeart will be set to character's max health in Start()
 
             // Add overlay controller to drive the Heart meter UI (reuses VoidSurvivor corruption bar)
@@ -151,9 +147,13 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             Prefabs.ClearEntityStateMachines(bodyPrefab);
 
             //the main "Body" state machine has some special properties
-            Prefabs.AddMainEntityStateMachine(bodyPrefab, "Body", typeof(EntityStates.GenericCharacterMain), typeof(EntityStates.SpawnTeleporterState));
+            // Use our custom spawn state now that this body does not use a survivor pod.
+            Prefabs.AddMainEntityStateMachine(bodyPrefab, "Body", typeof(EntityStates.GenericCharacterMain), typeof(SkillStates.SeamstressSpawnState));
             //if you set up a custom main characterstate, set it up here
                 //don't forget to register custom entitystates in your HenryStates.cs
+
+            // Keep preferred initial state aligned with body machine setup.
+            bodyPrefab.GetComponent<CharacterBody>().preferredInitialStateType = new EntityStates.SerializableEntityStateType(typeof(SkillStates.SeamstressSpawnState));
 
             Prefabs.AddEntityStateMachine(bodyPrefab, "Weapon");
             Prefabs.AddEntityStateMachine(bodyPrefab, "Weapon2");
