@@ -5,6 +5,7 @@ using RoR2.Skills;
 
 using SeamstressVariant;
 using UnityEngine;
+using UnityEngine.Networking;
 using SeamstressVariant.Survivors.SeamstressVariant.Components;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant
@@ -303,10 +304,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 activationStateMachineName = "Special",
                 interruptPriority = EntityStates.InterruptPriority.Skill,
 
-                keywordTokens = new string[] { "KEYWORD_DEFIANCE", "KEYWORD_HEART" },
+                keywordTokens = new string[] { "KEYWORD_DEFIANCE" },
 
                 baseMaxStock = 1,
-                baseRechargeInterval = 16f,
+                baseRechargeInterval = 10f,
                 beginSkillCooldownOnSkillEnd = true,
 
                 isCombatSkill = true,
@@ -422,7 +423,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 float incomingHeal = Mathf.Max(0f, amount);
                 float healed = orig(self, amount, procChainMask, nonRegen);
 
-                if (incomingHeal > 0f)
+                if (incomingHeal > 0f && NetworkServer.active)
                 {
                     var heart = self.GetComponent<BleedingHeartComponent>();
                     
@@ -430,7 +431,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                     {
                         // Redirect attempted healing into Heart, even when HP is already full.
                         heart.AddToHeart(incomingHeal);
-                        self.health = previousHealth;
+                        self.Networkhealth = previousHealth;
                     }
                 }
 

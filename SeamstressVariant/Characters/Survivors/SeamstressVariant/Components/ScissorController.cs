@@ -1,7 +1,6 @@
 using RoR2;
 using RoR2.Skills;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 {
@@ -50,17 +49,19 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 }
             }
 
-            // Apply both scissor buffs on spawn so buff bar and ClawCombo see them immediately.
-            if (NetworkServer.active && characterBody != null)
+            if (_scissorLModel)
             {
-                if (_scissorLModel) _scissorLModel.SetActive(HasLeftScissor);
-                if (_scissorRModel) _scissorRModel.SetActive(HasRightScissor);
+                _scissorLModel.SetActive(HasLeftScissor);
+            }
+
+            if (_scissorRModel)
+            {
+                _scissorRModel.SetActive(HasRightScissor);
             }
         }
 
         private void FixedUpdate()
         {
-            if (!NetworkServer.active) return;
             if (characterBody == null) return;
 
             GenericSkill secondary = characterBody.skillLocator?.secondary;
@@ -103,7 +104,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         /// </summary>
         public void OnScissorFired(bool isLeft)
         {
-            if (!NetworkServer.active) return;
             lastFiredLeft = isLeft;
 
             GenericSkill secondary = characterBody?.skillLocator?.secondary;

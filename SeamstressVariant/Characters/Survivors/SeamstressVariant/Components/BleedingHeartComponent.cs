@@ -8,23 +8,25 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
     /// Redirects incoming healing into Heart that can be used as a resource for skills.
     /// The Heart builds up from healing received and can be consumed by abilities.
     /// </summary>
-    internal class BleedingHeartComponent : MonoBehaviour
+    internal class BleedingHeartComponent : NetworkBehaviour
     {
         private HealthComponent healthComponent;
         private CharacterBody body;
 
         // Heart settings
-        private float MaxHeart = 110f;
+        [SyncVar(hook = nameof(OnMaxHeartChanged))]
+        public float MaxHeart = 110f;
+        [SyncVar(hook = nameof(OnCurrentHeartChanged))]
         public float currentHeart = 0f;
         private int activeBleedStacks = 0;
         private int nearbyEnemyCount = 0;
-        private const float NearbyEnemyRadius = 20f;
+        private const float NearbyEnemyRadius = 30f;
         private float scanTimer = 0f;
         private float healTimer = 0f;
         private const float ScanInterval = 1f;
-        private const float HealInterval = 0.25f;
-        private const float HealPerBleedStack = 1f;
-        private const int HeartPerBleedChancePercent = 100;
+        private const float HealInterval = 0.20f;
+        private const float HealPerBleedStack = 2f;
+        private const int HeartPerBleedChancePercent = 75;
 
         private bool isInitialized = false;
 
@@ -35,7 +37,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
             if (healthComponent != null)
             {
-                MaxHeart = healthComponent.fullHealth;
+                if (NetworkServer.active)
+                {
+                    MaxHeart = healthComponent.fullHealth;
+                }
                 isInitialized = true;
             }
         }
@@ -83,6 +88,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         // Update maxHeart when maxHealth increased
         private void OnBodyRecalculateStates(CharacterBody body)
         {
+            if (!NetworkServer.active) return;
             MaxHeart = body.maxHealth;
             //Log.Debug("MaxHeart = " + MaxHeart);
         }
@@ -149,6 +155,20 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             return activeBleedStacks;
         }
 
+        public void OnCurrentHeartChanged(float newValue)
+        {
+            currentHeart = newValue;
+            if(body)
+            {
+                body.MarkAllStatsDirty();
+            }
+        }
+
+        public void OnMaxHeartChanged(float newValue)
+        {
+            MaxHeart = newValue;
+        }
+        
         public int GetNearbyEnemyCount()
         {
             return nearbyEnemyCount;

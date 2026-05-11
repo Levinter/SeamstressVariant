@@ -10,6 +10,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 {
     public class Blink : BaseSkillState
     {
+        private const float BlinkDistance = 15f;
+        private const float ExitMomentumFraction = 0.15f;
+
         protected Transform modelTransform;
 
         public static string beginSoundString = "Play_imp_attack_blink";
@@ -32,7 +35,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             hasAimRequest = false;
 
-            duration = SeamstressVariantConfig.utilityBlinkDuration.Value;
+            duration = 0.1f;
 
             // Guard against buffered inputs firing after health recovers.
             // If the authority doesn't have enough health + heart to cover the cost, cancel immediately.
@@ -65,13 +68,13 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     if (availableHealth >= totalCost)
                     {
                         // Health alone can cover the cost.
-                        healthComponent.health -= totalCost;
+                        healthComponent.Networkhealth = Mathf.Max(healthComponent.health - totalCost, 1f);
                     }
                     else
                     {
                         // Drain health to floor, then pull the remainder from Heart.
                         float remainder = totalCost - availableHealth;
-                        healthComponent.health = 1f;
+                        healthComponent.Networkhealth = 1f;
 
                         BleedingHeartComponent heart = characterBody.GetComponent<BleedingHeartComponent>();
                         if (heart != null)
@@ -127,20 +130,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             CreateBlinkEffect(characterBody.corePosition, true);
 
-            int itemCount = characterBody.inventory ? characterBody.inventory.GetItemCountEffective(RoR2Content.Items.JumpBoost) : 0;
-            float sprintBonus = 1f;
-            if (itemCount > 0 && characterBody.isSprinting)
-            {
-                float accelControl = characterBody.acceleration * characterMotor.airControl;
-                if (characterBody.moveSpeed > 0f && accelControl > 0f)
-                {
-                    float stride = Mathf.Sqrt(10f * itemCount / accelControl);
-                    float speedRatio = characterBody.moveSpeed / accelControl;
-                    sprintBonus = (stride + speedRatio) / speedRatio;
-                }
-            }
-
-            speedCoefficient = 0.5f * characterBody.jumpPower * Mathf.Clamp(characterBody.moveSpeed * sprintBonus / 4f, 5f, 20f);
+            speedCoefficient = duration > 0f ? BlinkDistance / duration : 0f;
 
             gameObject.layer = LayerIndex.fakeActor.intVal;
             if (characterMotor)
@@ -224,6 +214,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             if (characterMotor)
             {
                 ((BaseCharacterController)characterMotor).Motor.RebuildCollidableLayers();
+                characterMotor.velocity = blinkVector * (speedCoefficient * ExitMomentumFraction);
             }
 
             if (!outer.destroying)

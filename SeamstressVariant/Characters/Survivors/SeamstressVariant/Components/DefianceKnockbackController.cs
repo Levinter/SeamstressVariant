@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Networking;
 using RoR2;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant.Components
@@ -24,13 +23,17 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 return;
             }
 
-            previousBuffCount = 0;
+            // Initialize from current replicated buff state in case this component starts mid-Defiance.
+            previousBuffCount = characterBody.GetBuffCount(SeamstressVariantBuffs.defianceBuff);
+            if (previousBuffCount > 0)
+            {
+                ApplyDefianceFlags();
+            }
         }
 
         private void Update()
         {
-            // Only apply body flag changes on the server.
-            if (!NetworkServer.active || characterBody == null)
+            if (characterBody == null)
             {
                 return;
             }
@@ -52,6 +55,15 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
                 previousBuffCount = currentBuffCount;
             }
+        }
+
+        private void OnDisable()
+        {
+            if (characterBody != null && appliedBodyFlags != 0)
+            {
+                RestoreDefianceFlags();
+            }
+            previousBuffCount = 0;
         }
 
         private void ApplyDefianceFlags()
