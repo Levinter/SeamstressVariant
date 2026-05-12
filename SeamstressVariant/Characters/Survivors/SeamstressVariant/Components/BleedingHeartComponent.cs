@@ -181,7 +181,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 return;
             }
 
-            TeamIndex myTeam = TeamComponent.GetObjectTeam(body.gameObject);
             Vector3 center = body.footPosition;
             float radiusSqr = NearbyEnemyRadius * NearbyEnemyRadius;
             int enemyCount = 0;
@@ -189,10 +188,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
             foreach (CharacterBody otherBody in CharacterBody.readOnlyInstancesList)
             {
-                if (!CountsAsNearbyEnemy(otherBody, myTeam))
+                /*if (!CountsAsNearbyCharacter(otherBody))
                 {
                     continue;
-                }
+                }*/
 
                 Vector3 delta = otherBody.footPosition - center;
                 if (delta.sqrMagnitude <= radiusSqr)
@@ -219,15 +218,14 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             //Log.Debug("Passive heal: " + healAmount + " (" + activeBleedStacks + " stacks)");
         }
 
-        private bool CountsAsNearbyEnemy(CharacterBody otherBody, TeamIndex myTeam)
+        private bool CountsAsNearbyCharacter(CharacterBody otherBody)
         {
             if (otherBody == null || otherBody == body || otherBody.healthComponent == null || !otherBody.healthComponent.alive)
             {
                 return false;
             }
 
-            TeamIndex otherTeam = TeamComponent.GetObjectTeam(otherBody.gameObject);
-            return otherTeam != TeamIndex.None && otherTeam != myTeam;
+            return true;
         }
     }
 }

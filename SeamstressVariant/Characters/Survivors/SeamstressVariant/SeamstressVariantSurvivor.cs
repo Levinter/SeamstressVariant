@@ -304,7 +304,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 activationStateMachineName = "Special",
                 interruptPriority = EntityStates.InterruptPriority.Skill,
 
-                keywordTokens = new string[] { "KEYWORD_DEFIANCE" },
+                keywordTokens = new string[] { "KEYWORD_DEFIANCE", "KEYWORD_UNSTOPPABLE" },
 
                 baseMaxStock = 1,
                 baseRechargeInterval = 10f,
@@ -397,7 +397,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 return;
             }
 
-            float hemorrhageChance = heart.GetBleedChanceBonusFromHeart();
+            float hemorrhageChance = 1f + heart.GetBleedChanceBonusFromHeart();
+            Log.Debug("Hemorrhage chance: " + hemorrhageChance * damageInfo.procCoefficient + "%");
             if (!Util.CheckRoll(hemorrhageChance * damageInfo.procCoefficient, attackerBody.master))
             {
                 return;

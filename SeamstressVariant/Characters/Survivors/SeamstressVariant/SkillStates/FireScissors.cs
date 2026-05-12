@@ -21,7 +21,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
     public class FireScissors : BaseSkillState
     {
         public static float baseDuration = 0.5f;
-        public static float damageCoefficient = SeamstressVariantStaticValues.scissorImpactDamageCoefficient;
         public static float procCoefficient = 1f;
         public static float force = 0f;
 
@@ -134,7 +133,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     aimRay.origin,
                     fireRotation,
                     gameObject,
-                    damageStat * damageCoefficient,
+                    damageStat,
                     force,
                     Util.CheckRoll(critStat, characterBody.master),
                     DamageColorIndex.Default,

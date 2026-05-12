@@ -154,7 +154,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             {
                 targetFinder = proj.AddComponent<ProjectileDirectionalTargetFinder>();
             }
-            targetFinder.lookRange = 30f;
+            targetFinder.lookRange = 60f;
             targetFinder.lookCone = 60f;
             targetFinder.targetSearchInterval = ScissorTargetSearchInterval;
             targetFinder.onlySearchIfNoTarget = true;
@@ -181,7 +181,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             {
                 impactExplosion.impactEffect = scissorImpactEffect ? scissorImpactEffect : SeamstressAssets.blinkEffect;
                 //impactExplosion.explosionEffect = SeamstressAssets.genericImpactExplosionEffect;
-                impactExplosion.blastDamageCoefficient = SeamstressVariantStaticValues.scissorExplosionFromImpactMultiplier;
+                impactExplosion.blastDamageCoefficient = SeamstressVariantStaticValues.scissorExplosionDamageCoefficient;
                 impactExplosion.blastProcCoefficient = 1f;
                 impactExplosion.blastRadius = 5f;
                 impactExplosion.destroyOnWorld = true;

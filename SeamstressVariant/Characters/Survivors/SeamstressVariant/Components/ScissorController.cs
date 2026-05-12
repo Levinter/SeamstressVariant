@@ -1,6 +1,7 @@
 using RoR2;
 using RoR2.Skills;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 {
@@ -17,9 +18,18 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         // Cached references to the scissor model child GameObjects for visibility toggling.
         private GameObject _scissorLModel;
         private GameObject _scissorRModel;
+        private bool? _prevHasLeftScissor;
+        private bool? _prevHasRightScissor;
 
-        public bool HasLeftScissor { get; private set; } = true;
-        public bool HasRightScissor { get; private set; } = true;
+        public bool HasLeftScissor =>
+            characterBody != null
+            && SeamstressVariantBuffs.scissorLeftBuff != null
+            && characterBody.HasBuff(SeamstressVariantBuffs.scissorLeftBuff);
+
+        public bool HasRightScissor =>
+            characterBody != null
+            && SeamstressVariantBuffs.scissorRightBuff != null
+            && characterBody.HasBuff(SeamstressVariantBuffs.scissorRightBuff);
 
         // True when the last fired scissor was the left one.
         // Used by FixedUpdate to decide which buff to restore first.
@@ -49,20 +59,22 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 }
             }
 
-            if (_scissorLModel)
+            if (NetworkServer.active)
             {
-                _scissorLModel.SetActive(HasLeftScissor);
+                SetLeftScissor(true);
+                SetRightScissor(true);
             }
 
-            if (_scissorRModel)
-            {
-                _scissorRModel.SetActive(HasRightScissor);
-            }
+            UpdateScissorModelVisibility();
         }
 
         private void FixedUpdate()
         {
             if (characterBody == null) return;
+
+            UpdateScissorModelVisibility();
+
+            if (!NetworkServer.active) return;
 
             GenericSkill secondary = characterBody.skillLocator?.secondary;
             if (secondary == null) return;
@@ -97,6 +109,25 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             _lastKnownSecondaryStock = stock;
         }
 
+        private void UpdateScissorModelVisibility()
+        {
+            bool hasLeft = HasLeftScissor;
+            bool hasRight = HasRightScissor;
+
+            if (_scissorLModel && (_prevHasLeftScissor == null || _prevHasLeftScissor.Value != hasLeft))
+            {
+                _scissorLModel.SetActive(hasLeft);
+            }
+
+            if (_scissorRModel && (_prevHasRightScissor == null || _prevHasRightScissor.Value != hasRight))
+            {
+                _scissorRModel.SetActive(hasRight);
+            }
+
+            _prevHasLeftScissor = hasLeft;
+            _prevHasRightScissor = hasRight;
+        }
+
         /// <summary>
         /// Called by FireScissors when a blade is launched. Records which side was fired for
         /// restoration ordering, and only removes a scissor if we're in the final two stocks.
@@ -118,14 +149,34 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
         public void SetLeftScissor(bool active)
         {
-            HasLeftScissor = active;
-            if (_scissorLModel) _scissorLModel.SetActive(active);
+            if (!NetworkServer.active || characterBody == null || SeamstressVariantBuffs.scissorLeftBuff == null)
+                return;
+
+            bool hasBuff = characterBody.HasBuff(SeamstressVariantBuffs.scissorLeftBuff);
+            if (active)
+            {
+                if (!hasBuff) characterBody.AddBuff(SeamstressVariantBuffs.scissorLeftBuff);
+            }
+            else
+            {
+                if (hasBuff) characterBody.RemoveBuff(SeamstressVariantBuffs.scissorLeftBuff);
+            }
         }
 
         public void SetRightScissor(bool active)
         {
-            HasRightScissor = active;
-            if (_scissorRModel) _scissorRModel.SetActive(active);
+            if (!NetworkServer.active || characterBody == null || SeamstressVariantBuffs.scissorRightBuff == null)
+                return;
+
+            bool hasBuff = characterBody.HasBuff(SeamstressVariantBuffs.scissorRightBuff);
+            if (active)
+            {
+                if (!hasBuff) characterBody.AddBuff(SeamstressVariantBuffs.scissorRightBuff);
+            }
+            else
+            {
+                if (hasBuff) characterBody.RemoveBuff(SeamstressVariantBuffs.scissorRightBuff);
+            }
         }
     }
 }
