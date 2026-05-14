@@ -16,6 +16,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         public static GameObject swordHitImpactEffect;
         public static GameObject defianceEndEffect;
         public static GameObject scissorImpactEffect;
+        public static GameObject defiantTransformEnterEffect;
+        public static GameObject defiantTransformExitEffect;
+        public static CharacterCameraParams defiantTransformCameraParams;
 
         // Simplified scissor projectiles for the secondary skill.
         // Ghost visuals are stolen from the OG Seamstress scissor prefabs.
@@ -45,9 +48,58 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         {
             CreateDefianceEndEffect();
             CreateScissorImpactEffect();
+            CreateDefiantTransformEffects();
 
             // Register OG Seamstress effects used by ClawCombo so OverlapAttack can spawn them.
             Content.CreateAndAddEffectDef(SeamstressAssets.scissorsHitImpactEffect);
+        }
+
+        private static void CreateDefiantTransformEffects()
+        {
+            GameObject baseTransformEffect = Addressables
+                .LoadAssetAsync<GameObject>("RoR2/DLC1/VoidSurvivor/VoidSurvivorCorruptDeathCharge.prefab")
+                .WaitForCompletion();
+
+            if (baseTransformEffect)
+            {
+                defiantTransformEnterEffect = PrefabAPI.InstantiateClone(baseTransformEffect, "SeamstressVariantDefiantTransformEnterEffect");
+                defiantTransformExitEffect = PrefabAPI.InstantiateClone(baseTransformEffect, "SeamstressVariantDefiantTransformExitEffect");
+                EnsureEffectPrefabRequirements(defiantTransformEnterEffect);
+                EnsureEffectPrefabRequirements(defiantTransformExitEffect);
+
+                Content.CreateAndAddEffectDef(defiantTransformEnterEffect);
+                Content.CreateAndAddEffectDef(defiantTransformExitEffect);
+            }
+
+            defiantTransformCameraParams = Addressables
+                .LoadAssetAsync<CharacterCameraParams>("RoR2/DLC1/VoidSurvivor/ccpCorruptionTransitionCamera.asset")
+                .WaitForCompletion();
+        }
+
+        private static void EnsureEffectPrefabRequirements(GameObject effectPrefab)
+        {
+            if (!effectPrefab)
+            {
+                return;
+            }
+
+            if (!effectPrefab.GetComponent<EffectComponent>())
+            {
+                EffectComponent effectComponent = effectPrefab.AddComponent<EffectComponent>();
+                effectComponent.applyScale = true;
+            }
+
+            if (!effectPrefab.GetComponent<VFXAttributes>())
+            {
+                VFXAttributes attributes = effectPrefab.AddComponent<VFXAttributes>();
+                attributes.vfxIntensity = VFXAttributes.VFXIntensity.Medium;
+                attributes.vfxPriority = VFXAttributes.VFXPriority.Medium;
+            }
+
+            if (!effectPrefab.GetComponent<NetworkIdentity>())
+            {
+                effectPrefab.AddComponent<NetworkIdentity>();
+            }
         }
 
         private static void CreateScissorImpactEffect()

@@ -63,8 +63,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             #endregion
 
             #region Special
-            Language.Add(prefix + "SPECIAL_DEFIANT_DASH_NAME", "Defiant Heart");
-            Language.Add(prefix + "SPECIAL_DEFIANT_DASH_DESCRIPTION", $"Dash forward, dealing <style=cIsDamage>{100f * SeamstressVariantStaticValues.dashDamageCoefficient}% damage + 25% of current <color=#9B3737>Heart</color></style> to enemies in your path and gaining <style=cIsUtility>Defiance</style>. Recast to end early, converting all <color=#9B3737>Heart</color> to <style=cIsHealing>health</style>.");
+            Language.Add(prefix + "SPECIAL_HEALING_HEART_NAME", "Healing Heart");
+            Language.Add(prefix + "SPECIAL_HEALING_HEART_DESCRIPTION", "Convert all current <color=#9B3737>Heart</color> to <style=cIsHealing>health</style>. While <style=cIsUtility>Defiance</style> is active, recast to end it early and transfer your remaining Heart. Lethal damage can trigger Defiance if this skill is ready.");
             Language.Add("KEYWORD_DEFIANCE", "<style=cKeywordName>Defiance</style><style=cSub>While active, incoming damage <style=cIsUtility>cannot reduce you below 1 health</style> and you are <style=cIsUtility>Unstoppable</style>, but <style=cIsHealth>drains an increasing amount of Heart per second active</style>.</style>");
             Language.Add("KEYWORD_UNSTOPPABLE", "<style=cKeywordName>Unstoppable</style><style=cSub>You are immune to <style=cIsUtility>slows</style>, <style=cIsUtility>freeze</style>, <style=cIsUtility>knockback</style>, <style=cIsUtility>roots</style>, <style=cIsUtility>stuns</style>, and <style=cIsUtility>all debuffs</style>.</style>");
             #endregion

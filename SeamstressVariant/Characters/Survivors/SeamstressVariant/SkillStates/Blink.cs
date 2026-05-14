@@ -10,14 +10,14 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 {
     public class Blink : BaseSkillState
     {
-        private const float BlinkDistance = 15f;
+        private const float BlinkDistance = 10f;
         private const float ExitMomentumFraction = 0.15f;
 
         protected Transform modelTransform;
 
         public static string beginSoundString = "Play_imp_attack_blink";
         public string animationLayer = "FullBody, Override";
-        public float duration = 0.1f;
+        public float duration = 0.2f;
         protected CameraTargetParams.AimRequest request;
         protected bool hasAimRequest;
         protected Vector3 blinkVector;

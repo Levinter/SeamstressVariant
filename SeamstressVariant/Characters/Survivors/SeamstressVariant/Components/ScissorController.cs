@@ -85,45 +85,30 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 return;
             }
 
-            if (stock > _lastKnownSecondaryStock)
+            // Clamp to [0, 2]: extra stocks from items should not affect scissor visuals.
+            // Scissors only start disappearing once the player is within the base 2-stock window.
+            int visualStock = Mathf.Min(stock, 2);
+            int lastVisualStock = Mathf.Min(_lastKnownSecondaryStock, 2);
+
+            if (visualStock != lastVisualStock)
             {
-                if (stock >= 2)
+                if (visualStock >= 2)
                 {
-                    // Both stocks restored — bring both scissors back.
+                    // Both base stocks present — show both scissors.
                     SetLeftScissor(true);
+                    SetRightScissor(true);
+                }
+                else if (visualStock == 1)
+                {
+                    // One base stock remaining — left was fired first, so remove left, keep right.
+                    SetLeftScissor(false);
                     SetRightScissor(true);
                 }
                 else
                 {
-                    // One stock restored — restore whichever scissor is currently absent.
-                    // Using buff-state rather than lastFiredLeft so this works for remote clients
-                    // whose lastFiredLeft is never synced to the server.
-                    if (!HasLeftScissor)
-                        SetLeftScissor(true);
-                    else if (!HasRightScissor)
-                        SetRightScissor(true);
-                }
-            }
-            else if (stock < _lastKnownSecondaryStock)
-            {
-                // Stock decreased — a scissor was fired. Remove the appropriate buff server-side.
-                // This is the primary path for clients: OnScissorFired cannot touch buffs on a
-                // non-server machine, so the server watches for stock drops and acts here instead
-                // (mirroring OG Seamstress's CmdUpdateScissors approach).
-                if (stock == 0)
-                {
+                    // No stocks remaining — remove both scissors.
                     SetLeftScissor(false);
                     SetRightScissor(false);
-                }
-                else
-                {
-                    // Remove whichever scissor is still present. Left has priority because
-                    // FireScissors fires Left when both are available, so Left will still be
-                    // present on the first shot (Right on the second shot).
-                    if (HasLeftScissor)
-                        SetLeftScissor(false);
-                    else if (HasRightScissor)
-                        SetRightScissor(false);
                 }
             }
 
@@ -162,6 +147,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 return;
 
             _hasLeftScissor = active;
+            // SyncVar hooks are not invoked on the server when the server sets the value — call directly.
+            OnHasLeftScissorChanged(active);
 
             bool hasBuff = characterBody.HasBuff(SeamstressVariantBuffs.scissorLeftBuff);
             if (active)
@@ -180,6 +167,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 return;
 
             _hasRightScissor = active;
+            // SyncVar hooks are not invoked on the server when the server sets the value — call directly.
+            OnHasRightScissorChanged(active);
 
             bool hasBuff = characterBody.HasBuff(SeamstressVariantBuffs.scissorRightBuff);
             if (active)

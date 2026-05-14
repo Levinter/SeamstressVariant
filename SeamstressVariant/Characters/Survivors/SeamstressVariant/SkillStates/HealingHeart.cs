@@ -1,5 +1,6 @@
 using EntityStates;
 using RoR2;
+using RoR2.Skills;
 using SeamstressMod.Seamstress.Content;
 using SeamstressVariant.Survivors.SeamstressVariant.Components;
 using UnityEngine;
@@ -7,7 +8,7 @@ using UnityEngine.Networking;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 {
-    public class DefiantDashReactivate : BaseSkillState
+    public class HealingHeart : BaseSkillState
     {
         public float baseDuration = 0.5f;
 
@@ -21,6 +22,14 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             transferApplied = false;
             heart = GetComponent<BleedingHeartComponent>();
+
+            DefianceSpecialController specialController = GetComponent<DefianceSpecialController>();
+            if (specialController != null && specialController.ConsumeForcedDefianceActivation())
+            {
+                transferApplied = true;
+                outer.SetNextState(new DefiantHeart());
+                return;
+            }
 
             if (heart == null || healthComponent == null || characterBody == null)
             {

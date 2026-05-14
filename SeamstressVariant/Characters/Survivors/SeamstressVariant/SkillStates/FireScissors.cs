@@ -139,8 +139,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     DamageColorIndex.Default,
                     targetObject);
             }
-
-            GetComponent<ScissorController>()?.OnScissorFired(_firingLeft);
         }
 
         public override InterruptPriority GetMinimumInterruptPriority()

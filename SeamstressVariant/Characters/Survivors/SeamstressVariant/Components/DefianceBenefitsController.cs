@@ -17,6 +17,13 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private int previousBuffCount = 0;
         private CharacterBody.BodyFlags appliedBodyFlags;
         private bool stateImmunitiesApplied;
+
+        private const int MaxFervourStacks = 20;
+        private float fervourAccumulator = 0f;
+        private int fervourStacks = 0;
+
+        public bool IsDefianceActive => previousBuffCount > 0;
+        public int FervourStacks => fervourStacks;
         private bool originalCanBeHitStunned;
         private bool originalCanBeStunned;
         private bool originalCanBeFrozen;
@@ -69,6 +76,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             if (currentBuffCount > 0 && NetworkServer.active)
             {
                 RemoveDebuffs();
+                TickFervour();
             }
         }
 
@@ -90,6 +98,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             if (NetworkServer.active)
             {
                 RemoveDebuffs();
+                fervourAccumulator = 0f;
+                fervourStacks = 0;
+                characterBody.MarkAllStatsDirty();
             }
         }
 
@@ -97,6 +108,32 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         {
             RestoreStateImmunities();
             RestoreDefianceFlags();
+
+            fervourAccumulator = 0f;
+            fervourStacks = 0;
+            characterBody.MarkAllStatsDirty();
+        }
+
+        private void TickFervour()
+        {
+            if (fervourStacks >= MaxFervourStacks)
+            {
+                return;
+            }
+
+            fervourAccumulator += Time.deltaTime;
+            bool changed = false;
+            while (fervourAccumulator >= 1f && fervourStacks < MaxFervourStacks)
+            {
+                fervourAccumulator -= 1f;
+                fervourStacks++;
+                changed = true;
+            }
+
+            if (changed)
+            {
+                characterBody.MarkAllStatsDirty();
+            }
         }
 
         private void ApplyDefianceFlags()
