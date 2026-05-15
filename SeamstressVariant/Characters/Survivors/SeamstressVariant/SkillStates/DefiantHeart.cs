@@ -30,12 +30,16 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         private bool canReactivate;
         private bool transitioningToReactivate;
         private bool fired;
-        private CameraTargetParams.CameraParamsOverrideHandle transformCameraParamsHandle;
         private bool startupMoveLockApplied;
         private bool cachedDisableAirControlUntilCollision;
         private bool cachedDisableAirControlUntilCollisionValid;
         private bool startupAntiGravityApplied;
         private bool startupFlightApplied;
+
+        private bool CanExitState()
+        {
+            return isAuthority || NetworkServer.active;
+        }
 
         public override void OnEnter()
         {
@@ -242,16 +246,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         {
             if (heart == null)
             {
-                if (isAuthority)
-                {
-                    outer.SetNextStateToMain();
-                }
-                return;
-            }
-
-            if (!heart.CanSustainDefiantHeart())
-            {
-                if (isAuthority)
+                if (CanExitState())
                 {
                     outer.SetNextStateToMain();
                 }
@@ -264,6 +259,15 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 ApplyDefianceVisuals();
             }
 
+            if (!heart.CanSustainDefiantHeart())
+            {
+                if (CanExitState())
+                {
+                    outer.SetNextStateToMain();
+                }
+                return;
+            }
+
             if (heartOverlayController != null)
             {
                 heartOverlayController.SetHeartDrainActive(true);
@@ -274,7 +278,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         {
             if (heart == null)
             {
-                if (isAuthority)
+                if (CanExitState())
                 {
                     outer.SetNextStateToMain();
                 }
@@ -283,7 +287,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             if (!heart.CanSustainDefiantHeart())
             {
-                if (isAuthority)
+                if (CanExitState())
                 {
                     outer.SetNextStateToMain();
                 }
@@ -319,7 +323,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
                 if (!heart.CanSustainDefiantHeart())
                 {
-                    if (isAuthority)
+                    if (CanExitState())
                     {
                         outer.SetNextStateToMain();
                     }
@@ -469,23 +473,27 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             if (NetworkServer.active && characterBody)
             {
-                int defianceCount = characterBody.GetBuffCount(SeamstressVariantBuffs.defianceBuff);
-                if (defianceCount > 0 && !transitioningToReactivate)
-                {
-                    characterBody.SetBuffCount(SeamstressVariantBuffs.defianceBuff.buffIndex, 0);
-                }
-
                 DefianceSpecialController specialController = GetComponent<DefianceSpecialController>();
                 GenericSkill specialSkill = skillLocator != null ? skillLocator.special : null;
                 if (specialController != null && specialController.ConsumeForcedDefianceSession() && specialSkill != null)
                 {
                     specialSkill.DeductStock(1);
+                    RemoveDefiance();
                 }
             }
 
             RemoveDefianceVisuals();
 
             base.OnExit();
+        }
+
+        private void RemoveDefiance()
+        {
+            int defianceCount = characterBody.GetBuffCount(SeamstressVariantBuffs.defianceBuff);
+            if (defianceCount > 0 && !transitioningToReactivate)
+            {
+                characterBody.RemoveBuff(SeamstressVariantBuffs.defianceBuff);
+            }
         }
 
         public override InterruptPriority GetMinimumInterruptPriority()

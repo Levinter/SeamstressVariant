@@ -63,6 +63,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             if (NetworkServer.active)
             {
                 ApplyHeartTransfer();
+                RemoveDefiance();
             }
 
             base.OnExit();
@@ -82,13 +83,16 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 healthComponent.Networkhealth = Mathf.Clamp(healthComponent.health + transferred, 1f, currentMaxHealth);
             }
 
+            transferApplied = true;
+        }
+
+        private void RemoveDefiance()
+        {
             int defianceCount = characterBody.GetBuffCount(SeamstressVariantBuffs.defianceBuff);
             if (defianceCount > 0)
             {
-                characterBody.SetBuffCount(SeamstressVariantBuffs.defianceBuff.buffIndex, 0);
+                characterBody.RemoveBuff(SeamstressVariantBuffs.defianceBuff);
             }
-
-            transferApplied = true;
         }
 
         public override InterruptPriority GetMinimumInterruptPriority()
