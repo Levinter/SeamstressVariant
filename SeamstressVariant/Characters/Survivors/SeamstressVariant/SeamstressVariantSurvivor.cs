@@ -496,7 +496,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && !self.body.HasBuff(SeamstressVariantBuffs.defianceBuff)
                 && NetworkServer.active)
             {
-                bool incomingDamageIsLethal = damageInfo.damage >= self.combinedHealth - 1; // Leave 1 HP to avoid killing the character and allow for proper death-gate Defiance triggering.
+                bool incomingDamageIsLethal = damageInfo.damage >= self.health - 1; // Leave 1 HP to avoid killing the character and allow for proper death-gate Defiance triggering.
                 GenericSkill specialSkill = self.body.skillLocator?.special;
                 DefianceSpecialController defianceSpecialController = self.body.GetComponent<DefianceSpecialController>();
 
@@ -507,9 +507,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
                     if (specialSkill.ExecuteIfReady())
                     {
-                        
+                        // Let the lethal hit resolve to exactly 1 combined HP instead of preserving current HP.
+                        float damageToLeaveOneHp = Mathf.Max(self.health - 1f, 0f);
                         damageInfo.damageType |= DamageType.NonLethal;
-                        damageInfo.damage = 0f;
+                        damageInfo.damage = damageToLeaveOneHp;
 
                         Log.Warning("Forced Defiance activation successful. Preventing death and consuming special stock.");
                         // Forced death-gate Defiance should not spend stock on entry.
