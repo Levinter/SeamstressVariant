@@ -27,7 +27,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         private float startupFreezeEndTime;
         private float currentDrainPerTick;
         private bool startupFreezeActive;
-        private bool hiddenInvincibilityApplied;
         private bool canReactivate;
         private bool transitioningToReactivate;
         private bool fired;
@@ -49,7 +48,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             currentDrainPerTick = heartDrainPerTick;
             startupFreezeEndTime = startupFreezeDuration;
             startupFreezeActive = startupFreezeDuration > 0f;
-            hiddenInvincibilityApplied = false;
             canReactivate = false;
             transitioningToReactivate = false;
             startupMoveLockApplied = false;
@@ -66,12 +64,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             if (NetworkServer.active && characterBody)
             {
                 characterBody.AddBuff(SeamstressVariantBuffs.defianceBuff);
-
-                if (startupFreezeActive)
-                {
-                    characterBody.AddBuff(RoR2Content.Buffs.HiddenInvincibility);
-                    hiddenInvincibilityApplied = true;
-                }
             }
 
             
@@ -121,12 +113,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             startupFreezeActive = false;
             ReleaseStartupMovementLock();
             ReleaseStartupGravityLock();
-
-            if (NetworkServer.active && characterBody && hiddenInvincibilityApplied)
-            {
-                characterBody.RemoveBuff(RoR2Content.Buffs.HiddenInvincibility);
-                hiddenInvincibilityApplied = false;
-            }
         }
 
         private void ApplyStartupGravityLock()
@@ -367,18 +353,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 }
             }
 
-            /*Transform modelTransform = GetModelTransform();
-            if (modelTransform && destealthMaterial)
-            {
-                TemporaryOverlayInstance entryOverlay = TemporaryOverlayManager.AddOverlay(gameObject);
-                entryOverlay.duration = 1f;
-                entryOverlay.destroyComponentOnEnd = true;
-                entryOverlay.originalMaterial = destealthMaterial;
-                entryOverlay.inspectorCharacterModel = modelTransform.GetComponent<CharacterModel>();
-                entryOverlay.alphaCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
-                entryOverlay.animateShaderAlpha = true;
-            }*/
-
             if (SeamstressAssets.trailEffectHands)
             {
                 Transform handR = FindModelChild("HandR");
@@ -482,30 +456,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             }, true);
         }
 
-        private void StartTransformCameraOverride()
-        {
-            if (transformCameraParamsHandle.isValid || !cameraTargetParams || !SeamstressVariantAssets.defiantTransformCameraParams)
-            {
-                return;
-            }
-
-            transformCameraParamsHandle = cameraTargetParams.AddParamsOverride(new CameraTargetParams.CameraParamsOverrideRequest
-            {
-                cameraParamsData = SeamstressVariantAssets.defiantTransformCameraParams.data
-            }, 0.1f);
-        }
-
         public override void OnExit()
         {
             EndStartupFreeze();
             ReleaseStartupMovementLock();
             ReleaseStartupGravityLock();
-
-            if (NetworkServer.active && characterBody && hiddenInvincibilityApplied)
-            {
-                characterBody.RemoveBuff(RoR2Content.Buffs.HiddenInvincibility);
-                hiddenInvincibilityApplied = false;
-            }
 
             if (heartOverlayController != null)
             {

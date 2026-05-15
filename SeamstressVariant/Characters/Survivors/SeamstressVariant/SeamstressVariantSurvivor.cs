@@ -479,8 +479,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && damageInfo.damage > 0f)
             {
                 damageInfo.damageType |= DamageType.NonLethal;
-                float maxAllowedDamage = Mathf.Max(0f, self.health - 1f);
-                damageInfo.damage = Mathf.Min(damageInfo.damage, maxAllowedDamage);
+                damageInfo.damage = 0f;
             }
 
             orig(self, damageInfo);
@@ -497,7 +496,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && !self.body.HasBuff(SeamstressVariantBuffs.defianceBuff)
                 && NetworkServer.active)
             {
-                bool incomingDamageIsLethal = damageInfo.damage >= self.combinedHealth;
+                bool incomingDamageIsLethal = damageInfo.damage >= self.combinedHealth - 1; // Leave 1 HP to avoid killing the character and allow for proper death-gate Defiance triggering.
                 GenericSkill specialSkill = self.body.skillLocator?.special;
                 DefianceSpecialController defianceSpecialController = self.body.GetComponent<DefianceSpecialController>();
 
@@ -508,14 +507,14 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
                     if (specialSkill.ExecuteIfReady())
                     {
+                        
+                        damageInfo.damageType |= DamageType.NonLethal;
+                        damageInfo.damage = 0f;
+
                         Log.Warning("Forced Defiance activation successful. Preventing death and consuming special stock.");
                         // Forced death-gate Defiance should not spend stock on entry.
                         specialSkill.AddOneStock();
                         defianceSpecialController.MarkForcedDefianceSession();
-
-                        damageInfo.damageType |= DamageType.NonLethal;
-                        float maxAllowedDamage = Mathf.Max(0f, self.health - 1f);
-                        damageInfo.damage = Mathf.Min(damageInfo.damage, maxAllowedDamage);
                     }
                     else
                     {
