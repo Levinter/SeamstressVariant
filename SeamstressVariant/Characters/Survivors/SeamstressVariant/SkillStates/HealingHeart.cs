@@ -42,18 +42,20 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             }
 
             storedHeart = heart.GetHeart();
+
+            ApplyHeartTransfer();
         }
 
         public override void FixedUpdate()
         {
             base.FixedUpdate();
 
-            if (fixedAge >= baseDuration / attackSpeedStat)
+            if (fixedAge >= baseDuration)
             {
-                if (NetworkServer.active)
+                /*if (NetworkServer.active)
                 {
                     ApplyHeartTransfer();
-                }
+                }*/
 
                 if (isAuthority)
                 {
@@ -65,13 +67,13 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         public override void OnExit()
         {
             Log.Warning("Exiting Healing Heart state.");
+            
 
             if (NetworkServer.active)
             {
                 
                 if (!forcedTransitionToDefiantHeart)
                 {
-                    ApplyHeartTransfer();
                     RemoveDefiance();
                 }
             }
