@@ -478,6 +478,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && damageInfo != null
                 && damageInfo.damage > 0f)
             {
+                Log.Warning("Defiance active?:" + self.body.HasBuff(SeamstressVariantBuffs.defianceBuff));
+                Log.Warning("Defiance active: preventing damage.");
                 damageInfo.damageType |= DamageType.NonLethal;
                 damageInfo.damage = 0f;
             }
@@ -504,18 +506,26 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 {
                     Log.Warning("Incoming damage is lethal. Attempting to trigger Defiance if special is ready.");
                     defianceSpecialController.RequestForcedDefianceActivation();
+                    Log.Warning("Forced Defiance activation requested. Checking special skill stock. Current stock: " + specialSkill.stock);
 
-                    if (specialSkill.ExecuteIfReady())
+                    if (specialSkill.stock > 0)
                     {
+                        Log.Warning("Forced Defiance activation successful. Preventing death and routing to specialController");
+
+                        defianceSpecialController.MarkForcedDefianceSession();
+
                         // Let the lethal hit resolve to exactly 1 combined HP instead of preserving current HP.
                         float damageToLeaveOneHp = Mathf.Max(self.health - 1f, 0f);
                         damageInfo.damageType |= DamageType.NonLethal;
                         damageInfo.damage = damageToLeaveOneHp;
 
-                        Log.Warning("Forced Defiance activation successful. Preventing death and consuming special stock.");
-                        // Forced death-gate Defiance should not spend stock on entry.
-                        specialSkill.AddOneStock();
-                        defianceSpecialController.MarkForcedDefianceSession();
+                        specialSkill.ExecuteIfReady();
+                        specialSkill.AddOneStock(); // Refund the stock that will be consumed on cast since this is a forced activation.
+                        self.body.AddBuff(SeamstressVariantBuffs.defianceBuff); // Manually add Defiance buff here to ensure it applies even if the special skill's state machine fails to transition for some reason.
+                        Log.Warning("Special skill executed. Refunded one stock. Current stock: " + specialSkill.stock);
+                        Log.Warning("Exiting health component hook");
+
+                        
                     }
                     else
                     {

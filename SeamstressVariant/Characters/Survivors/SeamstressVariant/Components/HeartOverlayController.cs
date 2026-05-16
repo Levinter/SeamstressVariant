@@ -7,11 +7,12 @@ using SeamstressMod.Seamstress.Content;
 using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 {
-    internal class HeartOverlayController : MonoBehaviour
+    internal class HeartOverlayController : NetworkBehaviour
     {
         private sealed class OverlayThemeCache
         {
@@ -42,6 +43,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private float themeApplyTotalMs;
         private float themeApplyMaxMs;
         private float nextThemePerfLogTime;
+        [SyncVar(hook = nameof(OnHeartDrainActiveChanged))]
         private bool heartDrainActive;
 
         private void Awake()
@@ -57,14 +59,21 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             nextThemePerfLogTime = Time.unscaledTime + ThemePerfLogInterval;
         }
 
+        private void OnHeartDrainActiveChanged(bool newValue)
+        {
+            heartDrainActive = newValue;
+        }
+
         internal void SetHeartDrainActive(bool active)
         {
             if (heartDrainActive == active)
             {
+                Log.Warning("Heart drain active state is already " + active);
                 return;
             }
 
             heartDrainActive = active;
+            Log.Warning("Setting heart drain active state to " + active);
             ApplyThemeToOverlayInstances();
             ApplyOverlayStateToTrackedInstances();
         }

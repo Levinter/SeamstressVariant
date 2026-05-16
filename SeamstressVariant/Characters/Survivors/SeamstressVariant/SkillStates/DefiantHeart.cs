@@ -65,10 +65,16 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 ApplyStartupMovementLock();
             }
 
-            if (NetworkServer.active && characterBody)
+            /*if (NetworkServer.active && characterBody)
             {
-                characterBody.AddBuff(SeamstressVariantBuffs.defianceBuff);
-            }
+                Log.Warning("Defiant Heart onEnter. Attempting to apply Defiance buff. Is Defiance active?:" + characterBody.HasBuff(SeamstressVariantBuffs.defianceBuff));
+
+                if (!characterBody.HasBuff(SeamstressVariantBuffs.defianceBuff))
+                {
+                    characterBody.AddBuff(SeamstressVariantBuffs.defianceBuff);
+                    Log.Warning("Applying Defiance buff on Defiant Heart enter. New stacks:" + characterBody.GetBuffCount(SeamstressVariantBuffs.defianceBuff));
+                }
+            }*/
 
             
 
@@ -253,6 +259,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 return;
             }
 
+            if (heartOverlayController != null)
+            {
+                heartOverlayController.SetHeartDrainActive(true);
+            }
+
             if (GetModelAnimator())
             {
                 PlayAnimation("Gesture, Override", "BufferEmpty");
@@ -266,11 +277,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     outer.SetNextStateToMain();
                 }
                 return;
-            }
-
-            if (heartOverlayController != null)
-            {
-                heartOverlayController.SetHeartDrainActive(true);
             }
         }
 
@@ -462,6 +468,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         public override void OnExit()
         {
+            Log.Warning("Exiting Defiant Heart state.");
+
             EndStartupFreeze();
             ReleaseStartupMovementLock();
             ReleaseStartupGravityLock();
@@ -476,8 +484,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 DefianceSpecialController specialController = GetComponent<DefianceSpecialController>();
                 GenericSkill specialSkill = skillLocator != null ? skillLocator.special : null;
                 if (specialController != null && specialController.ConsumeForcedDefianceSession() && specialSkill != null)
-                {
+                {   
+                    Log.Debug("Defiant Heart onExit. Stocks:" + specialSkill.stock);
                     specialSkill.DeductStock(1);
+                    Log.Debug("Defiant Heart onExit after deduct. Stocks:" + specialSkill.stock);
                     RemoveDefiance();
                 }
             }

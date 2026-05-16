@@ -15,18 +15,22 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         private BleedingHeartComponent heart;
         private float storedHeart;
         private bool transferApplied;
+        private bool forcedTransitionToDefiantHeart;
 
         public override void OnEnter()
         {
             base.OnEnter();
 
             transferApplied = false;
+            forcedTransitionToDefiantHeart = false;
             heart = GetComponent<BleedingHeartComponent>();
 
             DefianceSpecialController specialController = GetComponent<DefianceSpecialController>();
             if (specialController != null && specialController.ConsumeForcedDefianceActivation())
             {
+                Log.Warning("HealingHeart: Forced Defiance activation detected on enter. Transitioning to DefiantHeart.");
                 transferApplied = true;
+                forcedTransitionToDefiantHeart = true;
                 outer.SetNextState(new DefiantHeart());
                 return;
             }
@@ -60,12 +64,17 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         public override void OnExit()
         {
+            Log.Warning("Exiting Healing Heart state.");
+
             if (NetworkServer.active)
             {
-                ApplyHeartTransfer();
-                RemoveDefiance();
+                
+                if (!forcedTransitionToDefiantHeart)
+                {
+                    ApplyHeartTransfer();
+                    RemoveDefiance();
+                }
             }
-
             base.OnExit();
         }
 
