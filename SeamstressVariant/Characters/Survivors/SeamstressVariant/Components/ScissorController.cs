@@ -7,12 +7,13 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 {
     /// <summary>
     /// Owns the survivor's independent scissor state.
-    /// Fires are tracked via OnScissorFired(bool isLeft), which removes the respective buff
-    /// immediately. FixedUpdate watches the secondary skill stock on the server; each time a
-    /// stock restores, it adds back the opposite-of-last-fired scissor buff first (mirroring
-    /// the OG Seamstress pattern).
+    /// Extends NetworkBehaviour so scissor presence is synced to all clients via SyncVar.
+    /// The server manages buff add/remove and updates the SyncVars; hooks on clients directly
+    /// toggle model visibility without polling.
+    /// FixedUpdate on the server watches secondary skill stock to handle both removal (when a
+    /// client fires) and restoration (when stock recharges).
     /// </summary>
-    public class ScissorController : MonoBehaviour
+    public class ScissorController : NetworkBehaviour
     {
         private CharacterBody characterBody;
 
@@ -20,12 +21,16 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private GameObject _scissorLModel;
         private GameObject _scissorRModel;
 
-        public bool HasLeftScissor { get; private set; } = true;
-        public bool HasRightScissor { get; private set; } = true;
+        // SyncVars replicate scissor state to all clients. Hooks update model visibility directly,
+        // so no per-frame polling is needed on clients.
+        [SyncVar(hook = nameof(OnHasLeftScissorChanged))]
+        private bool _hasLeftScissor;
 
-        // True when the last fired scissor was the left one.
-        // Used by FixedUpdate to decide which buff to restore first.
-        public bool lastFiredLeft = true;
+        [SyncVar(hook = nameof(OnHasRightScissorChanged))]
+        private bool _hasRightScissor;
+
+        public bool HasLeftScissor => _hasLeftScissor;
+        public bool HasRightScissor => _hasRightScissor;
 
         private int _lastKnownSecondaryStock = -1;
 
@@ -51,17 +56,22 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 }
             }
 
-            // Apply both scissor buffs on spawn so buff bar and ClawCombo see them immediately.
-            if (NetworkServer.active && characterBody != null)
+            if (NetworkServer.active)
             {
-                SyncBuffs();
+                SetLeftScissor(true);
+                SetRightScissor(true);
             }
+
+            // Apply current SyncVar state to models. This covers late-joining clients where the
+            // SyncVar hook may have fired before Start() had a chance to cache the model refs.
+            if (_scissorLModel) _scissorLModel.SetActive(_hasLeftScissor);
+            if (_scissorRModel) _scissorRModel.SetActive(_hasRightScissor);
         }
 
         private void FixedUpdate()
         {
-            if (!NetworkServer.active) return;
             if (characterBody == null) return;
+            if (!NetworkServer.active) return;
 
             GenericSkill secondary = characterBody.skillLocator?.secondary;
             if (secondary == null) return;
@@ -75,40 +85,55 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 return;
             }
 
-            if (stock > _lastKnownSecondaryStock)
+            // Clamp to [0, 2]: extra stocks from items should not affect scissor visuals.
+            // Scissors only start disappearing once the player is within the base 2-stock window.
+            int visualStock = Mathf.Min(stock, 2);
+            int lastVisualStock = Mathf.Min(_lastKnownSecondaryStock, 2);
+
+            if (visualStock != lastVisualStock)
             {
-                if (stock >= 2)
+                if (visualStock >= 2)
                 {
-                    // Both stocks restored — bring both scissors back.
+                    // Both base stocks present — show both scissors.
                     SetLeftScissor(true);
+                    SetRightScissor(true);
+                }
+                else if (visualStock == 1)
+                {
+                    // One base stock remaining — left was fired first, so remove left, keep right.
+                    SetLeftScissor(false);
                     SetRightScissor(true);
                 }
                 else
                 {
-                    // One stock restored — restore the scissor that was NOT the last one fired.
-                    if (lastFiredLeft)
-                        SetRightScissor(true);
-                    else
-                        SetLeftScissor(true);
+                    // No stocks remaining — remove both scissors.
+                    SetLeftScissor(false);
+                    SetRightScissor(false);
                 }
             }
 
             _lastKnownSecondaryStock = stock;
         }
 
+        // SyncVar hooks — called on clients whenever the server changes the value.
+        private void OnHasLeftScissorChanged(bool newValue)
+        {
+            if (_scissorLModel) _scissorLModel.SetActive(newValue);
+        }
+
+        private void OnHasRightScissorChanged(bool newValue)
+        {
+            if (_scissorRModel) _scissorRModel.SetActive(newValue);
+        }
+
         /// <summary>
-        /// Called by FireScissors when a blade is launched. Records which side was fired for
-        /// restoration ordering, and only removes a scissor if we're in the final two stocks.
-        /// This keeps both scissors available while surplus stocks (3+) are being spent.
+        /// Called by FireScissors on the authority client when a blade is launched.
+        /// On the server/host this immediately removes the scissor. For remote clients the
+        /// server's FixedUpdate stock-watch handles removal on the next tick.
         /// </summary>
         public void OnScissorFired(bool isLeft)
         {
             if (!NetworkServer.active) return;
-            lastFiredLeft = isLeft;
-
-            GenericSkill secondary = characterBody?.skillLocator?.secondary;
-            if (secondary != null && secondary.stock >= 2)
-                return;
 
             if (isLeft)
                 SetLeftScissor(false);
@@ -118,33 +143,42 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
         public void SetLeftScissor(bool active)
         {
-            HasLeftScissor = active;
-            if (_scissorLModel) _scissorLModel.SetActive(active);
-            if (NetworkServer.active && characterBody != null)
-                SyncBuffs();
+            if (!NetworkServer.active || characterBody == null || SeamstressVariantBuffs.scissorLeftBuff == null)
+                return;
+
+            _hasLeftScissor = active;
+            // SyncVar hooks are not invoked on the server when the server sets the value — call directly.
+            OnHasLeftScissorChanged(active);
+
+            bool hasBuff = characterBody.HasBuff(SeamstressVariantBuffs.scissorLeftBuff);
+            if (active)
+            {
+                if (!hasBuff) characterBody.AddBuff(SeamstressVariantBuffs.scissorLeftBuff);
+            }
+            else
+            {
+                if (hasBuff) characterBody.RemoveBuff(SeamstressVariantBuffs.scissorLeftBuff);
+            }
         }
 
         public void SetRightScissor(bool active)
         {
-            HasRightScissor = active;
-            if (_scissorRModel) _scissorRModel.SetActive(active);
-            if (NetworkServer.active && characterBody != null)
-                SyncBuffs();
-        }
+            if (!NetworkServer.active || characterBody == null || SeamstressVariantBuffs.scissorRightBuff == null)
+                return;
 
-        private void SyncBuffs()
-        {
-            SetBuff(SeamstressVariantBuffs.scissorLeftBuff, HasLeftScissor);
-            SetBuff(SeamstressVariantBuffs.scissorRightBuff, HasRightScissor);
-        }
+            _hasRightScissor = active;
+            // SyncVar hooks are not invoked on the server when the server sets the value — call directly.
+            OnHasRightScissorChanged(active);
 
-        private void SetBuff(BuffDef buff, bool shouldHave)
-        {
-            bool hasBuff = characterBody.HasBuff(buff);
-            if (shouldHave && !hasBuff)
-                characterBody.AddBuff(buff);
-            else if (!shouldHave && hasBuff)
-                characterBody.RemoveBuff(buff);
+            bool hasBuff = characterBody.HasBuff(SeamstressVariantBuffs.scissorRightBuff);
+            if (active)
+            {
+                if (!hasBuff) characterBody.AddBuff(SeamstressVariantBuffs.scissorRightBuff);
+            }
+            else
+            {
+                if (hasBuff) characterBody.RemoveBuff(SeamstressVariantBuffs.scissorRightBuff);
+            }
         }
     }
 }

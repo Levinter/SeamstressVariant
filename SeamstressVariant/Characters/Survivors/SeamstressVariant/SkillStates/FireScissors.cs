@@ -21,7 +21,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
     public class FireScissors : BaseSkillState
     {
         public static float baseDuration = 0.5f;
-        public static float damageCoefficient = SeamstressVariantStaticValues.scissorDamageCoefficient;
         public static float procCoefficient = 1f;
         public static float force = 0f;
 
@@ -53,8 +52,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             var tracker = characterBody.GetComponent<SeamstressTracker>();
             _lockedTarget = tracker != null ? tracker.GetTrackingTarget() : null;
 
-            bool hasLeft  = characterBody.HasBuff(SeamstressVariantBuffs.scissorLeftBuff);
-            bool hasRight = characterBody.HasBuff(SeamstressVariantBuffs.scissorRightBuff);
+            var scissors = characterBody != null ? characterBody.GetComponent<ScissorController>() : null;
+            bool hasLeft = scissors != null && scissors.HasLeftScissor;
+            bool hasRight = scissors != null && scissors.HasRightScissor;
 
             if (hasRight && !hasLeft)
             {
@@ -133,14 +133,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     aimRay.origin,
                     fireRotation,
                     gameObject,
-                    damageStat * damageCoefficient,
+                    damageStat,
                     force,
                     Util.CheckRoll(critStat, characterBody.master),
                     DamageColorIndex.Default,
                     targetObject);
             }
-
-            GetComponent<ScissorController>()?.OnScissorFired(_firingLeft);
         }
 
         public override InterruptPriority GetMinimumInterruptPriority()

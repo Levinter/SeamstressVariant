@@ -1,15 +1,12 @@
-﻿using BepInEx.Configuration;
-using SeamstressVariant.Modules;
+﻿using SeamstressVariant.Modules;
 using SeamstressVariant.Modules.Characters;
 using RoR2;
 using RoR2.Skills;
-
+using R2API;
 using SeamstressVariant;
-using System;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 using SeamstressVariant.Survivors.SeamstressVariant.Components;
-using System.Runtime.CompilerServices;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant
 {
@@ -37,7 +34,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             sortPosition = 100,
 
             crosshair = Asset.LoadCrosshair("SimpleDot"),
-            podPrefab = LegacyResourcesAPI.Load<GameObject>("Prefabs/NetworkedObjects/SurvivorPod"),
+            podPrefab = null,
 
             maxHealth = 110f,
             healthRegen = 1.5f,
@@ -117,7 +114,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             AddHitboxes();
             
             // Add heart component for passive
-            BleedingHeartComponent heart = bodyPrefab.AddComponent<BleedingHeartComponent>();
+            bodyPrefab.AddComponent<BleedingHeartComponent>();
             // maxHeart will be set to character's max health in Start()
 
             // Add overlay controller to drive the Heart meter UI (reuses VoidSurvivor corruption bar)
@@ -129,8 +126,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             // Add tracker — drives the Huntress tracking indicator and is read by FireScissors on cast.
             bodyPrefab.AddComponent<SeamstressTracker>();
 
-            // Add Defiance knockback controller for body flag toggling during buff.
-            bodyPrefab.AddComponent<DefianceKnockbackController>();
+            // Add Defiance benefits controller for buff-driven immunity/cleanse handling.
+            bodyPrefab.AddComponent<DefianceBenefitsController>();
+
+            // Tracks whether the next special execute should force Defiance entry (death-gate path).
+            bodyPrefab.AddComponent<DefianceSpecialController>();
             //anything else here
         }
 
@@ -151,9 +151,13 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             Prefabs.ClearEntityStateMachines(bodyPrefab);
 
             //the main "Body" state machine has some special properties
-            Prefabs.AddMainEntityStateMachine(bodyPrefab, "Body", typeof(EntityStates.GenericCharacterMain), typeof(EntityStates.SpawnTeleporterState));
+            // Use our custom spawn state now that this body does not use a survivor pod.
+            Prefabs.AddMainEntityStateMachine(bodyPrefab, "Body", typeof(EntityStates.GenericCharacterMain), typeof(SkillStates.SeamstressSpawnState));
             //if you set up a custom main characterstate, set it up here
                 //don't forget to register custom entitystates in your HenryStates.cs
+
+            // Keep preferred initial state aligned with body machine setup.
+            bodyPrefab.GetComponent<CharacterBody>().preferredInitialStateType = new EntityStates.SerializableEntityStateType(typeof(SkillStates.SeamstressSpawnState));
 
             Prefabs.AddEntityStateMachine(bodyPrefab, "Weapon");
             Prefabs.AddEntityStateMachine(bodyPrefab, "Weapon2");
@@ -242,7 +246,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 isCombatSkill = true,
                 canceledFromSprinting = false,
                 cancelSprintingOnActivation = true,
-                forceSprintDuringState = false,
+                forceSprintDuringState = true,
 
             });
 
@@ -291,22 +295,22 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         {
             Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Special);
 
-            // DefiantDash is now the unified special skill (Dash + Sustained Defiance)
+            // Healing Heart is the manual special: transfer Heart/end Defiance, while death-gate can force Defiant Heart.
             SkillDef specialSkillDef = Skills.CreateSkillDef(new SkillDefInfo
             {
-                skillName = "HenryDefiantDash",
-                skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "SPECIAL_DEFIANT_DASH_NAME",
-                skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "SPECIAL_DEFIANT_DASH_DESCRIPTION",
+                skillName = "HealingHeart",
+                skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "SPECIAL_HEALING_HEART_NAME",
+                skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "SPECIAL_HEALING_HEART_DESCRIPTION",
                 skillIcon = assetBundle.LoadAsset<Sprite>("texGlimpseOfPurityIcon"),
 
-                activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.DefiantDash)),
+                activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.HealingHeart)),
                 activationStateMachineName = "Special",
                 interruptPriority = EntityStates.InterruptPriority.Skill,
 
-                keywordTokens = new string[] { "KEYWORD_DEFIANCE", "KEYWORD_HEART" },
+                keywordTokens = new string[] { "KEYWORD_DEFIANCE", "KEYWORD_UNSTOPPABLE" },
 
                 baseMaxStock = 1,
-                baseRechargeInterval = 16f,
+                baseRechargeInterval = 10f,
                 beginSkillCooldownOnSkillEnd = true,
 
                 isCombatSkill = true,
@@ -350,7 +354,42 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         {
             On.RoR2.HealthComponent.Heal += HealthComponent_Heal;
             On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
+            On.RoR2.HealthComponent.TakeDamageProcess += HealthComponent_TakeDamageProcess;
             GlobalEventManager.onServerDamageDealt += GlobalEventManager_onServerDamageDealt;
+            On.RoR2.HealthComponent.GetHealthBarValues += HealthComponent_GetHealthBarValues;
+            RecalculateStatsAPI.GetStatCoefficients += RecalculateStatsAPI_GetStatCoefficients;
+        }
+
+        private void RecalculateStatsAPI_GetStatCoefficients(CharacterBody sender, RecalculateStatsAPI.StatHookEventArgs args)
+        {
+            if (sender == null || sender.bodyIndex != BodyCatalog.FindBodyIndex(bodyName))
+            {
+                return;
+            }
+
+            DefianceBenefitsController defianceController = sender.GetComponent<DefianceBenefitsController>();
+            if (defianceController == null || !defianceController.IsDefianceActive)
+            {
+                return;
+            }
+
+            args.moveSpeedMultAdd += 0.2f;
+
+            int fervourStacks = defianceController.FervourStacks;
+            if (fervourStacks > 0)
+            {
+                args.attackSpeedMultAdd += fervourStacks * 0.1f;
+            }
+        }
+
+        private HealthComponent.HealthBarValues HealthComponent_GetHealthBarValues(On.RoR2.HealthComponent.orig_GetHealthBarValues orig, HealthComponent self)
+        {
+            HealthComponent.HealthBarValues values = orig(self);
+            if (self.body != null && self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName))
+            {
+                values.hasInfusion = true;
+            }
+            return values;
         }
 
         private void GlobalEventManager_onServerDamageDealt(DamageReport report)
@@ -385,7 +424,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 return;
             }
 
-            float hemorrhageChance = heart.GetBleedChanceBonusFromHeart();
+            float hemorrhageChance = 1f + heart.GetBleedChanceBonusFromHeart();
+            Log.Debug("Hemorrhage chance: " + hemorrhageChance * damageInfo.procCoefficient + "%");
             if (!Util.CheckRoll(hemorrhageChance * damageInfo.procCoefficient, attackerBody.master))
             {
                 return;
@@ -406,12 +446,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
         private float HealthComponent_Heal(On.RoR2.HealthComponent.orig_Heal orig, HealthComponent self, float amount, ProcChainMask procChainMask, bool nonRegen)
         {
-            if (self.body.bodyIndex == BodyCatalog.FindBodyIndex("SeamstressVariantBody") && self.alive){
+            if (self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName) && self.alive){
                 float previousHealth = self.health;
                 float incomingHeal = Mathf.Max(0f, amount);
                 float healed = orig(self, amount, procChainMask, nonRegen);
 
-                if (incomingHeal > 0f)
+                if (incomingHeal > 0f && NetworkServer.active)
                 {
                     var heart = self.GetComponent<BleedingHeartComponent>();
                     
@@ -419,7 +459,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                     {
                         // Redirect attempted healing into Heart, even when HP is already full.
                         heart.AddToHeart(incomingHeal);
-                        self.health = previousHealth;
+                        self.Networkhealth = previousHealth;
                     }
                 }
 
@@ -433,14 +473,56 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         {
             if (self != null
                 && self.body != null
-                && self.body.bodyIndex == BodyCatalog.FindBodyIndex("SeamstressVariantBody")
+                && self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName)
                 && self.body.HasBuff(SeamstressVariantBuffs.defianceBuff)
                 && damageInfo != null
                 && damageInfo.damage > 0f)
             {
                 damageInfo.damageType |= DamageType.NonLethal;
-                float maxAllowedDamage = Mathf.Max(0f, self.health - 1f);
-                damageInfo.damage = Mathf.Min(damageInfo.damage, maxAllowedDamage);
+                damageInfo.damage = 0f;
+            }
+
+            orig(self, damageInfo);
+        }
+
+        private void HealthComponent_TakeDamageProcess(On.RoR2.HealthComponent.orig_TakeDamageProcess orig, HealthComponent self, DamageInfo damageInfo)
+        {
+            if (self != null
+                && self.alive
+                && self.body != null
+                && self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName)
+                && damageInfo != null
+                && damageInfo.damage > 0f
+                && !self.body.HasBuff(SeamstressVariantBuffs.defianceBuff)
+                && NetworkServer.active)
+            {
+                bool incomingDamageIsLethal = damageInfo.damage >= self.health - 1; // Leave 1 HP to avoid killing the character and allow for proper death-gate Defiance triggering.
+                GenericSkill specialSkill = self.body.skillLocator?.special;
+                DefianceSpecialController defianceSpecialController = self.body.GetComponent<DefianceSpecialController>();
+
+                if (incomingDamageIsLethal && specialSkill != null && defianceSpecialController != null)
+                {
+                    Log.Warning("Incoming damage is lethal. Attempting to trigger Defiance if special is ready.");
+                    defianceSpecialController.RequestForcedDefianceActivation();
+
+                    if (specialSkill.ExecuteIfReady())
+                    {
+                        // Let the lethal hit resolve to exactly 1 combined HP instead of preserving current HP.
+                        float damageToLeaveOneHp = Mathf.Max(self.health - 1f, 0f);
+                        damageInfo.damageType |= DamageType.NonLethal;
+                        damageInfo.damage = damageToLeaveOneHp;
+
+                        Log.Warning("Forced Defiance activation successful. Preventing death and consuming special stock.");
+                        // Forced death-gate Defiance should not spend stock on entry.
+                        specialSkill.AddOneStock();
+                        defianceSpecialController.MarkForcedDefianceSession();
+                    }
+                    else
+                    {
+                        Log.Warning("Forced Defiance activation failed. Clearing forced activation.");
+                        defianceSpecialController.ClearForcedDefianceActivation();
+                    }
+                }
             }
 
             orig(self, damageInfo);

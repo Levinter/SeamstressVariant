@@ -41,11 +41,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             #endregion
 
             #region Passive
-            Language.Add(prefix + "PASSIVE_NAME", "Her Bleeding Heart");
-            Language.Add(prefix + "PASSIVE_DESCRIPTION", "Nearby <color=#9B3737>Bleeding</color> enemies heal you for <style=cIsHealing>4 health</style> per second, per stack. All healing is stored in your <color=#9B3737>Heart</color> instead of restoring health.");
-            Language.Add("KEYWORD_HEART", "<style=cKeywordName>Heart</style><style=cSub>Stores healing. Capacity is equal to your <style=cIsHealing>maximum health</style>. Grants <style=cIsDamage>1% hemorrhage chance</style> per <style=cIsHealing>100 health</style> stored in the Heart.</style>");
-            Language.Add("KEYWORD_HEMORRHAGE", "<style=cKeywordName>Hemorrhage</style><style=cSub>Deals <style=cIsDamage>2000% base damage</style> over <style=cIsDamage>15 seconds</style>.</style>");
-            Language.Add("KEYWORD_HEART_HEMORRHAGE", "<style=cKeywordName>Heart</style><style=cSub>Stores healing. Capacity is equal to your <style=cIsHealing>maximum health</style>. Grants <style=cIsDamage>1% hemorrhage chance</style> per <style=cIsHealing>100 health</style> stored in the Heart.</style><style=cStack>\n\n</style><style=cKeywordName>Hemorrhage</style><style=cSub>Deals <style=cIsDamage>2000% base damage</style> over <style=cIsDamage>15 seconds</style>.</style>");
+            Language.Add(prefix + "PASSIVE_NAME", "Bleeding Heart");
+            Language.Add(prefix + "PASSIVE_DESCRIPTION", "Nearby <color=#9B3737>Bleeding</color> heals you for <style=cIsHealing>10 health</style> per second, per stack. All healing is stored in your <color=#9B3737>Heart</color> instead of restoring health.");
+            Language.Add("KEYWORD_HEART_HEMORRHAGE", "<style=cKeywordName>Heart</style><style=cSub>Stores healing. Capacity is equal to your <style=cIsHealing>maximum health</style>. Grants <style=cIsDamage>1% hemorrhage chance</style> per <style=cIsHealing>75 health</style> stored in the Heart.</style><style=cStack>\n\n</style><style=cKeywordName>Hemorrhage</style><style=cSub>Deals <style=cIsDamage>2000% base damage</style> over <style=cIsDamage>15 seconds</style>.</style>");
             #endregion
 
             #region Primary
@@ -55,7 +53,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             #region Secondary
             Language.Add(prefix + "SECONDARY_SCISSORS_NAME", "Symbiotic Scissors");
-            Language.Add(prefix + "SECONDARY_SCISSORS_DESCRIPTION", $"Command your scissors to seek out a nearby enemy and strike them for <style=cIsDamage>{100f * SeamstressVariantStaticValues.scissorDamageCoefficient}% damage</style>, applying Bleed on hit.");
+                Language.Add(prefix + "SECONDARY_SCISSORS_DESCRIPTION", $"Command your scissors to seek out a nearby enemy and strike them, exploding for <style=cIsDamage>{100f * SeamstressVariantStaticValues.scissorExplosionDamageCoefficient}% damage</style>.");
             Language.Add("KEYWORD_SYMBIOTIC", $"<style=cKeywordName>Symbiotic</style><style=cSub><style=cIsUtility>While off cooldown</style>, your scissors follow you and cause claw attacks to hit an additional time with increased range for <style=cIsDamage>{100f * SeamstressVariantStaticValues.meleeScissorDamageCoefficient}% damage</style>.</style>");
             #endregion
 
@@ -65,12 +63,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             #endregion
 
             #region Special
-            Language.Add(prefix + "SPECIAL_DEFIANT_HEART_NAME", "Defiant Heart");
-            Language.Add(prefix + "SPECIAL_DEFIANT_HEART_DESCRIPTION", $"Requires <style=cKeywordName>Heart</style> above 0. Drain <style=cIsHealing>1 Heart per second</style> to gain <style=cKeywordName>Defiance</style>. While active, incoming damage <style=cIsUtility>cannot reduce you below 1 health</style>.");
-
-            Language.Add(prefix + "SPECIAL_DEFIANT_DASH_NAME", "Defiant Dash");
-            Language.Add(prefix + "SPECIAL_DEFIANT_DASH_DESCRIPTION", $"Dash forward, dealing <style=cIsDamage>{100f * SeamstressVariantStaticValues.dashDamageCoefficient}% damage</style> to enemies in your path and gaining <style=cIsUtility>Defiance</style>. Recast to end early, converting all <color=#9B3737>Heart</color> to <style=cIsHealing>health</style> and dealing <style=cIsDamage>{100f * SeamstressVariantStaticValues.dashDamageCoefficient}% + 100% damage per 100 Heart consumed</style> to nearby enemies.");
-            Language.Add("KEYWORD_DEFIANCE", "<style=cKeywordName>Defiance</style><style=cSub>While active, incoming damage <style=cIsUtility>cannot reduce you below 1 health</style> and you are <style=cIsUtility>unstoppable</style>, but <style=cIsHealth>drains an increasing amount of Heart per second active</style>.</style>");
+            Language.Add(prefix + "SPECIAL_HEALING_HEART_NAME", "Healing Heart");
+            Language.Add(prefix + "SPECIAL_HEALING_HEART_DESCRIPTION", "Convert all current <color=#9B3737>Heart</color> to <style=cIsHealing>health</style>. While <style=cIsUtility>Defiance</style> is active, recast to end it early and transfer your remaining Heart. Lethal damage can trigger Defiance if this skill is ready.");
+            Language.Add("KEYWORD_DEFIANCE", "<style=cKeywordName>Defiance</style><style=cSub>While active, incoming damage <style=cIsUtility>cannot reduce you below 1 health</style> and you are <style=cIsUtility>Unstoppable</style>, but <style=cIsHealth>drains an increasing amount of Heart per second active</style>.</style>");
+            Language.Add("KEYWORD_UNSTOPPABLE", "<style=cKeywordName>Unstoppable</style><style=cSub>You are immune to <style=cIsUtility>slows</style>, <style=cIsUtility>freeze</style>, <style=cIsUtility>knockback</style>, <style=cIsUtility>roots</style>, <style=cIsUtility>stuns</style>, and <style=cIsUtility>all debuffs</style>.</style>");
             #endregion
 
             #region Achievements

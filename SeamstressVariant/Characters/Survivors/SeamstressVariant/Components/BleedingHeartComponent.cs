@@ -8,23 +8,25 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
     /// Redirects incoming healing into Heart that can be used as a resource for skills.
     /// The Heart builds up from healing received and can be consumed by abilities.
     /// </summary>
-    internal class BleedingHeartComponent : MonoBehaviour
+    internal class BleedingHeartComponent : NetworkBehaviour
     {
         private HealthComponent healthComponent;
         private CharacterBody body;
 
         // Heart settings
-        private float MaxHeart = 110f;
+        [SyncVar(hook = nameof(OnMaxHeartChanged))]
+        public float MaxHeart = 110f;
+        [SyncVar(hook = nameof(OnCurrentHeartChanged))]
         public float currentHeart = 0f;
         private int activeBleedStacks = 0;
         private int nearbyEnemyCount = 0;
-        private const float NearbyEnemyRadius = 20f;
+        private const float NearbyEnemyRadius = 30f;
         private float scanTimer = 0f;
         private float healTimer = 0f;
         private const float ScanInterval = 1f;
-        private const float HealInterval = 0.25f;
-        private const float HealPerBleedStack = 1f;
-        private const int HeartPerBleedChancePercent = 100;
+        private const float HealInterval = 0.20f;
+        private const float HealPerBleedStack = 2f;
+        private const int HeartPerBleedChancePercent = 75;
 
         private bool isInitialized = false;
 
@@ -35,7 +37,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
             if (healthComponent != null)
             {
-                MaxHeart = healthComponent.fullHealth;
+                if (NetworkServer.active)
+                {
+                    MaxHeart = healthComponent.fullHealth;
+                }
                 isInitialized = true;
             }
         }
@@ -55,7 +60,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 scanTimer = ScanInterval;
                 ScanNearbyEnemies();
                 //Log.Debug("NEARBY ENEMIES = " + nearbyEnemyCount + " | BLEED STACKS = " + activeBleedStacks);
-                UpdateBleedStackBuff();
             }
 
             if (healTimer <= 0f)
@@ -84,6 +88,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         // Update maxHeart when maxHealth increased
         private void OnBodyRecalculateStates(CharacterBody body)
         {
+            if (!NetworkServer.active) return;
             MaxHeart = body.maxHealth;
             //Log.Debug("MaxHeart = " + MaxHeart);
         }
@@ -150,6 +155,20 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             return activeBleedStacks;
         }
 
+        public void OnCurrentHeartChanged(float newValue)
+        {
+            currentHeart = newValue;
+            if(body)
+            {
+                body.MarkAllStatsDirty();
+            }
+        }
+
+        public void OnMaxHeartChanged(float newValue)
+        {
+            MaxHeart = newValue;
+        }
+        
         public int GetNearbyEnemyCount()
         {
             return nearbyEnemyCount;
@@ -162,7 +181,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 return;
             }
 
-            TeamIndex myTeam = TeamComponent.GetObjectTeam(body.gameObject);
             Vector3 center = body.footPosition;
             float radiusSqr = NearbyEnemyRadius * NearbyEnemyRadius;
             int enemyCount = 0;
@@ -170,10 +188,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
             foreach (CharacterBody otherBody in CharacterBody.readOnlyInstancesList)
             {
-                if (!CountsAsNearbyEnemy(otherBody, myTeam))
+                /*if (!CountsAsNearbyCharacter(otherBody))
                 {
                     continue;
-                }
+                }*/
 
                 Vector3 delta = otherBody.footPosition - center;
                 if (delta.sqrMagnitude <= radiusSqr)
@@ -200,40 +218,14 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             //Log.Debug("Passive heal: " + healAmount + " (" + activeBleedStacks + " stacks)");
         }
 
-        private bool CountsAsNearbyEnemy(CharacterBody otherBody, TeamIndex myTeam)
+        private bool CountsAsNearbyCharacter(CharacterBody otherBody)
         {
             if (otherBody == null || otherBody == body || otherBody.healthComponent == null || !otherBody.healthComponent.alive)
             {
                 return false;
             }
 
-            TeamIndex otherTeam = TeamComponent.GetObjectTeam(otherBody.gameObject);
-            return otherTeam != TeamIndex.None && otherTeam != myTeam;
-        }
-
-        private void UpdateBleedStackBuff()
-        {
-            if (!NetworkServer.active || body == null)
-            {
-                return;
-            }
-
-            // Get the buff count before updating
-            int currentBuffCount = body.GetBuffCount(SeamstressVariantBuffs.bleedStackCounterBuff);
-            
-            // Set the buff count to match the active bleed stacks on enemies
-            if (activeBleedStacks > 0)
-            {
-                // Set exact buff count to match bleed stacks
-                body.SetBuffCount(SeamstressVariantBuffs.bleedStackCounterBuff.buffIndex, activeBleedStacks);
-                //Log.Debug("Updated bleed stack visualization buff to " + activeBleedStacks);
-            }
-            else if (currentBuffCount > 0)
-            {
-                // Clear the buff if no bleeds are active
-                body.SetBuffCount(SeamstressVariantBuffs.bleedStackCounterBuff.buffIndex, 0);
-                //Log.Debug("Cleared bleed stack visualization buff");
-            }
+            return true;
         }
     }
 }
