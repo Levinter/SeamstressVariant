@@ -2,7 +2,6 @@ using EntityStates;
 using RoR2;
 using RoR2.Projectile;
 using SeamstressMod.Seamstress.Content;
-using SeamstressVariant.Survivors.SeamstressVariant;
 using SeamstressVariant.Survivors.SeamstressVariant.Components;
 using UnityEngine;
 using OGSeamstressController = SeamstressMod.Seamstress.Components.SeamstressController;
@@ -33,6 +32,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         private GameObject projectilePrefab;
         private GameObject scissorFiringPrefab = SeamstressAssets.impDashEffect;
         private HurtBox _lockedTarget;
+        private ScissorController _scissors;
 
         public override void OnEnter()
         {
@@ -52,9 +52,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             var tracker = characterBody.GetComponent<SeamstressTracker>();
             _lockedTarget = tracker != null ? tracker.GetTrackingTarget() : null;
 
-            var scissors = characterBody != null ? characterBody.GetComponent<ScissorController>() : null;
-            bool hasLeft = scissors != null && scissors.HasLeftScissor;
-            bool hasRight = scissors != null && scissors.HasRightScissor;
+            _scissors = characterBody != null ? characterBody.GetComponent<ScissorController>() : null;
+            bool hasLeft = _scissors != null && _scissors.HasLeftScissor;
+            bool hasRight = _scissors != null && _scissors.HasRightScissor;
 
             if (hasRight && !hasLeft)
             {
@@ -72,6 +72,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 _firingLeft      = true;
             }
 
+            Log.Info($"FireScissors: enter side={(_firingLeft ? "L" : "R")} hasLeft={hasLeft} hasRight={hasRight} target={(_lockedTarget != null)}");
+
             Animator modelAnimator = GetModelAnimator();
             if (modelAnimator)
             {
@@ -81,6 +83,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         public override void OnExit()
         {
+            Log.Debug($"FireScissors: exit age={fixedAge:F2} fired={hasFired}");
             base.OnExit();
         }
 
@@ -102,6 +105,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         private void Fire()
         {
+            if (projectilePrefab == null)
+            {
+                Log.Error($"FireScissors: missing projectile prefab for side={(_firingLeft ? "L" : "R")}");
+                return;
+            }
+
             Util.PlaySound("Play_item_lunar_specialReplace_explode", gameObject);
             Util.PlaySound("Play_imp_overlord_attack1_throw", gameObject);
 
@@ -123,7 +132,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 // Launch along the aim ray. Homing is handled by projectile steering components.
                 Quaternion fireRotation = Util.QuaternionSafeLookRotation(aimRay.direction);
                 GameObject targetObject = null;
-                if (_lockedTarget)
+                if (_lockedTarget && _lockedTarget.healthComponent != null && _lockedTarget.healthComponent.body != null)
                 {
                     targetObject = _lockedTarget.healthComponent.body.gameObject;
                 }
@@ -138,6 +147,17 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     Util.CheckRoll(critStat, characterBody.master),
                     DamageColorIndex.Default,
                     targetObject);
+
+                if (_scissors != null)
+                {
+                    _scissors.NotifyScissorFired(_firingLeft);
+                }
+                else
+                {
+                    Log.Warning($"FireScissors: missing ScissorController while firing side={(_firingLeft ? "L" : "R")}");
+                }
+
+                Log.Info($"FireScissors: fired side={(_firingLeft ? "L" : "R")} target={targetObject != null} critRollFromStat={critStat:F2}");
             }
         }
 
