@@ -478,7 +478,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && damageInfo != null
                 && damageInfo.damage > 0f)
             {
-                Log.Warning("Defiance active?:" + self.body.HasBuff(SeamstressVariantBuffs.defianceBuff));
                 Log.Warning("Defiance active: preventing damage.");
                 damageInfo.damageType |= DamageType.NonLethal;
                 damageInfo.damage = 0f;
@@ -499,14 +498,18 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && NetworkServer.active)
             {
                 bool incomingDamageIsLethal = damageInfo.damage >= self.health - 1; // Leave 1 HP to avoid killing the character and allow for proper death-gate Defiance triggering.
+                if (incomingDamageIsLethal)
+                {
+                    Log.Warning("Incoming damage is lethal. Attempting to trigger Defiance.");
+                }
+
                 GenericSkill specialSkill = self.body.skillLocator?.special;
                 DefianceSpecialController defianceSpecialController = self.body.GetComponent<DefianceSpecialController>();
 
                 if (incomingDamageIsLethal && specialSkill != null && defianceSpecialController != null)
                 {
-                    Log.Warning("Incoming damage is lethal. Attempting to trigger Defiance if special is ready.");
                     defianceSpecialController.RequestForcedDefianceActivation();
-                    Log.Warning("Forced Defiance activation requested. Checking special skill stock. Current stock: " + specialSkill.stock);
+                    Log.Warning("Checking special skill stock. Current stock: " + specialSkill.stock);
 
                     if (specialSkill.stock > 0)
                     {
@@ -524,8 +527,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                         self.body.AddBuff(SeamstressVariantBuffs.defianceBuff); // Manually add Defiance buff here to ensure it applies even if the special skill's state machine fails to transition for some reason.
                         Log.Warning("Special skill executed. Refunded one stock. Current stock: " + specialSkill.stock);
                         Log.Warning("Exiting health component hook");
-
-                        
                     }
                     else
                     {
