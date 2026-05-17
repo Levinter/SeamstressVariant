@@ -72,19 +72,21 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             bool isLeftSwing = swingIndex % 2 == 0;
             string scissorHitboxGroup = isLeftSwing ? "Right" : "Left";
 
-            scissorOverlapAttack = new OverlapAttack();
-            scissorOverlapAttack.attacker = gameObject;
-            scissorOverlapAttack.inflictor = gameObject;
-            scissorOverlapAttack.teamIndex = GetTeam();
-            scissorOverlapAttack.damage = SeamstressVariantStaticValues.meleeScissorDamageCoefficient * damageStat;
-            scissorOverlapAttack.procCoefficient = procCoefficient;
-            scissorOverlapAttack.hitEffectPrefab = hitEffectPrefab;
-            scissorOverlapAttack.forceVector = bonusForce;
-            scissorOverlapAttack.pushAwayForce = pushForce * 2f;
-            scissorOverlapAttack.hitBoxGroup = FindHitBoxGroup(scissorHitboxGroup);
-            scissorOverlapAttack.isCrit = attack.isCrit;
-            scissorOverlapAttack.impactSound = impactSound;
-            scissorOverlapAttack.damageType = damageType;
+            scissorOverlapAttack = new OverlapAttack
+            {
+                attacker = gameObject,
+                inflictor = gameObject,
+                teamIndex = GetTeam(),
+                damage = SeamstressVariantStaticValues.meleeScissorDamageCoefficient * damageStat,
+                procCoefficient = procCoefficient,
+                hitEffectPrefab = hitEffectPrefab,
+                forceVector = bonusForce,
+                pushAwayForce = pushForce * 3f,
+                hitBoxGroup = FindHitBoxGroup(scissorHitboxGroup),
+                isCrit = attack.isCrit,
+                impactSound = impactSound,
+                damageType = damageType
+            };
         }
 
         private void ApplyScissorMechanics()
