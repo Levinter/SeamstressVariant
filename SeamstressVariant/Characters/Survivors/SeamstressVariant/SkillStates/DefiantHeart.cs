@@ -24,11 +24,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         private bool canReactivate;
         private bool transitioningToReactivate;
         private bool fired;
-        private bool startupMoveLockApplied;
-        private bool cachedDisableAirControlUntilCollision;
-        private bool cachedDisableAirControlUntilCollisionValid;
-        private bool startupAntiGravityApplied;
-        private bool startupFlightApplied;
 
         private bool CanExitState()
         {
@@ -47,29 +42,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             startupFreezeActive = startupFreezeDuration > 0f;
             canReactivate = false;
             transitioningToReactivate = false;
-            startupMoveLockApplied = false;
-            cachedDisableAirControlUntilCollisionValid = false;
-            startupAntiGravityApplied = false;
-            startupFlightApplied = false;
 
-            if (startupFreezeActive)
+            if (startupFreezeActive && heart != null)
             {
-                ApplyStartupGravityLock();
-                ApplyStartupMovementLock();
+                heart.RequestSetDefiantStartupFreezeActive(true);
             }
-
-            /*if (NetworkServer.active && characterBody)
-            {
-                Log.Warning("Defiant Heart onEnter. Attempting to apply Defiance buff. Is Defiance active?:" + characterBody.HasBuff(SeamstressVariantBuffs.defianceBuff));
-
-                if (!characterBody.HasBuff(SeamstressVariantBuffs.defianceBuff))
-                {
-                    characterBody.AddBuff(SeamstressVariantBuffs.defianceBuff);
-                    Log.Warning("Applying Defiance buff on Defiant Heart enter. New stacks:" + characterBody.GetBuffCount(SeamstressVariantBuffs.defianceBuff));
-                }
-            }*/
-
-            
 
             PlayCrossfade("FullBody, Override", "RipHeart", "Dash.playbackRate", animDuration, 0.05f);
 
@@ -83,10 +60,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         {
             base.FixedUpdate();
 
-            if (startupFreezeActive && (isAuthority || NetworkServer.active))
+            if (startupFreezeActive)
             {
-                ApplyStartupMovementLock();
-
                 if (fixedAge >= startupFreezeEndTime)
                 {
                     EndStartupFreeze();
@@ -114,95 +89,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             }
 
             startupFreezeActive = false;
-            ReleaseStartupMovementLock();
-            ReleaseStartupGravityLock();
-        }
 
-        private void ApplyStartupGravityLock()
-        {
-            if (!characterMotor)
+            if (heart != null)
             {
-                return;
+                heart.RequestSetDefiantStartupFreezeActive(false);
             }
-
-            if (!startupAntiGravityApplied)
-            {
-                CharacterGravityParameters gravityParameters = characterMotor.gravityParameters;
-                gravityParameters.channeledAntiGravityGranterCount++;
-                characterMotor.gravityParameters = gravityParameters;
-                startupAntiGravityApplied = true;
-            }
-
-            if (!startupFlightApplied)
-            {
-                CharacterFlightParameters flightParameters = characterMotor.flightParameters;
-                flightParameters.channeledFlightGranterCount++;
-                characterMotor.flightParameters = flightParameters;
-                startupFlightApplied = true;
-            }
-        }
-
-        private void ReleaseStartupGravityLock()
-        {
-            if (!characterMotor)
-            {
-                startupAntiGravityApplied = false;
-                startupFlightApplied = false;
-                return;
-            }
-
-            if (startupFlightApplied)
-            {
-                CharacterFlightParameters flightParameters = characterMotor.flightParameters;
-                flightParameters.channeledFlightGranterCount--;
-                characterMotor.flightParameters = flightParameters;
-                startupFlightApplied = false;
-            }
-
-            if (startupAntiGravityApplied)
-            {
-                CharacterGravityParameters gravityParameters = characterMotor.gravityParameters;
-                gravityParameters.channeledAntiGravityGranterCount--;
-                characterMotor.gravityParameters = gravityParameters;
-                startupAntiGravityApplied = false;
-            }
-        }
-
-        private void ApplyStartupMovementLock()
-        {
-            if (characterMotor)
-            {
-                if (!startupMoveLockApplied)
-                {
-                    cachedDisableAirControlUntilCollision = characterMotor.disableAirControlUntilCollision;
-                    cachedDisableAirControlUntilCollisionValid = true;
-                    characterMotor.disableAirControlUntilCollision = true;
-                    startupMoveLockApplied = true;
-                }
-
-                characterMotor.velocity = Vector3.zero;
-            }
-
-            if (characterDirection)
-            {
-                characterDirection.moveVector = Vector3.zero;
-            }
-
-            if (inputBank)
-            {
-                inputBank.moveVector = Vector3.zero;
-            }
-        }
-
-        private void ReleaseStartupMovementLock()
-        {
-            if (characterMotor && startupMoveLockApplied && cachedDisableAirControlUntilCollisionValid)
-            {
-                characterMotor.disableAirControlUntilCollision = cachedDisableAirControlUntilCollision;
-            }
-
-            startupMoveLockApplied = false;
-            cachedDisableAirControlUntilCollisionValid = false;
         }
 
         private void EnterSustainedPhase()
@@ -334,8 +225,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             Log.Warning("Exiting Defiant Heart state.");
 
             EndStartupFreeze();
-            ReleaseStartupMovementLock();
-            ReleaseStartupGravityLock();
 
             if (heartOverlayController != null)
             {

@@ -27,6 +27,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         public float currentHeart = 0f;
         [SyncVar(hook = nameof(OnDefianceVisualsActiveChanged))]
         private bool defianceVisualsActive;
+        [SyncVar(hook = nameof(OnDefiantStartupFreezeActiveChanged))]
+        private bool defiantStartupFreezeActive;
         private int activeBleedStacks = 0;
         private int nearbyEnemyCount = 0;
         private const float NearbyEnemyRadius = 30f;
@@ -36,6 +38,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private const float HealInterval = 0.20f;
         private const float HealPerBleedStack = 2f;
         private const int HeartPerBleedChancePercent = 75;
+        private bool startupMoveLockApplied;
+        private bool cachedDisableAirControlUntilCollision;
+        private bool cachedDisableAirControlUntilCollisionValid;
+        private bool startupAntiGravityApplied;
+        private bool startupFlightApplied;
 
         private bool isInitialized = false;
 
@@ -57,6 +64,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
         private void Update()
         {
+            if (defiantStartupFreezeActive)
+            {
+                ApplyDefiantStartupFreezeLocal();
+            }
+
             if (!NetworkServer.active || body == null || healthComponent == null || !healthComponent.alive)
             {
                 return;
@@ -94,6 +106,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 body.onRecalculateStats -= OnBodyRecalculateStates;
             }
 
+            RemoveDefiantStartupFreezeLocal();
             RemoveDefianceVisualsLocal();
         }
 
@@ -195,6 +208,20 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             }
         }
 
+        private void OnDefiantStartupFreezeActiveChanged(bool newValue)
+        {
+            defiantStartupFreezeActive = newValue;
+
+            if (newValue)
+            {
+                ApplyDefiantStartupFreezeLocal();
+            }
+            else
+            {
+                RemoveDefiantStartupFreezeLocal();
+            }
+        }
+
         public void RequestSetDefianceVisualsActive(bool active)
         {
             if (NetworkServer.active)
@@ -224,6 +251,37 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
             defianceVisualsActive = active;
             OnDefianceVisualsActiveChanged(active);
+        }
+
+        public void RequestSetDefiantStartupFreezeActive(bool active)
+        {
+            if (NetworkServer.active)
+            {
+                SetDefiantStartupFreezeActiveServer(active);
+                return;
+            }
+
+            if (hasAuthority)
+            {
+                CmdRequestSetDefiantStartupFreezeActive(active);
+            }
+        }
+
+        [Command]
+        private void CmdRequestSetDefiantStartupFreezeActive(bool active)
+        {
+            SetDefiantStartupFreezeActiveServer(active);
+        }
+
+        private void SetDefiantStartupFreezeActiveServer(bool active)
+        {
+            if (!NetworkServer.active || defiantStartupFreezeActive == active)
+            {
+                return;
+            }
+
+            defiantStartupFreezeActive = active;
+            OnDefiantStartupFreezeActiveChanged(active);
         }
         
         public int GetNearbyEnemyCount()
@@ -433,6 +491,87 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             }
 
             Util.PlaySound("Play_voidman_transform_return", gameObject);
+        }
+
+        private void ApplyDefiantStartupFreezeLocal()
+        {
+            CharacterMotor characterMotor = body ? body.characterMotor : null;
+            if (characterMotor)
+            {
+                if (!startupMoveLockApplied)
+                {
+                    cachedDisableAirControlUntilCollision = characterMotor.disableAirControlUntilCollision;
+                    cachedDisableAirControlUntilCollisionValid = true;
+                    characterMotor.disableAirControlUntilCollision = true;
+                    startupMoveLockApplied = true;
+                }
+
+                if (!startupAntiGravityApplied)
+                {
+                    CharacterGravityParameters gravityParameters = characterMotor.gravityParameters;
+                    gravityParameters.channeledAntiGravityGranterCount++;
+                    characterMotor.gravityParameters = gravityParameters;
+                    startupAntiGravityApplied = true;
+                }
+
+                if (!startupFlightApplied)
+                {
+                    CharacterFlightParameters flightParameters = characterMotor.flightParameters;
+                    flightParameters.channeledFlightGranterCount++;
+                    characterMotor.flightParameters = flightParameters;
+                    startupFlightApplied = true;
+                }
+
+                characterMotor.velocity = Vector3.zero;
+            }
+
+            if (body && body.characterDirection)
+            {
+                body.characterDirection.moveVector = Vector3.zero;
+            }
+
+            InputBankTest inputBank = GetComponent<InputBankTest>();
+            if (inputBank)
+            {
+                inputBank.moveVector = Vector3.zero;
+            }
+        }
+
+        private void RemoveDefiantStartupFreezeLocal()
+        {
+            CharacterMotor characterMotor = body ? body.characterMotor : null;
+            if (!characterMotor)
+            {
+                startupMoveLockApplied = false;
+                cachedDisableAirControlUntilCollisionValid = false;
+                startupAntiGravityApplied = false;
+                startupFlightApplied = false;
+                return;
+            }
+
+            if (startupMoveLockApplied && cachedDisableAirControlUntilCollisionValid)
+            {
+                characterMotor.disableAirControlUntilCollision = cachedDisableAirControlUntilCollision;
+            }
+
+            startupMoveLockApplied = false;
+            cachedDisableAirControlUntilCollisionValid = false;
+
+            if (startupFlightApplied)
+            {
+                CharacterFlightParameters flightParameters = characterMotor.flightParameters;
+                flightParameters.channeledFlightGranterCount--;
+                characterMotor.flightParameters = flightParameters;
+                startupFlightApplied = false;
+            }
+
+            if (startupAntiGravityApplied)
+            {
+                CharacterGravityParameters gravityParameters = characterMotor.gravityParameters;
+                gravityParameters.channeledAntiGravityGranterCount--;
+                characterMotor.gravityParameters = gravityParameters;
+                startupAntiGravityApplied = false;
+            }
         }
     }
 }
