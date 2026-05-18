@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Networking;
 using RoR2;
+using SeamstressMod.Seamstress.Content;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 {
@@ -12,12 +13,20 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
     {
         private HealthComponent healthComponent;
         private CharacterBody body;
+        private Material destealthMaterial;
+        private GameObject trailEffectR;
+        private GameObject trailEffectL;
+        private bool sustainedVisualActive;
+        private TemporaryOverlayInstance persistentDefianceOverlay;
+        private EffectManagerHelper defianceBleedEffect;
 
         // Heart settings
         [SyncVar(hook = nameof(OnMaxHeartChanged))]
         public float MaxHeart = 110f;
         [SyncVar(hook = nameof(OnCurrentHeartChanged))]
         public float currentHeart = 0f;
+        [SyncVar(hook = nameof(OnDefianceVisualsActiveChanged))]
+        private bool defianceVisualsActive;
         private int activeBleedStacks = 0;
         private int nearbyEnemyCount = 0;
         private const float NearbyEnemyRadius = 30f;
@@ -34,6 +43,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         {
             healthComponent = GetComponent<HealthComponent>();
             body = GetComponent<CharacterBody>();
+            destealthMaterial = SeamstressAssets.destealthMaterial;
 
             if (healthComponent != null)
             {
@@ -83,6 +93,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             {
                 body.onRecalculateStats -= OnBodyRecalculateStates;
             }
+
+            RemoveDefianceVisualsLocal();
         }
 
         // Update maxHeart when maxHealth increased
@@ -168,6 +180,51 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         {
             MaxHeart = newValue;
         }
+
+        private void OnDefianceVisualsActiveChanged(bool newValue)
+        {
+            defianceVisualsActive = newValue;
+
+            if (newValue)
+            {
+                ApplyDefianceVisualsLocal();
+            }
+            else
+            {
+                RemoveDefianceVisualsLocal();
+            }
+        }
+
+        public void RequestSetDefianceVisualsActive(bool active)
+        {
+            if (NetworkServer.active)
+            {
+                SetDefianceVisualsActiveServer(active);
+                return;
+            }
+
+            if (hasAuthority)
+            {
+                CmdRequestSetDefianceVisualsActive(active);
+            }
+        }
+
+        [Command]
+        private void CmdRequestSetDefianceVisualsActive(bool active)
+        {
+            SetDefianceVisualsActiveServer(active);
+        }
+
+        private void SetDefianceVisualsActiveServer(bool active)
+        {
+            if (!NetworkServer.active || defianceVisualsActive == active)
+            {
+                return;
+            }
+
+            defianceVisualsActive = active;
+            OnDefianceVisualsActiveChanged(active);
+        }
         
         public int GetNearbyEnemyCount()
         {
@@ -226,6 +283,156 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             }
 
             return true;
+        }
+
+        private void ApplyDefianceBleedEffect()
+        {
+            if (defianceBleedEffect)
+            {
+                return;
+            }
+
+            GameObject bleedEffectPrefab = LegacyResourcesAPI.Load<GameObject>("Prefabs/BleedEffect");
+            if (!bleedEffectPrefab)
+            {
+                return;
+            }
+
+            defianceBleedEffect = EffectManager.GetAndActivatePooledEffect(bleedEffectPrefab, transform, true);
+        }
+
+        private void RemoveDefianceBleedEffect()
+        {
+            if (!defianceBleedEffect)
+            {
+                return;
+            }
+
+            if (defianceBleedEffect.OwningPool != null)
+            {
+                defianceBleedEffect.transform.SetParent(null);
+                defianceBleedEffect.ReturnToPool();
+            }
+            else
+            {
+                Object.Destroy(defianceBleedEffect.gameObject);
+            }
+
+            defianceBleedEffect = null;
+        }
+
+        private Transform FindModelChild(string childName)
+        {
+            ModelLocator modelLocator = GetComponent<ModelLocator>();
+            if (!modelLocator || !modelLocator.modelTransform)
+            {
+                return null;
+            }
+
+            ChildLocator childLocator = modelLocator.modelTransform.GetComponent<ChildLocator>();
+            if (!childLocator)
+            {
+                return null;
+            }
+
+            return childLocator.FindChild(childName);
+        }
+
+        private Animator GetModelAnimator()
+        {
+            ModelLocator modelLocator = GetComponent<ModelLocator>();
+            if (!modelLocator || !modelLocator.modelTransform)
+            {
+                return null;
+            }
+
+            return modelLocator.modelTransform.GetComponent<Animator>();
+        }
+
+        private Transform GetModelTransform()
+        {
+            ModelLocator modelLocator = GetComponent<ModelLocator>();
+            return modelLocator ? modelLocator.modelTransform : null;
+        }
+
+        private void ApplyDefianceVisualsLocal()
+        {
+            if (sustainedVisualActive)
+            {
+                return;
+            }
+
+            sustainedVisualActive = true;
+            ApplyDefianceBleedEffect();
+
+            Animator anim = GetModelAnimator();
+            if (anim && destealthMaterial && persistentDefianceOverlay == null)
+            {
+                persistentDefianceOverlay = TemporaryOverlayManager.AddOverlay(gameObject);
+                persistentDefianceOverlay.duration = 9999f;
+                persistentDefianceOverlay.destroyComponentOnEnd = true;
+                persistentDefianceOverlay.originalMaterial = destealthMaterial;
+                persistentDefianceOverlay.inspectorCharacterModel = anim.gameObject.GetComponent<CharacterModel>();
+                persistentDefianceOverlay.alphaCurve = AnimationCurve.Linear(0f, 1f, 1f, 1f);
+                persistentDefianceOverlay.animateShaderAlpha = true;
+            }
+
+            if (SeamstressAssets.trailEffectHands)
+            {
+                Transform handR = FindModelChild("HandR");
+                Transform handL = FindModelChild("HandL");
+                if (handR)
+                {
+                    trailEffectR = Object.Instantiate(SeamstressAssets.trailEffectHands, handR);
+                }
+                if (handL)
+                {
+                    trailEffectL = Object.Instantiate(SeamstressAssets.trailEffectHands, handL);
+                }
+            }
+        }
+
+        private void RemoveDefianceVisualsLocal()
+        {
+            if (!sustainedVisualActive)
+            {
+                return;
+            }
+
+            sustainedVisualActive = false;
+            RemoveDefianceBleedEffect();
+
+            if (persistentDefianceOverlay != null)
+            {
+                persistentDefianceOverlay.Destroy();
+                persistentDefianceOverlay = null;
+            }
+
+            if (trailEffectR)
+            {
+                Object.Destroy(trailEffectR);
+                trailEffectR = null;
+            }
+
+            if (trailEffectL)
+            {
+                Object.Destroy(trailEffectL);
+                trailEffectL = null;
+            }
+
+            Transform modelTransform = GetModelTransform();
+            if (modelTransform && destealthMaterial)
+            {
+                TemporaryOverlayInstance exitOverlay = TemporaryOverlayManager.AddOverlay(gameObject);
+                exitOverlay.duration = 1f;
+                exitOverlay.destroyComponentOnEnd = true;
+                exitOverlay.originalMaterial = destealthMaterial;
+                exitOverlay.inspectorCharacterModel = modelTransform.GetComponent<CharacterModel>();
+                exitOverlay.alphaCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
+                exitOverlay.animateShaderAlpha = true;
+            }
+
+            Util.PlaySound("Play_voidman_transform_return", gameObject);
         }
     }
 }

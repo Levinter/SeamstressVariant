@@ -14,12 +14,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         public static float heartDrainInterval = 0.25f;
         public static float startupFreezeDuration = 1.0f;
         public static float animDuration = 1.5f;
-        private Material destealthMaterial;
-        private GameObject trailEffectR;
-        private GameObject trailEffectL;
-        private bool sustainedVisualActive;
-        private TemporaryOverlayInstance persistentDefianceOverlay;
-        private EffectManagerHelper defianceBleedEffect;
 
         private BleedingHeartComponent heart;
         private HeartOverlayController heartOverlayController;
@@ -45,7 +39,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         {
             base.OnEnter();
 
-            destealthMaterial = SeamstressAssets.destealthMaterial;
             heart = GetComponent<BleedingHeartComponent>();
             heartOverlayController = GetComponent<HeartOverlayController>();
             nextDrainAt = heartDrainInterval;
@@ -90,7 +83,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         {
             base.FixedUpdate();
 
-            if (startupFreezeActive)
+            if (startupFreezeActive && (isAuthority || NetworkServer.active))
             {
                 ApplyStartupMovementLock();
 
@@ -212,42 +205,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             cachedDisableAirControlUntilCollisionValid = false;
         }
 
-        private void ApplyDefianceBleedEffect()
-        {
-            if (defianceBleedEffect)
-            {
-                return;
-            }
-
-            GameObject bleedEffectPrefab = LegacyResourcesAPI.Load<GameObject>("Prefabs/BleedEffect");
-            if (!bleedEffectPrefab)
-            {
-                return;
-            }
-
-            defianceBleedEffect = EffectManager.GetAndActivatePooledEffect(bleedEffectPrefab, transform, true);
-        }
-
-        private void RemoveDefianceBleedEffect()
-        {
-            if (!defianceBleedEffect)
-            {
-                return;
-            }
-
-            if (defianceBleedEffect.OwningPool != null)
-            {
-                defianceBleedEffect.transform.SetParent(null);
-                defianceBleedEffect.ReturnToPool();
-            }
-            else
-            {
-                Object.Destroy(defianceBleedEffect.gameObject);
-            }
-
-            defianceBleedEffect = null;
-        }
-
         private void EnterSustainedPhase()
         {
             if (heart == null)
@@ -264,11 +221,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 heartOverlayController.SetHeartDrainActive(true);
             }
 
-            if (GetModelAnimator())
+            if (GetModelAnimator() && (NetworkServer.active || isAuthority))
             {
                 PlayAnimation("Gesture, Override", "BufferEmpty");
-                ApplyDefianceVisuals();
             }
+
+            heart.RequestSetDefianceVisualsActive(true);
 
             if (!heart.CanSustainDefiantHeart())
             {
@@ -337,101 +295,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             }
         }
 
-        private void ApplyDefianceVisuals()
-        {
-            if (sustainedVisualActive)
-            {
-                return;
-            }
-
-            sustainedVisualActive = true;
-
-            ApplyDefianceBleedEffect();
-
-            Animator anim = GetModelAnimator();
-            if (anim)
-            {
-                if (destealthMaterial && persistentDefianceOverlay == null)
-                {
-                    persistentDefianceOverlay = TemporaryOverlayManager.AddOverlay(gameObject);
-                    persistentDefianceOverlay.duration = 9999f;
-                    persistentDefianceOverlay.destroyComponentOnEnd = true;
-                    persistentDefianceOverlay.originalMaterial = destealthMaterial;
-                    persistentDefianceOverlay.inspectorCharacterModel = anim.gameObject.GetComponent<CharacterModel>();
-                    persistentDefianceOverlay.alphaCurve = AnimationCurve.Linear(0f, 1f, 1f, 1f);
-                    persistentDefianceOverlay.animateShaderAlpha = true;
-                }
-            }
-
-            if (SeamstressAssets.trailEffectHands)
-            {
-                Transform handR = FindModelChild("HandR");
-                Transform handL = FindModelChild("HandL");
-                if (handR)
-                {
-                    trailEffectR = Object.Instantiate(SeamstressAssets.trailEffectHands, handR);
-                }
-                if (handL)
-                {
-                    trailEffectL = Object.Instantiate(SeamstressAssets.trailEffectHands, handL);
-                }
-            }
-        }
-
-        private void RemoveDefianceVisuals()
-        {
-            if (!sustainedVisualActive)
-            {
-                return;
-            }
-
-            sustainedVisualActive = false;
-            RemoveDefianceBleedEffect();
-
-            if (persistentDefianceOverlay != null)
-            {
-                persistentDefianceOverlay.Destroy();
-                persistentDefianceOverlay = null;
-            }
-
-            if (trailEffectR)
-            {
-                Object.Destroy(trailEffectR);
-                trailEffectR = null;
-            }
-            if (trailEffectL)
-            {
-                Object.Destroy(trailEffectL);
-                trailEffectL = null;
-            }
-
-            Transform modelTransform = GetModelTransform();
-            if (modelTransform && destealthMaterial)
-            {
-                TemporaryOverlayInstance exitOverlay = TemporaryOverlayManager.AddOverlay(gameObject);
-                exitOverlay.duration = 1f;
-                exitOverlay.destroyComponentOnEnd = true;
-                exitOverlay.originalMaterial = destealthMaterial;
-                exitOverlay.inspectorCharacterModel = modelTransform.GetComponent<CharacterModel>();
-                exitOverlay.alphaCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
-                exitOverlay.animateShaderAlpha = true;
-            }
-
-            /*if (SeamstressVariantAssets.defianceEndEffect && characterBody)
-            {
-                EffectManager.SpawnEffect(SeamstressVariantAssets.defianceEndEffect, new EffectData
-                {
-                    origin = characterBody.corePosition,
-                    rotation = Quaternion.identity,
-                    scale = 1f
-                }, true);
-            }*/
-
-            //ApplyTransformExitEffect();
-
-            Util.PlaySound("Play_voidman_transform_return", gameObject);
-        }
-
         private void ApplyTransformEnterEffect()
         {
             Log.Debug("Attempting to apply transform enter effect.");
@@ -492,7 +355,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 }
             }
 
-            RemoveDefianceVisuals();
+            if (heart != null)
+            {
+                heart.RequestSetDefianceVisualsActive(false);
+            }
 
             base.OnExit();
         }

@@ -353,7 +353,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         private void AddHooks()
         {
             On.RoR2.HealthComponent.Heal += HealthComponent_Heal;
-            On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
+            //On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
             On.RoR2.HealthComponent.TakeDamageProcess += HealthComponent_TakeDamageProcess;
             GlobalEventManager.onServerDamageDealt += GlobalEventManager_onServerDamageDealt;
             On.RoR2.HealthComponent.GetHealthBarValues += HealthComponent_GetHealthBarValues;
@@ -478,7 +478,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && damageInfo != null
                 && damageInfo.damage > 0f)
             {
-                Log.Warning("Defiance active: preventing damage.");
                 damageInfo.damageType |= DamageType.NonLethal;
                 damageInfo.damage = 0f;
             }
@@ -497,36 +496,34 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && !self.body.HasBuff(SeamstressVariantBuffs.defianceBuff)
                 && NetworkServer.active)
             {
-                bool incomingDamageIsLethal = damageInfo.damage >= self.health - 1; // Leave 1 HP to avoid killing the character and allow for proper death-gate Defiance triggering.
-                if (incomingDamageIsLethal)
-                {
-                    Log.Warning("Incoming damage is lethal. Attempting to trigger Defiance.");
-                }
-
+                bool incomingDamageIsLethal = damageInfo.damage >= self.health;
                 GenericSkill specialSkill = self.body.skillLocator?.special;
                 DefianceSpecialController defianceSpecialController = self.body.GetComponent<DefianceSpecialController>();
 
                 if (incomingDamageIsLethal && specialSkill != null && defianceSpecialController != null)
                 {
-                    defianceSpecialController.RequestForcedDefianceActivation();
-                    Log.Warning("Checking special skill stock. Current stock: " + specialSkill.stock);
+                    Log.Warning("Incoming damage is lethal. Attempting to trigger Defiance if special is ready.");
+                    Log.Debug("Checking special skill readiness. Current stock: " + specialSkill.stock);
 
                     if (specialSkill.stock > 0)
                     {
-                        Log.Warning("Forced Defiance activation successful. Preventing death and routing to specialController");
-
-                        defianceSpecialController.MarkForcedDefianceSession();
-
-                        // Let the lethal hit resolve to exactly 1 combined HP instead of preserving current HP.
+                        // Let the lethal hit resolve to exactly 1 HP instead of preserving current HP.
                         float damageToLeaveOneHp = Mathf.Max(self.health - 1f, 0f);
                         damageInfo.damageType |= DamageType.NonLethal;
                         damageInfo.damage = damageToLeaveOneHp;
 
-                        specialSkill.ExecuteIfReady();
-                        specialSkill.AddOneStock(); // Refund the stock that will be consumed on cast since this is a forced activation.
-                        self.body.AddBuff(SeamstressVariantBuffs.defianceBuff); // Manually add Defiance buff here to ensure it applies even if the special skill's state machine fails to transition for some reason.
-                        Log.Warning("Special skill executed. Refunded one stock. Current stock: " + specialSkill.stock);
-                        Log.Warning("Exiting health component hook");
+                        Log.Warning("Forced Defiance activation successful. Preventing death and routing to SpecialController.");
+                        defianceSpecialController.MarkForcedDefianceSession();
+
+                        EntityStateMachine specialMachine = EntityStateMachine.FindByCustomName(self.body.gameObject, "Special");
+                        if (specialMachine != null)
+                        {
+                            specialMachine.SetInterruptState(new SkillStates.DefiantHeart(), EntityStates.InterruptPriority.Frozen);
+                        }
+                        else
+                        {
+                            Log.Warning("Forced Defiance activation failed: Special state machine not found.");
+                        }
                     }
                     else
                     {
