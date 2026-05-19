@@ -3,7 +3,6 @@ using SeamstressVariant.Modules.Characters;
 using RoR2;
 using RoR2.Skills;
 using R2API;
-using SeamstressVariant;
 using UnityEngine;
 using UnityEngine.Networking;
 using SeamstressVariant.Survivors.SeamstressVariant.Components;
@@ -353,7 +352,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         private void AddHooks()
         {
             On.RoR2.HealthComponent.Heal += HealthComponent_Heal;
-            //On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
+            On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
             On.RoR2.HealthComponent.TakeDamageProcess += HealthComponent_TakeDamageProcess;
             GlobalEventManager.onServerDamageDealt += GlobalEventManager_onServerDamageDealt;
             On.RoR2.HealthComponent.GetHealthBarValues += HealthComponent_GetHealthBarValues;
@@ -478,6 +477,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && damageInfo != null
                 && damageInfo.damage > 0f)
             {
+                Log.Warning("Damage prevented by Defiance. Converting to non-lethal and routing to TakeDamageProcess for proper handling.");
                 damageInfo.damageType |= DamageType.NonLethal;
                 damageInfo.damage = 0f;
             }
@@ -493,10 +493,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName)
                 && damageInfo != null
                 && damageInfo.damage > 0f
-                && !self.body.HasBuff(SeamstressVariantBuffs.defianceBuff)
+                && self.body.GetBuffCount(SeamstressVariantBuffs.defianceBuff) == 0
+                //&& self.body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility) == 0
                 && NetworkServer.active)
             {
-                bool incomingDamageIsLethal = damageInfo.damage >= self.health;
+                bool incomingDamageIsLethal = damageInfo.damage >= self.health -1 && damageInfo.damageType == DamageType.NonLethal;
                 GenericSkill specialSkill = self.body.skillLocator?.special;
                 DefianceSpecialController defianceSpecialController = self.body.GetComponent<DefianceSpecialController>();
 
@@ -504,6 +505,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 {
                     Log.Warning("Incoming damage is lethal. Attempting to trigger Defiance if special is ready.");
                     Log.Debug("Checking special skill readiness. Current stock: " + specialSkill.stock);
+
+                    defianceSpecialController.RequestForcedDefianceActivation();
 
                     if (specialSkill.stock > 0)
                     {
@@ -513,17 +516,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                         damageInfo.damage = damageToLeaveOneHp;
 
                         Log.Warning("Forced Defiance activation successful. Preventing death and routing to SpecialController.");
-                        defianceSpecialController.MarkForcedDefianceSession();
+                        //self.body.AddBuff(RoR2Content.Buffs.HiddenInvincibility);
+                        self.body.AddBuff(SeamstressVariantBuffs.defianceBuff);
 
-                        EntityStateMachine specialMachine = EntityStateMachine.FindByCustomName(self.body.gameObject, "Special");
-                        if (specialMachine != null)
-                        {
-                            specialMachine.SetInterruptState(new SkillStates.DefiantHeart(), EntityStates.InterruptPriority.Frozen);
-                        }
-                        else
-                        {
-                            Log.Warning("Forced Defiance activation failed: Special state machine not found.");
-                        }
+                        specialSkill.ExecuteIfReady();
+                        specialSkill.AddOneStock();
+                        defianceSpecialController.MarkForcedDefianceSession();
                     }
                     else
                     {
