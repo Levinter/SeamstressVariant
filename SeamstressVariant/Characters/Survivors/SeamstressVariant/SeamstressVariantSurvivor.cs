@@ -477,7 +477,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && damageInfo != null
                 && damageInfo.damage > 0f)
             {
-                Log.Warning("Damage prevented by Defiance. Converting to non-lethal and routing to TakeDamageProcess for proper handling.");
+                Log.Warning("TakeDamageHook: Damage prevented by Defiance.");
                 damageInfo.damageType |= DamageType.NonLethal;
                 damageInfo.damage = 0f;
             }
@@ -497,7 +497,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 //&& self.body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility) == 0
                 && NetworkServer.active)
             {
-                bool incomingDamageIsLethal = damageInfo.damage >= self.health -1 && damageInfo.damageType == DamageType.NonLethal;
+                bool incomingDamageIsLethal = damageInfo.damage >= self.health -1;
                 GenericSkill specialSkill = self.body.skillLocator?.special;
                 DefianceSpecialController defianceSpecialController = self.body.GetComponent<DefianceSpecialController>();
 
