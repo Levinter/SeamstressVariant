@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Networking;
 using RoR2;
+using SeamstressMod.Seamstress.Content;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 {
@@ -12,12 +13,22 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
     {
         private HealthComponent healthComponent;
         private CharacterBody body;
+        private Material destealthMaterial;
+        private GameObject trailEffectR;
+        private GameObject trailEffectL;
+        private bool sustainedVisualActive;
+        private TemporaryOverlayInstance persistentDefianceOverlay;
+        private EffectManagerHelper defianceBleedEffect;
 
         // Heart settings
         [SyncVar(hook = nameof(OnMaxHeartChanged))]
         public float MaxHeart = 110f;
         [SyncVar(hook = nameof(OnCurrentHeartChanged))]
         public float currentHeart = 0f;
+        [SyncVar(hook = nameof(OnDefianceVisualsActiveChanged))]
+        private bool defianceVisualsActive;
+        [SyncVar(hook = nameof(OnDefiantStartupFreezeActiveChanged))]
+        private bool defiantStartupFreezeActive;
         private int activeBleedStacks = 0;
         private int nearbyEnemyCount = 0;
         private const float NearbyEnemyRadius = 30f;
@@ -27,6 +38,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private const float HealInterval = 0.20f;
         private const float HealPerBleedStack = 2f;
         private const int HeartPerBleedChancePercent = 75;
+        private bool startupMoveLockApplied;
+        private bool cachedDisableAirControlUntilCollision;
+        private bool cachedDisableAirControlUntilCollisionValid;
+        private bool startupAntiGravityApplied;
+        private bool startupFlightApplied;
 
         private bool isInitialized = false;
 
@@ -34,6 +50,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         {
             healthComponent = GetComponent<HealthComponent>();
             body = GetComponent<CharacterBody>();
+            destealthMaterial = SeamstressAssets.destealthMaterial;
 
             if (healthComponent != null)
             {
@@ -47,6 +64,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
         private void Update()
         {
+            if (defiantStartupFreezeActive)
+            {
+                ApplyDefiantStartupFreezeLocal();
+            }
+
             if (!NetworkServer.active || body == null || healthComponent == null || !healthComponent.alive)
             {
                 return;
@@ -83,6 +105,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             {
                 body.onRecalculateStats -= OnBodyRecalculateStates;
             }
+
+            RemoveDefiantStartupFreezeLocal();
+            RemoveDefianceVisualsLocal();
         }
 
         // Update maxHeart when maxHealth increased
@@ -168,6 +193,96 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         {
             MaxHeart = newValue;
         }
+
+        private void OnDefianceVisualsActiveChanged(bool newValue)
+        {
+            defianceVisualsActive = newValue;
+
+            if (newValue)
+            {
+                ApplyDefianceVisualsLocal();
+            }
+            else
+            {
+                RemoveDefianceVisualsLocal();
+            }
+        }
+
+        private void OnDefiantStartupFreezeActiveChanged(bool newValue)
+        {
+            defiantStartupFreezeActive = newValue;
+
+            if (newValue)
+            {
+                ApplyDefiantStartupFreezeLocal();
+            }
+            else
+            {
+                RemoveDefiantStartupFreezeLocal();
+            }
+        }
+
+        public void RequestSetDefianceVisualsActive(bool active)
+        {
+            if (NetworkServer.active)
+            {
+                SetDefianceVisualsActiveServer(active);
+                return;
+            }
+
+            if (hasAuthority)
+            {
+                CmdRequestSetDefianceVisualsActive(active);
+            }
+        }
+
+        [Command]
+        private void CmdRequestSetDefianceVisualsActive(bool active)
+        {
+            SetDefianceVisualsActiveServer(active);
+        }
+
+        private void SetDefianceVisualsActiveServer(bool active)
+        {
+            if (!NetworkServer.active || defianceVisualsActive == active)
+            {
+                return;
+            }
+
+            defianceVisualsActive = active;
+            OnDefianceVisualsActiveChanged(active);
+        }
+
+        public void RequestSetDefiantStartupFreezeActive(bool active)
+        {
+            if (NetworkServer.active)
+            {
+                SetDefiantStartupFreezeActiveServer(active);
+                return;
+            }
+
+            if (hasAuthority)
+            {
+                CmdRequestSetDefiantStartupFreezeActive(active);
+            }
+        }
+
+        [Command]
+        private void CmdRequestSetDefiantStartupFreezeActive(bool active)
+        {
+            SetDefiantStartupFreezeActiveServer(active);
+        }
+
+        private void SetDefiantStartupFreezeActiveServer(bool active)
+        {
+            if (!NetworkServer.active || defiantStartupFreezeActive == active)
+            {
+                return;
+            }
+
+            defiantStartupFreezeActive = active;
+            OnDefiantStartupFreezeActiveChanged(active);
+        }
         
         public int GetNearbyEnemyCount()
         {
@@ -226,6 +341,237 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             }
 
             return true;
+        }
+
+        private void ApplyDefianceBleedEffect()
+        {
+            if (defianceBleedEffect)
+            {
+                return;
+            }
+
+            GameObject bleedEffectPrefab = LegacyResourcesAPI.Load<GameObject>("Prefabs/BleedEffect");
+            if (!bleedEffectPrefab)
+            {
+                return;
+            }
+
+            defianceBleedEffect = EffectManager.GetAndActivatePooledEffect(bleedEffectPrefab, transform, true);
+        }
+
+        private void RemoveDefianceBleedEffect()
+        {
+            if (!defianceBleedEffect)
+            {
+                return;
+            }
+
+            if (defianceBleedEffect.OwningPool != null)
+            {
+                defianceBleedEffect.transform.SetParent(null);
+                defianceBleedEffect.ReturnToPool();
+            }
+            else
+            {
+                Object.Destroy(defianceBleedEffect.gameObject);
+            }
+
+            defianceBleedEffect = null;
+        }
+
+        private Transform FindModelChild(string childName)
+        {
+            ModelLocator modelLocator = GetComponent<ModelLocator>();
+            if (!modelLocator || !modelLocator.modelTransform)
+            {
+                return null;
+            }
+
+            ChildLocator childLocator = modelLocator.modelTransform.GetComponent<ChildLocator>();
+            if (!childLocator)
+            {
+                return null;
+            }
+
+            return childLocator.FindChild(childName);
+        }
+
+        private Animator GetModelAnimator()
+        {
+            ModelLocator modelLocator = GetComponent<ModelLocator>();
+            if (!modelLocator || !modelLocator.modelTransform)
+            {
+                return null;
+            }
+
+            return modelLocator.modelTransform.GetComponent<Animator>();
+        }
+
+        private Transform GetModelTransform()
+        {
+            ModelLocator modelLocator = GetComponent<ModelLocator>();
+            return modelLocator ? modelLocator.modelTransform : null;
+        }
+
+        private void ApplyDefianceVisualsLocal()
+        {
+            if (sustainedVisualActive)
+            {
+                return;
+            }
+
+            sustainedVisualActive = true;
+            ApplyDefianceBleedEffect();
+
+            Animator anim = GetModelAnimator();
+            if (anim && destealthMaterial && persistentDefianceOverlay == null)
+            {
+                persistentDefianceOverlay = TemporaryOverlayManager.AddOverlay(gameObject);
+                persistentDefianceOverlay.duration = 9999f;
+                persistentDefianceOverlay.destroyComponentOnEnd = true;
+                persistentDefianceOverlay.originalMaterial = destealthMaterial;
+                persistentDefianceOverlay.inspectorCharacterModel = anim.gameObject.GetComponent<CharacterModel>();
+                persistentDefianceOverlay.alphaCurve = AnimationCurve.Linear(0f, 1f, 1f, 1f);
+                persistentDefianceOverlay.animateShaderAlpha = true;
+            }
+
+            if (SeamstressAssets.trailEffectHands)
+            {
+                Transform handR = FindModelChild("HandR");
+                Transform handL = FindModelChild("HandL");
+                if (handR)
+                {
+                    trailEffectR = Object.Instantiate(SeamstressAssets.trailEffectHands, handR);
+                }
+                if (handL)
+                {
+                    trailEffectL = Object.Instantiate(SeamstressAssets.trailEffectHands, handL);
+                }
+            }
+        }
+
+        private void RemoveDefianceVisualsLocal()
+        {
+            if (!sustainedVisualActive)
+            {
+                return;
+            }
+
+            sustainedVisualActive = false;
+            RemoveDefianceBleedEffect();
+
+            if (persistentDefianceOverlay != null)
+            {
+                persistentDefianceOverlay.Destroy();
+                persistentDefianceOverlay = null;
+            }
+
+            if (trailEffectR)
+            {
+                Object.Destroy(trailEffectR);
+                trailEffectR = null;
+            }
+
+            if (trailEffectL)
+            {
+                Object.Destroy(trailEffectL);
+                trailEffectL = null;
+            }
+
+            Transform modelTransform = GetModelTransform();
+            if (modelTransform && destealthMaterial)
+            {
+                TemporaryOverlayInstance exitOverlay = TemporaryOverlayManager.AddOverlay(gameObject);
+                exitOverlay.duration = 1f;
+                exitOverlay.destroyComponentOnEnd = true;
+                exitOverlay.originalMaterial = destealthMaterial;
+                exitOverlay.inspectorCharacterModel = modelTransform.GetComponent<CharacterModel>();
+                exitOverlay.alphaCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
+                exitOverlay.animateShaderAlpha = true;
+            }
+
+            Util.PlaySound("Play_voidman_transform_return", gameObject);
+        }
+
+        private void ApplyDefiantStartupFreezeLocal()
+        {
+            CharacterMotor characterMotor = body ? body.characterMotor : null;
+            if (characterMotor)
+            {
+                if (!startupMoveLockApplied)
+                {
+                    cachedDisableAirControlUntilCollision = characterMotor.disableAirControlUntilCollision;
+                    cachedDisableAirControlUntilCollisionValid = true;
+                    characterMotor.disableAirControlUntilCollision = true;
+                    startupMoveLockApplied = true;
+                }
+
+                if (!startupAntiGravityApplied)
+                {
+                    CharacterGravityParameters gravityParameters = characterMotor.gravityParameters;
+                    gravityParameters.channeledAntiGravityGranterCount++;
+                    characterMotor.gravityParameters = gravityParameters;
+                    startupAntiGravityApplied = true;
+                }
+
+                if (!startupFlightApplied)
+                {
+                    CharacterFlightParameters flightParameters = characterMotor.flightParameters;
+                    flightParameters.channeledFlightGranterCount++;
+                    characterMotor.flightParameters = flightParameters;
+                    startupFlightApplied = true;
+                }
+
+                characterMotor.velocity = Vector3.zero;
+            }
+
+            if (body && body.characterDirection)
+            {
+                body.characterDirection.moveVector = Vector3.zero;
+            }
+
+            InputBankTest inputBank = GetComponent<InputBankTest>();
+            if (inputBank)
+            {
+                inputBank.moveVector = Vector3.zero;
+            }
+        }
+
+        private void RemoveDefiantStartupFreezeLocal()
+        {
+            CharacterMotor characterMotor = body ? body.characterMotor : null;
+            if (!characterMotor)
+            {
+                startupMoveLockApplied = false;
+                cachedDisableAirControlUntilCollisionValid = false;
+                startupAntiGravityApplied = false;
+                startupFlightApplied = false;
+                return;
+            }
+
+            if (startupMoveLockApplied && cachedDisableAirControlUntilCollisionValid)
+            {
+                characterMotor.disableAirControlUntilCollision = cachedDisableAirControlUntilCollision;
+            }
+
+            startupMoveLockApplied = false;
+            cachedDisableAirControlUntilCollisionValid = false;
+
+            if (startupFlightApplied)
+            {
+                CharacterFlightParameters flightParameters = characterMotor.flightParameters;
+                flightParameters.channeledFlightGranterCount--;
+                characterMotor.flightParameters = flightParameters;
+                startupFlightApplied = false;
+            }
+
+            if (startupAntiGravityApplied)
+            {
+                CharacterGravityParameters gravityParameters = characterMotor.gravityParameters;
+                gravityParameters.channeledAntiGravityGranterCount--;
+                characterMotor.gravityParameters = gravityParameters;
+                startupAntiGravityApplied = false;
+            }
         }
     }
 }

@@ -91,7 +91,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             _search.teamMaskFilter    = TeamMask.allButNeutral;
             _search.teamMaskFilter.RemoveTeam(TeamComponent.GetObjectTeam(gameObject));
             _search.filterByLoS = true;
-            _search.sortMode    = BullseyeSearch.SortMode.DistanceAndAngle;
+            _search.sortMode    = BullseyeSearch.SortMode.Angle;
             _search.RefreshCandidates();
 
             System.Collections.Generic.IEnumerable<HurtBox> results = _search.GetResults();

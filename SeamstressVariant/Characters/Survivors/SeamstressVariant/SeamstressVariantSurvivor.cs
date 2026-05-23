@@ -3,7 +3,6 @@ using SeamstressVariant.Modules.Characters;
 using RoR2;
 using RoR2.Skills;
 using R2API;
-using SeamstressVariant;
 using UnityEngine;
 using UnityEngine.Networking;
 using SeamstressVariant.Survivors.SeamstressVariant.Components;
@@ -478,6 +477,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && damageInfo != null
                 && damageInfo.damage > 0f)
             {
+                Log.Warning("TakeDamageHook: Damage prevented by Defiance.");
                 damageInfo.damageType |= DamageType.NonLethal;
                 damageInfo.damage = 0f;
             }
@@ -493,27 +493,33 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName)
                 && damageInfo != null
                 && damageInfo.damage > 0f
-                && !self.body.HasBuff(SeamstressVariantBuffs.defianceBuff)
+                && self.body.GetBuffCount(SeamstressVariantBuffs.defianceBuff) == 0
+                //&& self.body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility) == 0
                 && NetworkServer.active)
             {
-                bool incomingDamageIsLethal = damageInfo.damage >= self.health - 1; // Leave 1 HP to avoid killing the character and allow for proper death-gate Defiance triggering.
+                bool incomingDamageIsLethal = damageInfo.damage >= self.health -1;
                 GenericSkill specialSkill = self.body.skillLocator?.special;
                 DefianceSpecialController defianceSpecialController = self.body.GetComponent<DefianceSpecialController>();
 
                 if (incomingDamageIsLethal && specialSkill != null && defianceSpecialController != null)
                 {
                     Log.Warning("Incoming damage is lethal. Attempting to trigger Defiance if special is ready.");
+                    Log.Debug("Checking special skill readiness. Current stock: " + specialSkill.stock);
+
                     defianceSpecialController.RequestForcedDefianceActivation();
 
-                    if (specialSkill.ExecuteIfReady())
+                    if (specialSkill.stock > 0)
                     {
-                        // Let the lethal hit resolve to exactly 1 combined HP instead of preserving current HP.
+                        // Let the lethal hit resolve to exactly 1 HP instead of preserving current HP.
                         float damageToLeaveOneHp = Mathf.Max(self.health - 1f, 0f);
                         damageInfo.damageType |= DamageType.NonLethal;
                         damageInfo.damage = damageToLeaveOneHp;
 
-                        Log.Warning("Forced Defiance activation successful. Preventing death and consuming special stock.");
-                        // Forced death-gate Defiance should not spend stock on entry.
+                        Log.Warning("Forced Defiance activation successful. Preventing death and routing to SpecialController.");
+                        //self.body.AddBuff(RoR2Content.Buffs.HiddenInvincibility);
+                        self.body.AddBuff(SeamstressVariantBuffs.defianceBuff);
+
+                        specialSkill.ExecuteIfReady();
                         specialSkill.AddOneStock();
                         defianceSpecialController.MarkForcedDefianceSession();
                     }

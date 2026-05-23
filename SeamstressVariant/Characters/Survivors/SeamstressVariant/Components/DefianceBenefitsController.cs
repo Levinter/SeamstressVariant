@@ -45,6 +45,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             previousBuffCount = characterBody.GetBuffCount(SeamstressVariantBuffs.defianceBuff);
             if (previousBuffCount > 0)
             {
+                Log.Debug("DefianceBenefitsController: Detected existing Defiance buff on Awake, applying benefits");
                 ApplyDefianceBenefits();
             }
         }
@@ -92,6 +93,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
         private void ApplyDefianceBenefits()
         {
+            Log.Warning("Applying Defiance benefits.");
             ApplyDefianceFlags();
             ApplyStateImmunities();
 
