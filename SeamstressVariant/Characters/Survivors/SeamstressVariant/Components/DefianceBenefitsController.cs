@@ -8,7 +8,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
     /// Applies and maintains Defiance gameplay benefits while the Defiance buff is active,
     /// then restores modified state when the buff ends.
     /// </summary>
-    internal class DefianceBenefitsController : MonoBehaviour
+    internal class DefianceBenefitsController : NetworkBehaviour
     {
         private CharacterBody characterBody;
         private SetStateOnHurt setStateOnHurt;
@@ -20,6 +20,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
         private const int MaxFervourStacks = 20;
         private float fervourAccumulator = 0f;
+        [SyncVar (hook = nameof(OnFervourStacksChanged))]
         private int fervourStacks = 0;
 
         public bool IsDefianceActive => previousBuffCount > 0;
@@ -142,6 +143,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         {
             appliedBodyFlags = DefianceBodyFlags & ~characterBody.bodyFlags;
             characterBody.bodyFlags |= DefianceBodyFlags;
+            Log.Warning($"Applied Defiance body flags: {appliedBodyFlags}");
         }
 
         private void RestoreDefianceFlags()
@@ -173,6 +175,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             setStateOnHurt.canBeTaunted = false;
             setStateOnHurt.Cleanse();
             stateImmunitiesApplied = true;
+            Log.Warning("Applied Defiance state immunities.");
         }
 
         private void RestoreStateImmunities()
@@ -187,6 +190,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             setStateOnHurt.canBeFrozen = originalCanBeFrozen;
             setStateOnHurt.canBeTaunted = originalCanBeTaunted;
             stateImmunitiesApplied = false;
+        }
+
+        private void OnFervourStacksChanged(int newStacks)
+        {
+            fervourStacks = newStacks;
+            //characterBody.MarkAllStatsDirty();
         }
 
         private void RemoveDebuffs()
