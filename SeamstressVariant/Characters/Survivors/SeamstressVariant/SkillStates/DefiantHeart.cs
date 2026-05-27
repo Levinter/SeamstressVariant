@@ -176,8 +176,17 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
                 currentDrainPerTick += 1f;
 
+                DotController.InflictDot(
+                    characterBody.gameObject,
+                    characterBody.gameObject,
+                    characterBody.mainHurtBox,
+                    DotController.DotIndex.Bleed,
+                    3f, 1f, 1);
+
                 if (!heart.CanSustainDefiantHeart())
                 {
+                    characterBody.healthComponent.Suicide(); 
+
                     if (CanExitState())
                     {
                         outer.SetNextStateToMain();
@@ -224,6 +233,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         {
             Log.Warning("Exiting Defiant Heart state.");
 
+            DefianceSpecialController specialController = GetComponent<DefianceSpecialController>();
+
             EndStartupFreeze();
 
             if (heartOverlayController != null)
@@ -231,18 +242,22 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 heartOverlayController.SetHeartDrainActive(false);
             }
 
-            if (NetworkServer.active && characterBody)
+            /*if (NetworkServer.active && characterBody)
             {
-                DefianceSpecialController specialController = GetComponent<DefianceSpecialController>();
+                
                 GenericSkill specialSkill = skillLocator != null ? skillLocator.special : null;
-                if (specialController != null && specialController.ConsumeForcedDefianceSession() && specialSkill != null)
+                if (specialController != null && specialSkill != null)
                 {   
                     Log.Debug("Defiant Heart onExit. Stocks:" + specialSkill.stock);
                     specialSkill.DeductStock(1);
                     Log.Debug("Defiant Heart onExit after deduct. Stocks:" + specialSkill.stock);
                     RemoveDefiance();
                 }
-            }
+            }*/
+
+            specialController.ClearForcedDefianceActivation();
+            
+            RemoveDefiance();
 
             if (heart != null)
             {
