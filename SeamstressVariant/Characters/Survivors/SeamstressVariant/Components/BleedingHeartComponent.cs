@@ -37,7 +37,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private const float ScanInterval = 1f;
         private const float HealInterval = 0.20f;
         private const float HealPerBleedStack = 2f;
-        private const int HeartPerBleedChancePercent = 75;
+        private const int HeartPerBleedChancePercent = 50;
         private bool startupMoveLockApplied;
         private bool cachedDisableAirControlUntilCollision;
         private bool cachedDisableAirControlUntilCollisionValid;
@@ -308,12 +308,15 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                     continue;
                 }*/
 
-                Vector3 delta = otherBody.footPosition - center;
-                if (delta.sqrMagnitude <= radiusSqr)
+                if (otherBody.teamComponent.teamIndex != TeamIndex.Player)
                 {
-                    enemyCount++;
-                    bleedCount += otherBody.GetBuffCount(RoR2Content.Buffs.Bleeding);
-                    bleedCount += otherBody.GetBuffCount(RoR2Content.Buffs.SuperBleed);
+                    Vector3 delta = otherBody.footPosition - center;
+                    if (delta.sqrMagnitude <= radiusSqr)
+                    {
+                        enemyCount++;
+                        bleedCount += otherBody.GetBuffCount(RoR2Content.Buffs.Bleeding);
+                        bleedCount += otherBody.GetBuffCount(RoR2Content.Buffs.SuperBleed);
+                    }
                 }
             }
 
@@ -421,7 +424,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             }
 
             sustainedVisualActive = true;
-            ApplyDefianceBleedEffect();
+            //ApplyDefianceBleedEffect();
 
             Animator anim = GetModelAnimator();
             if (anim && destealthMaterial && persistentDefianceOverlay == null)

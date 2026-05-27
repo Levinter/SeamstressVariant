@@ -188,12 +188,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 projectileSimple.desiredForwardSpeed = ScissorProjectileTravelSpeed;
             }
 
-            ProjectileDamage projectileDamage = proj.GetComponent<ProjectileDamage>();
+            /*ProjectileDamage projectileDamage = proj.GetComponent<ProjectileDamage>();
             if (projectileDamage)
             {
                 // Strip inherited damage flags from ImpVoidspike so the projectile is pure direct hit.
                 projectileDamage.damageType = DamageType.Generic;
-            }
+            }*/
 
             ProjectileStickOnImpact stickOnImpact = proj.GetComponent<ProjectileStickOnImpact>();
             if (stickOnImpact)

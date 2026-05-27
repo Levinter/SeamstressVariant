@@ -5,7 +5,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
     public class DefianceSpecialController : MonoBehaviour
     {
         private bool forceDefianceActivation;
-        private bool forcedDefianceSessionActive;
+        //private bool forcedDefianceSessionActive;
 
         public void RequestForcedDefianceActivation()
         {
@@ -24,7 +24,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             return wasRequested;
         }
 
-        public void MarkForcedDefianceSession()
+        /*public void MarkForcedDefianceSession()
         {
             forcedDefianceSessionActive = true;
         }
@@ -34,6 +34,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             bool shouldConsumeStock = forcedDefianceSessionActive;
             forcedDefianceSessionActive = false;
             return shouldConsumeStock;
-        }
+        }*/
     }
 }

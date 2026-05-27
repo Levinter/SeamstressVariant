@@ -35,11 +35,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             crosshair = Asset.LoadCrosshair("SimpleDot"),
             podPrefab = null,
 
-            maxHealth = 110f,
-            healthRegen = 1.5f,
-            armor = 0f,
-
-            jumpCount = 1,
+            maxHealth = 90f,
+            healthRegen = 1.0f,
         };
 
         public override CustomRendererInfo[] customRendererInfos => new CustomRendererInfo[]
@@ -244,8 +241,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
                 isCombatSkill = true,
                 canceledFromSprinting = false,
-                cancelSprintingOnActivation = true,
-                forceSprintDuringState = true,
+                cancelSprintingOnActivation = false,
+                forceSprintDuringState = false,
 
             });
 
@@ -309,13 +306,13 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 keywordTokens = new string[] { "KEYWORD_DEFIANCE", "KEYWORD_UNSTOPPABLE" },
 
                 baseMaxStock = 1,
-                baseRechargeInterval = 10f,
+                baseRechargeInterval = 12f,
                 beginSkillCooldownOnSkillEnd = true,
 
-                isCombatSkill = true,
+                isCombatSkill = false,
                 mustKeyPress = true,
-                cancelSprintingOnActivation = false,
-                forceSprintDuringState = true,
+                cancelSprintingOnActivation = true,
+                forceSprintDuringState = false,
             });
 
             Skills.AddSpecialSkills(bodyPrefab, specialSkillDef);
@@ -424,6 +421,27 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             }
 
             float hemorrhageChance = 1f + heart.GetBleedChanceBonusFromHeart();
+
+            // Allow overcap for better scalling, chance over 100% should apply additional stacks per hit. For example, 150% chance would apply 1 guaranteed stack and 50% chance for an additional stack.
+            if (hemorrhageChance > 100f)
+            {
+                int guaranteedStacks = Mathf.FloorToInt(hemorrhageChance / 100f);
+                hemorrhageChance %= 100f;
+                for (int i = 0; i < guaranteedStacks; i++)
+                {
+                    InflictDotInfo inflictGuaranteedDotInfo = new InflictDotInfo
+                    {
+                        victimObject = victimBody.gameObject,
+                        attackerObject = attackerBody.gameObject,
+                        hitHurtBox = damageInfo.inflictedHurtbox,
+                        dotIndex = DotController.DotIndex.SuperBleed,
+                        duration = 15f * damageInfo.procCoefficient,
+                        damageMultiplier = 1f
+                    };
+                    DotController.InflictDot(ref inflictGuaranteedDotInfo);
+                }
+            }
+
             Log.Debug("Hemorrhage chance: " + hemorrhageChance * damageInfo.procCoefficient + "%");
             if (!Util.CheckRoll(hemorrhageChance * damageInfo.procCoefficient, attackerBody.master))
             {
@@ -494,39 +512,34 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && damageInfo != null
                 && damageInfo.damage > 0f
                 && self.body.GetBuffCount(SeamstressVariantBuffs.defianceBuff) == 0
-                //&& self.body.GetBuffCount(RoR2Content.Buffs.HiddenInvincibility) == 0
                 && NetworkServer.active)
             {
                 bool incomingDamageIsLethal = damageInfo.damage >= self.health -1;
-                GenericSkill specialSkill = self.body.skillLocator?.special;
                 DefianceSpecialController defianceSpecialController = self.body.GetComponent<DefianceSpecialController>();
 
-                if (incomingDamageIsLethal && specialSkill != null && defianceSpecialController != null)
+                if (incomingDamageIsLethal && defianceSpecialController != null)
                 {
                     Log.Warning("Incoming damage is lethal. Attempting to trigger Defiance if special is ready.");
-                    Log.Debug("Checking special skill readiness. Current stock: " + specialSkill.stock);
 
                     defianceSpecialController.RequestForcedDefianceActivation();
 
-                    if (specialSkill.stock > 0)
+                    // Let the lethal hit resolve to exactly 1 HP instead of preserving current HP.
+                    float damageToLeaveOneHp = Mathf.Max(self.health - 1f, 0f);
+                    damageInfo.damageType |= DamageType.NonLethal;
+                    damageInfo.damage = damageToLeaveOneHp;
+
+                    Log.Warning("Forced Defiance activation successful. Preventing death and routing to SpecialController.");
+                    //self.body.AddBuff(RoR2Content.Buffs.HiddenInvincibility);
+                    self.body.AddBuff(SeamstressVariantBuffs.defianceBuff);
+
+                    EntityStateMachine specialMachine = EntityStateMachine.FindByCustomName(self.body.gameObject, "Special");
+                    if (specialMachine != null)
                     {
-                        // Let the lethal hit resolve to exactly 1 HP instead of preserving current HP.
-                        float damageToLeaveOneHp = Mathf.Max(self.health - 1f, 0f);
-                        damageInfo.damageType |= DamageType.NonLethal;
-                        damageInfo.damage = damageToLeaveOneHp;
-
-                        Log.Warning("Forced Defiance activation successful. Preventing death and routing to SpecialController.");
-                        //self.body.AddBuff(RoR2Content.Buffs.HiddenInvincibility);
-                        self.body.AddBuff(SeamstressVariantBuffs.defianceBuff);
-
-                        specialSkill.ExecuteIfReady();
-                        specialSkill.AddOneStock();
-                        defianceSpecialController.MarkForcedDefianceSession();
+                        specialMachine.SetInterruptState(new SkillStates.DefiantHeart(), EntityStates.InterruptPriority.Frozen);
                     }
                     else
                     {
-                        Log.Warning("Forced Defiance activation failed. Clearing forced activation.");
-                        defianceSpecialController.ClearForcedDefianceActivation();
+                        Log.Warning("Forced Defiance activation failed: Special state machine not found.");
                     }
                 }
             }
