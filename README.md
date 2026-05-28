@@ -1,4 +1,5 @@
 # Seamstress Variant
+[![icon.png](https://raw.githubusercontent.com/Levinter/SeamstressVariant/refs/heads/Main/Screenshots/icon.png)]()
 
 A variant of the Seamstress survivor by Tsuyoikenko, giving her a full rework. Thanks to DTEE by allowing me to use his Seamstress Icon
 
