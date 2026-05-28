@@ -1,7 +1,4 @@
 using EntityStates;
-using RoR2;
-using RoR2.Skills;
-using SeamstressMod.Seamstress.Content;
 using SeamstressVariant.Survivors.SeamstressVariant.Components;
 using UnityEngine;
 using UnityEngine.Networking;

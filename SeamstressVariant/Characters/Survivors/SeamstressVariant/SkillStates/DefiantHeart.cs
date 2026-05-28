@@ -49,7 +49,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             }
 
             PlayCrossfade("FullBody, Override", "RipHeart", "Dash.playbackRate", animDuration, 0.05f);
-
             Util.PlaySound("Play_imp_overlord_attack2_tell", gameObject);
 
             ApplyTransformEnterEffect();
@@ -158,8 +157,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             {
                 transitioningToReactivate = true;
 
-                if (isAuthority)
+                if (NetworkServer.active && isAuthority)
                 {
+                    Log.Warning("Trying to transition from Defiant Heart to Healing Heart.");
                     outer.SetNextState(new HealingHeart());
                 }
                 return;
@@ -234,35 +234,24 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             Log.Warning("Exiting Defiant Heart state.");
 
             DefianceSpecialController specialController = GetComponent<DefianceSpecialController>();
+            GenericSkill specialSkill = skillLocator?.special;
 
             EndStartupFreeze();
 
-            if (heartOverlayController != null)
-            {
-                heartOverlayController.SetHeartDrainActive(false);
-            }
+            heartOverlayController?.SetHeartDrainActive(false);
 
-            /*if (NetworkServer.active && characterBody)
+            if (NetworkServer.active && characterBody)
             {
-                
-                GenericSkill specialSkill = skillLocator != null ? skillLocator.special : null;
-                if (specialController != null && specialSkill != null)
+                if (specialController != null && specialController.ConsumeForcedDefianceActivation() && specialSkill != null)
                 {   
                     Log.Debug("Defiant Heart onExit. Stocks:" + specialSkill.stock);
                     specialSkill.DeductStock(1);
                     Log.Debug("Defiant Heart onExit after deduct. Stocks:" + specialSkill.stock);
                     RemoveDefiance();
                 }
-            }*/
-
-            specialController.ClearForcedDefianceActivation();
-            
-            RemoveDefiance();
-
-            if (heart != null)
-            {
-                heart.RequestSetDefianceVisualsActive(false);
             }
+
+            heart?.RequestSetDefianceVisualsActive(false);
 
             base.OnExit();
         }

@@ -307,7 +307,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
                 baseMaxStock = 1,
                 baseRechargeInterval = 12f,
-                beginSkillCooldownOnSkillEnd = true,
+                beginSkillCooldownOnSkillEnd = false,
 
                 isCombatSkill = false,
                 mustKeyPress = true,
@@ -515,31 +515,35 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && NetworkServer.active)
             {
                 bool incomingDamageIsLethal = damageInfo.damage >= self.health -1;
+                GenericSkill specialSkill = self.body.skillLocator?.special;
                 DefianceSpecialController defianceSpecialController = self.body.GetComponent<DefianceSpecialController>();
 
-                if (incomingDamageIsLethal && defianceSpecialController != null)
+                if (incomingDamageIsLethal && specialSkill != null && defianceSpecialController != null)
                 {
                     Log.Warning("Incoming damage is lethal. Attempting to trigger Defiance if special is ready.");
+                    Log.Debug("Checking special skill readiness. Current stock: " + specialSkill.stock);
 
                     defianceSpecialController.RequestForcedDefianceActivation();
 
-                    // Let the lethal hit resolve to exactly 1 HP instead of preserving current HP.
-                    float damageToLeaveOneHp = Mathf.Max(self.health - 1f, 0f);
-                    damageInfo.damageType |= DamageType.NonLethal;
-                    damageInfo.damage = damageToLeaveOneHp;
-
-                    Log.Warning("Forced Defiance activation successful. Preventing death and routing to SpecialController.");
-                    //self.body.AddBuff(RoR2Content.Buffs.HiddenInvincibility);
-                    self.body.AddBuff(SeamstressVariantBuffs.defianceBuff);
-
-                    EntityStateMachine specialMachine = EntityStateMachine.FindByCustomName(self.body.gameObject, "Special");
-                    if (specialMachine != null)
+                    if (specialSkill.stock > 0)
                     {
-                        specialMachine.SetInterruptState(new SkillStates.DefiantHeart(), EntityStates.InterruptPriority.Frozen);
+                        // Let the lethal hit resolve to exactly 1 HP instead of preserving current HP.
+                        float damageToLeaveOneHp = Mathf.Max(self.health - 1f, 0f);
+                        damageInfo.damageType |= DamageType.NonLethal;
+                        damageInfo.damage = damageToLeaveOneHp;
+
+                        Log.Warning("Forced Defiance activation successful. Preventing death and routing to SpecialController.");
+                        //self.body.AddBuff(RoR2Content.Buffs.HiddenInvincibility);
+                        self.body.AddBuff(SeamstressVariantBuffs.defianceBuff);
+
+                        specialSkill.AddOneStock();
+                        specialSkill.ExecuteIfReady();
+                        
                     }
                     else
                     {
-                        Log.Warning("Forced Defiance activation failed: Special state machine not found.");
+                        Log.Warning("Forced Defiance activation failed. Clearing forced activation.");
+                        defianceSpecialController.ClearForcedDefianceActivation();
                     }
                 }
             }
