@@ -37,6 +37,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             maxHealth = 90f,
             healthRegen = 1.0f,
+            damage = 11f,
         };
 
         public override CustomRendererInfo[] customRendererInfos => new CustomRendererInfo[]

@@ -22,20 +22,23 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             forcedTransitionToDefiantHeart = false;
             heart = GetComponent<BleedingHeartComponent>();
 
-            DefianceSpecialController specialController = GetComponent<DefianceSpecialController>();
-            if (specialController != null && specialController.ConsumeForcedDefianceActivation())
+            if (isAuthority)
             {
-                Log.Warning("HealingHeart: Forced Defiance activation detected on enter. Transitioning to DefiantHeart.");
-                transferApplied = true;
-                forcedTransitionToDefiantHeart = true;
-                outer.SetNextState(new DefiantHeart());
-                return;
-            }
+                DefianceSpecialController specialController = GetComponent<DefianceSpecialController>();
+                if (specialController != null && specialController.ConsumeForcedDefianceActivation())
+                {
+                    Log.Warning("HealingHeart: Forced Defiance activation detected on enter. Transitioning to DefiantHeart.");
+                    transferApplied = true;
+                    forcedTransitionToDefiantHeart = true;
+                    outer.SetNextState(new DefiantHeart());
+                    return;
+                }
 
-            if (heart == null || healthComponent == null || characterBody == null)
-            {
-                outer.SetNextStateToMain();
-                return;
+                if (heart == null || healthComponent == null || characterBody == null)
+                {
+                    outer.SetNextStateToMain();
+                    return;
+                }
             }
 
             storedHeart = heart.GetHeart();
