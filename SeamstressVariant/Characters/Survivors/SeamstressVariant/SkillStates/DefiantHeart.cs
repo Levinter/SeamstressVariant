@@ -233,7 +233,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         {
             Log.Warning("Exiting Defiant Heart state.");
 
-            DefianceSpecialController specialController = GetComponent<DefianceSpecialController>();
+            //DefianceSpecialController specialController = GetComponent<DefianceSpecialController>();
             GenericSkill specialSkill = skillLocator?.special;
 
             EndStartupFreeze();
@@ -242,7 +242,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             if (NetworkServer.active && characterBody)
             {
-                if (specialController != null && specialController.ConsumeForcedDefianceActivation() && specialSkill != null)
+                if (specialSkill != null)
                 {   
                     Log.Debug("Defiant Heart onExit. Stocks:" + specialSkill.stock);
                     specialSkill.DeductStock(1);

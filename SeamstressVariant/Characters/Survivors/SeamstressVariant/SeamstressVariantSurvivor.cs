@@ -443,7 +443,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 }
             }
 
-            Log.Debug("Hemorrhage chance: " + hemorrhageChance * damageInfo.procCoefficient + "%");
+            //Log.Debug("Hemorrhage chance: " + hemorrhageChance * damageInfo.procCoefficient + "%");
             if (!Util.CheckRoll(hemorrhageChance * damageInfo.procCoefficient, attackerBody.master))
             {
                 return;
@@ -496,7 +496,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && damageInfo != null
                 && damageInfo.damage > 0f)
             {
-                Log.Warning("TakeDamageHook: Damage prevented by Defiance.");
+                //Log.Warning("TakeDamageHook: Damage prevented by Defiance.");
                 damageInfo.damageType |= DamageType.NonLethal;
                 damageInfo.damage = 0f;
             }
