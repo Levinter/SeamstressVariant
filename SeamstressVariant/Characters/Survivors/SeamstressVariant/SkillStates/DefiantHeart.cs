@@ -43,16 +43,19 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             canReactivate = false;
             transitioningToReactivate = false;
 
-            if (startupFreezeActive && heart != null)
+            if (isAuthority || NetworkServer.active)
             {
-                heart.RequestSetDefiantStartupFreezeActive(true);
+                if (startupFreezeActive && heart != null)
+                {
+                    heart.RequestSetDefiantStartupFreezeActive(true);
+                }
+
+                PlayCrossfade("FullBody, Override", "RipHeart", "Dash.playbackRate", animDuration, 0.05f);
+                Util.PlaySound("Play_imp_overlord_attack2_tell", gameObject);
+
+                ApplyTransformEnterEffect();
+                //StartTransformCameraOverride();
             }
-
-            PlayCrossfade("FullBody, Override", "RipHeart", "Dash.playbackRate", animDuration, 0.05f);
-            Util.PlaySound("Play_imp_overlord_attack2_tell", gameObject);
-
-            ApplyTransformEnterEffect();
-            //StartTransformCameraOverride();
         }
 
         public override void FixedUpdate()
@@ -203,7 +206,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 return;
             }
 
-            float envelopeScale = 2.5f;
+            float envelopeScale = 3.5f;
             Vector3 origin = characterBody.corePosition + Vector3.up * (characterBody.radius * 0.75f);
 
             EffectManager.SpawnEffect(SeamstressVariantAssets.defiantTransformEnterEffect, new EffectData
@@ -247,6 +250,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     Log.Debug("Defiant Heart onExit. Stocks:" + specialSkill.stock);
                     specialSkill.DeductStock(1);
                     Log.Debug("Defiant Heart onExit after deduct. Stocks:" + specialSkill.stock);
+                    DotController.RemoveAllDots(characterBody.gameObject);
                     RemoveDefiance();
                 }
             }

@@ -42,8 +42,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             #region Passive
             Language.Add(prefix + "PASSIVE_NAME", "Bleeding Heart");
-            Language.Add(prefix + "PASSIVE_DESCRIPTION", "Nearby <color=#9B3737>Bleeding</color> heals you for <style=cIsHealing>10 health</style> per second, per stack. All healing is stored in your <color=#9B3737>Heart</color> instead of restoring health.");
-            Language.Add("KEYWORD_HEART_HEMORRHAGE", "<style=cKeywordName>Heart</style><style=cSub>Stores healing. Capacity is equal to your <style=cIsHealing>maximum health</style>. Grants <style=cIsDamage>1% hemorrhage chance</style> per <style=cIsHealing>50 health</style> stored in the Heart (Can overcap).</style><style=cStack>\n\n</style><style=cKeywordName>Hemorrhage</style><style=cSub>Deals <style=cIsDamage>2000% base damage</style> over <style=cIsDamage>15 seconds</style>.</style>");
+            Language.Add(prefix + "PASSIVE_DESCRIPTION", "Nearby <color=#9B3737>Bleeding</color> heals you for <style=cIsHealing>5 health</style> per second, per stack. All healing is stored in your <color=#9B3737>Heart</color>.");
+            Language.Add("KEYWORD_HEART_HEMORRHAGE", "<style=cKeywordName>Heart</style><style=cSub>Capacity is equal to your <style=cIsHealing>maximum health</style>. Grants <style=cIsDamage>1% hemorrhage chance</style> per <style=cIsHealing>50 health</style> stored in the Heart (Can overcap).</style><style=cStack>\n\n</style><style=cKeywordName>Hemorrhage</style><style=cSub>Deals <style=cIsDamage>2000% base damage</style> over <style=cIsDamage>15 seconds</style>.</style>");
             #endregion
 
             #region Primary

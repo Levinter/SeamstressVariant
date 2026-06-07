@@ -36,7 +36,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private float healTimer = 0f;
         private const float ScanInterval = 1f;
         private const float HealInterval = 0.20f;
-        private const float HealPerBleedStack = 2f;
+        private const float HealPerBleedStack = 1f;
         private const int HeartPerBleedChancePercent = 50;
         private bool startupMoveLockApplied;
         private bool cachedDisableAirControlUntilCollision;
@@ -308,8 +308,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                     continue;
                 }*/
 
-                if (otherBody.teamComponent.teamIndex != TeamIndex.Player)
-                {
+                //if (otherBody.teamComponent.teamIndex != TeamIndex.Player)
+                //{
                     Vector3 delta = otherBody.footPosition - center;
                     if (delta.sqrMagnitude <= radiusSqr)
                     {
@@ -317,7 +317,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                         bleedCount += otherBody.GetBuffCount(RoR2Content.Buffs.Bleeding);
                         bleedCount += otherBody.GetBuffCount(RoR2Content.Buffs.SuperBleed);
                     }
-                }
+                //}
             }
 
             nearbyEnemyCount = enemyCount;
@@ -461,7 +461,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             }
 
             sustainedVisualActive = false;
-            RemoveDefianceBleedEffect();
+            //RemoveDefianceBleedEffect();
 
             if (persistentDefianceOverlay != null)
             {
