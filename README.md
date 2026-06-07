@@ -57,6 +57,11 @@ DTEE - For creating the nice portrait icon and allowing me to use it for this mo
 
 And everyone on the Risk of Ran 2 modcord, for their help, tools and documentation on the process on how to create a mod.
 
+# Know Issues
+
+Some animations dont play properly when playing as a client. It is expected there is going to be more bugs while playing as a client.
+Due to the nature of Seamstress passive the Legendary Item Aegis is efectively useless.
+
 # Disclaimers
 
 Most likely there will be bugs, is my first time creating a mod after all.
