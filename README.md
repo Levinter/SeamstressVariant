@@ -60,6 +60,7 @@ And everyone on the Risk of Ran 2 modcord, for their help, tools and documentati
 # Know Issues
 
 Some animations dont play properly when playing as a client. It is expected there is going to be more bugs while playing as a client.
+
 Due to the nature of Seamstress passive the Legendary Item Aegis is efectively useless.
 
 # Disclaimers
