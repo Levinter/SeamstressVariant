@@ -29,7 +29,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             subtitleNameToken = SEAMSTRESS_VARIANT_PREFIX + "SUBTITLE",
 
             characterPortrait = SeamstressMod.Seamstress.Content.SeamstressAssets.mainAssetBundle.LoadAsset<Sprite>("texSeamstressIcon").texture,
-            bodyColor = Color.white,
+            bodyColor = new Color(0.607f, 0.216f, 0.300f),
             sortPosition = 100,
 
             crosshair = Asset.LoadCrosshair("SimpleDot"),

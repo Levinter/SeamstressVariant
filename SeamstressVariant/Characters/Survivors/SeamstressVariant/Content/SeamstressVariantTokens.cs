@@ -20,11 +20,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         {
             string prefix = SeamstressVariantSurvivor.SEAMSTRESS_VARIANT_PREFIX;
 
-            string desc = "Henry is a skilled fighter who makes use of a wide arsenal of weaponry to take down his foes.<color=#CCD3E0>" + Environment.NewLine + Environment.NewLine
-             + "< ! > Sword is a good all-rounder while Boxing Gloves are better for laying a beatdown on more powerful foes." + Environment.NewLine + Environment.NewLine
-             + "< ! > Pistol is a powerful anti air, with its low cooldown and high damage." + Environment.NewLine + Environment.NewLine
-             + "< ! > Blink is a short invulnerable reposition tool that rewards precise timing and spacing." + Environment.NewLine + Environment.NewLine
-             + "< ! > Defiant Heart drains Heart each second and grants Defiance, preventing death while active." + Environment.NewLine + Environment.NewLine;
+            string desc = "Seamstress Variant is a hyper scaler that uses her health as a resource to fuel her damage and defiance.<color=#CCD3E0>" + Environment.NewLine + Environment.NewLine
+             + "< ! > Her claw attack is pretty weak, managing her scissors for increased damage is key." + Environment.NewLine + Environment.NewLine
+             + "< ! > Stacking health is your priority, the more health, the more bleed chance, the more bleed chance the more healing." + Environment.NewLine + Environment.NewLine
+             + "< ! > Blink as no cooldown, but it costs health" + Environment.NewLine + Environment.NewLine
+             + "< ! > With enough resources you can maintain Defiant Heart for extenced periods of time, allowing you to tank almost everything." + Environment.NewLine + Environment.NewLine;
 
             string outro = "..and so she left, her heart still beating.";
             string outroFailure = "..and so she vanished, a silent heart, finally at rest.";
@@ -59,12 +59,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             #region Utility
             Language.Add(prefix + "UTILITY_BLINK_NAME", "Blink");
-            Language.Add(prefix + "UTILITY_BLINK_DESCRIPTION", $"<style=cIsUtility>Invulnerable.</style> Blink a short distance. <style=cIsHealth>Costs health on use</style>. <color=#9B3737>Health cost increases with level</color>.");
+            Language.Add(prefix + "UTILITY_BLINK_DESCRIPTION", $"<style=cIsUtility>Invulnerable.</style> Blink a short distance. <style=cIsHealth>Costs health on use</style>.");
             #endregion
 
             #region Special
             Language.Add(prefix + "SPECIAL_HEALING_HEART_NAME", "Healing Heart");
-            Language.Add(prefix + "SPECIAL_HEALING_HEART_DESCRIPTION", "Transfer all current <color=#9B3737>Heart</color> to <style=cIsHealing>health</style> and exit <style=cIsUtility>Defiant Heart</style> if active. Receiving lethal damage will trigger <style=cIsUtility>Defiant Heart</style> if this skill is ready.");
+            Language.Add(prefix + "SPECIAL_HEALING_HEART_DESCRIPTION", "Transfer all current <color=#9B3737>Heart</color> to <style=cIsHealing>Health</style> and exit <style=cIsUtility>Defiant Heart</style> if active. Receiving lethal damage will trigger <style=cIsUtility>Defiant Heart</style> if this skill is ready.");
             Language.Add("KEYWORD_DEFIANCE", "<style=cKeywordName>Defiant Heart</style><style=cSub>While active, incoming damage <style=cIsUtility>cannot reduce you below 1 health</style> and you are <style=cIsUtility>Unstoppable</style>, but <color=#9B3737>your heart will bleed out until Death</color>.</style>");
             Language.Add("KEYWORD_UNSTOPPABLE", "<style=cKeywordName>Unstoppable</style><style=cSub>You are immune to <style=cIsUtility>slows</style>, <style=cIsUtility>freeze</style>, <style=cIsUtility>knockback</style>, <style=cIsUtility>roots</style>, <style=cIsUtility>stuns</style>, and <style=cIsUtility>all debuffs</style>.</style>");
             #endregion
