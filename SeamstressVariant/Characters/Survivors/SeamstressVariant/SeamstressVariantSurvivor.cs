@@ -6,6 +6,7 @@ using R2API;
 using UnityEngine;
 using UnityEngine.Networking;
 using SeamstressVariant.Survivors.SeamstressVariant.Components;
+using SeamstressVariant.Survivors.SeamstressVariant.SkillStates;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant
 {
@@ -515,7 +516,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && self.body.GetBuffCount(SeamstressVariantBuffs.defianceBuff) == 0
                 && NetworkServer.active)
             {
-                bool incomingDamageIsLethal = damageInfo.damage >= self.health -1;
+                bool incomingDamageIsLethal = damageInfo.damage >= self.health;
                 GenericSkill specialSkill = self.body.skillLocator?.special;
                 DefianceSpecialController defianceSpecialController = self.body.GetComponent<DefianceSpecialController>();
 
@@ -534,12 +535,19 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                         damageInfo.damage = damageToLeaveOneHp;
 
                         Log.Warning("Forced Defiance activation successful. Preventing death and routing to SpecialController.");
-                        //self.body.AddBuff(RoR2Content.Buffs.HiddenInvincibility);
                         self.body.AddBuff(SeamstressVariantBuffs.defianceBuff);
 
-                        specialSkill.AddOneStock();
-                        specialSkill.ExecuteIfReady();
-                        
+                        EntityStateMachine specialStateMachine = EntityStateMachine.FindByCustomName(self.body.gameObject, "Special");
+                        if (specialStateMachine != null)
+                        {
+                            specialStateMachine.SetNextState(new HealingHeart());
+                        }
+                        else
+                        {
+                            Log.Warning("Forced Defiance: Special state machine not found. Rolling back.");
+                            self.body.RemoveBuff(SeamstressVariantBuffs.defianceBuff);
+                            defianceSpecialController.ClearForcedDefianceActivation();
+                        }
                     }
                     else
                     {

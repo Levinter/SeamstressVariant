@@ -30,33 +30,49 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             heart = GetComponent<BleedingHeartComponent>();
             DefianceSpecialController specialController = GetComponent<DefianceSpecialController>();
 
+            if (heart == null || healthComponent == null || characterBody == null)
+            {
+                if (isAuthority || NetworkServer.active)
+                {
+                    outer.SetNextStateToMain();
+                }
+                return;
+            }
+
+            storedHeart = heart.GetHeart();
+
             if (isAuthority || NetworkServer.active)
             {
+                bool forcedDefianceActivation = specialController != null && specialController.ConsumeForcedDefianceActivation();
                 int defianceCount = characterBody.GetBuffCount(SeamstressVariantBuffs.defianceBuff);
-                if (defianceCount == 0 && !specialController.ConsumeForcedDefianceActivation())
-                {
-                    characterBody.AddBuff(SeamstressVariantBuffs.defianceBuff);
-                    PlayCrossfade("FullBody, Override", "RipHeart", "Dash.playbackRate", baseDuration * 2.25f, 0.05f);
-                    normalExit = true;
-                }
-                
-                if (specialController != null && specialController.ConsumeForcedDefianceActivation())
+
+                if (forcedDefianceActivation)
                 {
                     Log.Warning("HealingHeart: Forced Defiance activation detected on enter. Transitioning to DefiantHeart.");
-                    transferApplied = true;
                     forcedTransitionToDefiantHeart = true;
                     outer.SetNextState(new DefiantHeart());
                     return;
                 }
 
-                if (heart == null || healthComponent == null || characterBody == null)
+                if (defianceCount > 0)
                 {
-                    outer.SetNextStateToMain();
-                    return;
+                    Log.Warning("Instant. Applying Heart Transfer on DefiantHeart Exit");
+                    if (NetworkServer.active)
+                    {
+                        ApplyHeartTransfer();
+                    }
+                }
+                
+                if (defianceCount == 0)
+                {
+                    Log.Warning("Normal entry to Healing Heart");
+                    characterBody.AddBuff(SeamstressVariantBuffs.defianceBuff);
+                    PlayCrossfade("FullBody, Override", "RipHeart", "Dash.playbackRate", baseDuration * 2.25f, 0.05f);
+                    normalExit = true;
                 }
             }
 
-            storedHeart = heart.GetHeart();
+            
         }
 
         public void PlayDestealthAnimation()
@@ -79,14 +95,19 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             base.FixedUpdate();
 
             if (fixedAge >= baseDuration)
-            {   
-                PlayDestealthAnimation();
-                ApplyHeartTransfer();
-                Util.PlaySound("Play_voidman_transform_return", gameObject);
-
-                /*if (NetworkServer.active)
+            {
+                if (normalExit)
                 {
-                }*/
+                    PlayDestealthAnimation();
+
+                    if (NetworkServer.active)
+                    {
+                        ApplyHeartTransfer();
+                    }
+
+                    Util.PlaySound("Play_voidman_transform_return", gameObject);
+                    normalExit = false;
+                }
 
                 if (isAuthority)
                 {

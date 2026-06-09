@@ -24,6 +24,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         private bool canReactivate;
         private bool transitioningToReactivate;
         private bool fired;
+        private bool exitingDueToHeartExhaustion;
 
         private bool CanExitState()
         {
@@ -42,6 +43,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             startupFreezeActive = startupFreezeDuration > 0f;
             canReactivate = false;
             transitioningToReactivate = false;
+            exitingDueToHeartExhaustion = false;
 
             if (isAuthority || NetworkServer.active)
             {
@@ -160,7 +162,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             {
                 transitioningToReactivate = true;
 
-                if (NetworkServer.active && isAuthority)
+                if (isAuthority || NetworkServer.active)
                 {
                     Log.Warning("Trying to transition from Defiant Heart to Healing Heart.");
                     outer.SetNextState(new HealingHeart());
@@ -175,20 +177,23 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 if (NetworkServer.active)
                 {
                     heart.ConsumeHeart(currentDrainPerTick);
+
+                    DotController.InflictDot(
+                        characterBody.gameObject,
+                        characterBody.gameObject,
+                        characterBody.mainHurtBox,
+                        DotController.DotIndex.Bleed,
+                        3f, 1f, 1);
                 }
 
                 currentDrainPerTick += 1f;
 
-                DotController.InflictDot(
-                    characterBody.gameObject,
-                    characterBody.gameObject,
-                    characterBody.mainHurtBox,
-                    DotController.DotIndex.Bleed,
-                    3f, 1f, 1);
-
                 if (!heart.CanSustainDefiantHeart())
                 {
-                    characterBody.healthComponent.Suicide(); 
+                    if (NetworkServer.active)
+                    {
+                        exitingDueToHeartExhaustion = true;
+                    }
 
                     if (CanExitState())
                     {
@@ -245,13 +250,19 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             if (NetworkServer.active && characterBody)
             {
+                DotController.RemoveAllDots(characterBody.gameObject);
+                RemoveDefiance();
+
                 if (specialSkill != null)
-                {   
+                {
                     Log.Debug("Defiant Heart onExit. Stocks:" + specialSkill.stock);
                     specialSkill.DeductStock(1);
                     Log.Debug("Defiant Heart onExit after deduct. Stocks:" + specialSkill.stock);
-                    DotController.RemoveAllDots(characterBody.gameObject);
-                    RemoveDefiance();
+                }
+
+                if (exitingDueToHeartExhaustion)
+                {
+                    characterBody.healthComponent.Suicide();
                 }
             }
 
