@@ -62,7 +62,7 @@ namespace SeamstressVariant.Modules
                 variant.Color = charColor;
                 SurvivorDef ogSeamstressDef = SeamstressMod.Modules.ContentPacks.survivorDefs[0];
                 variant.TargetSurvivor = ogSeamstressDef;
-                variant.Description = "Seamstress Variant";
+                variant.Description = "And so they will witness your defiance.";
 
                 SurvivorVariantCatalog.AddSurvivorVariant(variant);
 

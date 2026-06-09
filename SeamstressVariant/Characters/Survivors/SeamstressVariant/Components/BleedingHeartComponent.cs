@@ -36,8 +36,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private float healTimer = 0f;
         private const float ScanInterval = 1f;
         private const float HealInterval = 0.20f;
-        private const float HealPerBleedStack = 2f;
-        private const int HeartPerBleedChancePercent = 75;
+        private const float HealPerBleedStack = 1f;
+        private const int HeartPerBleedChancePercent = 50;
         private bool startupMoveLockApplied;
         private bool cachedDisableAirControlUntilCollision;
         private bool cachedDisableAirControlUntilCollisionValid;
@@ -308,13 +308,16 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                     continue;
                 }*/
 
-                Vector3 delta = otherBody.footPosition - center;
-                if (delta.sqrMagnitude <= radiusSqr)
-                {
-                    enemyCount++;
-                    bleedCount += otherBody.GetBuffCount(RoR2Content.Buffs.Bleeding);
-                    bleedCount += otherBody.GetBuffCount(RoR2Content.Buffs.SuperBleed);
-                }
+                //if (otherBody.teamComponent.teamIndex != TeamIndex.Player)
+                //{
+                    Vector3 delta = otherBody.footPosition - center;
+                    if (delta.sqrMagnitude <= radiusSqr)
+                    {
+                        enemyCount++;
+                        bleedCount += otherBody.GetBuffCount(RoR2Content.Buffs.Bleeding);
+                        bleedCount += otherBody.GetBuffCount(RoR2Content.Buffs.SuperBleed);
+                    }
+                //}
             }
 
             nearbyEnemyCount = enemyCount;
@@ -421,7 +424,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             }
 
             sustainedVisualActive = true;
-            ApplyDefianceBleedEffect();
+            //ApplyDefianceBleedEffect();
 
             Animator anim = GetModelAnimator();
             if (anim && destealthMaterial && persistentDefianceOverlay == null)
@@ -458,7 +461,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             }
 
             sustainedVisualActive = false;
-            RemoveDefianceBleedEffect();
+            //RemoveDefianceBleedEffect();
 
             if (persistentDefianceOverlay != null)
             {

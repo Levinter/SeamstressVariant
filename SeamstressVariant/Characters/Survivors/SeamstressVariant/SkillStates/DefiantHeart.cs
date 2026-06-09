@@ -24,6 +24,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         private bool canReactivate;
         private bool transitioningToReactivate;
         private bool fired;
+        private bool exitingDueToHeartExhaustion;
 
         private bool CanExitState()
         {
@@ -42,18 +43,21 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             startupFreezeActive = startupFreezeDuration > 0f;
             canReactivate = false;
             transitioningToReactivate = false;
+            exitingDueToHeartExhaustion = false;
 
-            if (startupFreezeActive && heart != null)
+            if (isAuthority || NetworkServer.active)
             {
-                heart.RequestSetDefiantStartupFreezeActive(true);
+                if (startupFreezeActive && heart != null)
+                {
+                    heart.RequestSetDefiantStartupFreezeActive(true);
+                }
+
+                PlayCrossfade("FullBody, Override", "RipHeart", "Dash.playbackRate", animDuration, 0.05f);
+                Util.PlaySound("Play_imp_overlord_attack2_tell", gameObject);
+
+                ApplyTransformEnterEffect();
+                //StartTransformCameraOverride();
             }
-
-            PlayCrossfade("FullBody, Override", "RipHeart", "Dash.playbackRate", animDuration, 0.05f);
-
-            Util.PlaySound("Play_imp_overlord_attack2_tell", gameObject);
-
-            ApplyTransformEnterEffect();
-            //StartTransformCameraOverride();
         }
 
         public override void FixedUpdate()
@@ -158,8 +162,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             {
                 transitioningToReactivate = true;
 
-                if (isAuthority)
+                if (isAuthority || NetworkServer.active)
                 {
+                    Log.Warning("Trying to transition from Defiant Heart to Healing Heart.");
                     outer.SetNextState(new HealingHeart());
                 }
                 return;
@@ -172,12 +177,24 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 if (NetworkServer.active)
                 {
                     heart.ConsumeHeart(currentDrainPerTick);
+
+                    DotController.InflictDot(
+                        characterBody.gameObject,
+                        characterBody.gameObject,
+                        characterBody.mainHurtBox,
+                        DotController.DotIndex.Bleed,
+                        3f, 1f, 1);
                 }
 
                 currentDrainPerTick += 1f;
 
                 if (!heart.CanSustainDefiantHeart())
                 {
+                    if (NetworkServer.active)
+                    {
+                        exitingDueToHeartExhaustion = true;
+                    }
+
                     if (CanExitState())
                     {
                         outer.SetNextStateToMain();
@@ -194,7 +211,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 return;
             }
 
-            float envelopeScale = 2.5f;
+            float envelopeScale = 3.5f;
             Vector3 origin = characterBody.corePosition + Vector3.up * (characterBody.radius * 0.75f);
 
             EffectManager.SpawnEffect(SeamstressVariantAssets.defiantTransformEnterEffect, new EffectData
@@ -224,30 +241,32 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         {
             Log.Warning("Exiting Defiant Heart state.");
 
+            //DefianceSpecialController specialController = GetComponent<DefianceSpecialController>();
+            GenericSkill specialSkill = skillLocator?.special;
+
             EndStartupFreeze();
 
-            if (heartOverlayController != null)
-            {
-                heartOverlayController.SetHeartDrainActive(false);
-            }
+            heartOverlayController?.SetHeartDrainActive(false);
 
             if (NetworkServer.active && characterBody)
             {
-                DefianceSpecialController specialController = GetComponent<DefianceSpecialController>();
-                GenericSkill specialSkill = skillLocator != null ? skillLocator.special : null;
-                if (specialController != null && specialController.ConsumeForcedDefianceSession() && specialSkill != null)
-                {   
+                DotController.RemoveAllDots(characterBody.gameObject);
+                RemoveDefiance();
+
+                if (specialSkill != null)
+                {
                     Log.Debug("Defiant Heart onExit. Stocks:" + specialSkill.stock);
                     specialSkill.DeductStock(1);
                     Log.Debug("Defiant Heart onExit after deduct. Stocks:" + specialSkill.stock);
-                    RemoveDefiance();
+                }
+
+                if (exitingDueToHeartExhaustion)
+                {
+                    characterBody.healthComponent.Suicide();
                 }
             }
 
-            if (heart != null)
-            {
-                heart.RequestSetDefianceVisualsActive(false);
-            }
+            heart?.RequestSetDefianceVisualsActive(false);
 
             base.OnExit();
         }

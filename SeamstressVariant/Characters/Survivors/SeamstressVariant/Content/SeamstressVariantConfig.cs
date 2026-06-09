@@ -28,29 +28,28 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             utilityBlinkHealthCost = Config.BindAndOptions(
                 section,
                 "Utility Blink Health Cost",
-                20f,
+                25f,
                 0f,
-                20f,
+                25f,
                 "Health drained each time Blink is used. Non-lethal (will not reduce below 1 HP).");
 
             utilityBlinkHealthCostPerLevel = Config.BindAndOptions(
                 section,
                 "Utility Blink Health Cost Per Level",
-                5f,
                 0f,
-                5f,
+                0f,
+                0f,
                 "Additional health drained per level when Blink is used. Starts applying at level 1.");
         }
 
         public static float GetBlinkHealthCostForLevel(float level)
         {
             float baseCost = Mathf.Max(utilityBlinkHealthCost.Value, 0f);
-            float perLevelCost = Mathf.Max(utilityBlinkHealthCostPerLevel.Value, 0f);
-            float levelMultiplier = Mathf.Max(level, 0f);
+            //float perLevelCost = Mathf.Max(utilityBlinkHealthCostPerLevel.Value, 0f);
+            //float levelMultiplier = Mathf.Max(level, 0f);
     
             // Total blink cost = base + perLevel * level.
-            // Example with base=10 and perLevel=10: level1=20, level2=30.
-            return baseCost + perLevelCost * levelMultiplier;
+            return baseCost; // + perLevelCost * levelMultiplier;
         }
     }
 }
