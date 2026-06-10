@@ -182,12 +182,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     scale = 0.15f,
                 };
 
-                EffectManager.SpawnEffect(blinkPrefab, effectData, true);
+                EffectManager.SpawnEffect(blinkPrefab, effectData, false);
 
                 effectData.scale = 3f;
                 if (!first && dashPrefab)
                 {
-                    EffectManager.SpawnEffect(dashPrefab, effectData, true);
+                    EffectManager.SpawnEffect(dashPrefab, effectData, false);
                 }
             }
         }
@@ -233,11 +233,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     temporaryOverlayInstance.alphaCurve = AnimationCurve.EaseInOut(0f, 1f, 1f, 0f);
                     temporaryOverlayInstance.animateShaderAlpha = true;
                 }
+            }
 
-                if (characterModel)
-                {
-                    characterModel.invisibilityCount--;
-                }
+            if (characterModel)
+            {
+                characterModel.invisibilityCount--;
+            }
 
                 if (hurtboxGroup)
                 {
@@ -252,7 +253,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                         hasAimRequest = false;
                     }
                 }
-            }
+            
 
             base.OnExit();
         }

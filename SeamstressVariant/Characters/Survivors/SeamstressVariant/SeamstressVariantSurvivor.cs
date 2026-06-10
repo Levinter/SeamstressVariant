@@ -536,8 +536,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
                         Log.Warning("Forced Defiance activation successful. Preventing death and routing to SpecialController.");
                         self.body.AddBuff(SeamstressVariantBuffs.defianceBuff);
-
-                        EntityStateMachine specialStateMachine = EntityStateMachine.FindByCustomName(self.body.gameObject, "Special");
+                        
+                        specialSkill.AddOneStock();
+                        specialSkill.ExecuteIfReady();
+                        /*EntityStateMachine specialStateMachine = EntityStateMachine.FindByCustomName(self.body.gameObject, "Special");
                         if (specialStateMachine != null)
                         {
                             specialStateMachine.SetNextState(new HealingHeart());
@@ -547,7 +549,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                             Log.Warning("Forced Defiance: Special state machine not found. Rolling back.");
                             self.body.RemoveBuff(SeamstressVariantBuffs.defianceBuff);
                             defianceSpecialController.ClearForcedDefianceActivation();
-                        }
+                        }*/
                     }
                     else
                     {

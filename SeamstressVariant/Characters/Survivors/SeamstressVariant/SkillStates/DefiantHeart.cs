@@ -28,7 +28,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         private bool CanExitState()
         {
-            return isAuthority || NetworkServer.active;
+            return isAuthority;
         }
 
         public override void OnEnter()
@@ -45,19 +45,15 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             transitioningToReactivate = false;
             exitingDueToHeartExhaustion = false;
 
-            if (isAuthority || NetworkServer.active)
+            if (startupFreezeActive && heart != null)
             {
-                if (startupFreezeActive && heart != null)
-                {
-                    heart.RequestSetDefiantStartupFreezeActive(true);
-                }
-
-                PlayCrossfade("FullBody, Override", "RipHeart", "Dash.playbackRate", animDuration, 0.05f);
-                Util.PlaySound("Play_imp_overlord_attack2_tell", gameObject);
-
-                ApplyTransformEnterEffect();
-                //StartTransformCameraOverride();
+                heart.RequestSetDefiantStartupFreezeActive(true);
             }
+
+            PlayCrossfade("FullBody, Override", "RipHeart", "Dash.playbackRate", animDuration, 0.05f);
+            Util.PlaySound("Play_imp_overlord_attack2_tell", gameObject);
+
+            ApplyTransformEnterEffect();
         }
 
         public override void FixedUpdate()
@@ -79,7 +75,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 EnterSustainedPhase();
             }
 
-            if (fired && (isAuthority || NetworkServer.active))
+            if (fired)
             {
                 UpdateSustainedPhase();
             }
@@ -162,7 +158,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             {
                 transitioningToReactivate = true;
 
-                if (isAuthority || NetworkServer.active)
+                if (CanExitState())
                 {
                     Log.Warning("Trying to transition from Defiant Heart to Healing Heart.");
                     outer.SetNextState(new HealingHeart());
@@ -219,7 +215,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 origin = origin,
                 rotation = Quaternion.identity,
                 scale = envelopeScale
-            }, true);
+            }, false);
         }
 
         private void ApplyTransformExitEffect()
@@ -234,36 +230,34 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 origin = characterBody.corePosition,
                 rotation = Quaternion.identity,
                 scale = 1f
-            }, true);
+            }, false);
         }
 
         public override void OnExit()
         {
             Log.Warning("Exiting Defiant Heart state.");
-
-            //DefianceSpecialController specialController = GetComponent<DefianceSpecialController>();
             GenericSkill specialSkill = skillLocator?.special;
 
             EndStartupFreeze();
 
             heartOverlayController?.SetHeartDrainActive(false);
 
-            if (NetworkServer.active && characterBody)
+            if(NetworkServer.active)
             {
                 DotController.RemoveAllDots(characterBody.gameObject);
                 RemoveDefiance();
-
-                if (specialSkill != null)
-                {
-                    Log.Debug("Defiant Heart onExit. Stocks:" + specialSkill.stock);
-                    specialSkill.DeductStock(1);
-                    Log.Debug("Defiant Heart onExit after deduct. Stocks:" + specialSkill.stock);
-                }
 
                 if (exitingDueToHeartExhaustion)
                 {
                     characterBody.healthComponent.Suicide();
                 }
+            }
+
+            if (specialSkill != null)
+            {
+                Log.Debug("Defiant Heart onExit. Stocks:" + specialSkill.stock);
+                specialSkill.DeductStock(1);
+                Log.Debug("Defiant Heart onExit after deduct. Stocks:" + specialSkill.stock);
             }
 
             heart?.RequestSetDefianceVisualsActive(false);
