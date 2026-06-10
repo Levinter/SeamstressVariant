@@ -22,9 +22,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
         // Heart settings
         [SyncVar(hook = nameof(OnMaxHeartChanged))]
-        public float MaxHeart = 110f;
+        private float MaxHeart = 110f;
         [SyncVar(hook = nameof(OnCurrentHeartChanged))]
-        public float currentHeart = 0f;
+        private float currentHeart = 0f;
         [SyncVar(hook = nameof(OnDefianceVisualsActiveChanged))]
         private bool defianceVisualsActive;
         [SyncVar(hook = nameof(OnDefiantStartupFreezeActiveChanged))]

@@ -126,7 +126,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         {
             base.FixedUpdate();
 
-            if (!isScissorActive || scissorOverlapAttack == null) return;
+            if (!isScissorActive) return;
 
             // Scissor second-hit window: 20%-40% of the (slowed) duration = 0.40s..0.80s at base speed
             float scissorStart = duration * 0.2f;
