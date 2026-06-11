@@ -297,7 +297,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             Skills.CreateGenericSkillWithSkillFamily(bodyPrefab, SkillSlot.Special);
 
             // Healing Heart is the manual special: transfer Heart/end Defiance, while death-gate can force Defiant Heart.
-            SkillDef specialSkillDef = Skills.CreateSkillDef(new SkillDefInfo
+            HealingHeart.specialSkillDef = Skills.CreateSkillDef(new SkillDefInfo
             {
                 skillName = "HealingHeart",
                 skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "SPECIAL_HEALING_HEART_NAME",
@@ -320,7 +320,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 forceSprintDuringState = false,
             });
 
-            Skills.AddSpecialSkills(bodyPrefab, specialSkillDef);
+            Skills.AddSpecialSkills(bodyPrefab, HealingHeart.specialSkillDef);
         }
         #endregion skills
         
@@ -355,7 +355,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         {
             On.RoR2.HealthComponent.Heal += HealthComponent_Heal;
             On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
-            //On.RoR2.HealthComponent.TakeDamageProcess += HealthComponent_TakeDamageProcess;
             GlobalEventManager.onServerDamageDealt += GlobalEventManager_onServerDamageDealt;
             On.RoR2.HealthComponent.GetHealthBarValues += HealthComponent_GetHealthBarValues;
             RecalculateStatsAPI.GetStatCoefficients += RecalculateStatsAPI_GetStatCoefficients;
@@ -507,24 +506,5 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             orig(self, damageInfo);
         }
-
-        private void HealthComponent_TakeDamageProcess(On.RoR2.HealthComponent.orig_TakeDamageProcess orig, HealthComponent self, DamageInfo damageInfo)
-        {
-            if (self != null
-                && self.alive
-                && self.body != null
-                && self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName)
-                && damageInfo != null
-                && damageInfo.damage > 0f
-                && self.body.GetBuffCount(SeamstressVariantBuffs.defianceBuff) == 0
-                && NetworkServer.active)
-            {
-                // Lethal death-gate handling is owned by DeathGateComponent via IOnIncomingDamageServerReceiver.
-                // Keep this hook for non-lethal processing and potential future shared logic.
-            }
-
-            orig(self, damageInfo);
-        }
-
     }
 }

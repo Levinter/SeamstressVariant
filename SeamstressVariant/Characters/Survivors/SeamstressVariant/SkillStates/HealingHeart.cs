@@ -4,13 +4,14 @@ using UnityEngine;
 using UnityEngine.Networking;
 using RoR2;
 using SeamstressMod.Seamstress.Content;
+using RoR2.Skills;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 {
     public class HealingHeart : BaseSkillState
     {
+        public static SkillDef specialSkillDef;
         public float baseDuration = 0.6f;
-
         private BleedingHeartComponent heart;
         private Material destealthMaterial;
         private TemporaryOverlayInstance persistentDefianceOverlay;

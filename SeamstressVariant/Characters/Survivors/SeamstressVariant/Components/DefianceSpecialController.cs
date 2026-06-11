@@ -1,9 +1,11 @@
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 {
-    public class DefianceSpecialController : MonoBehaviour
+    public class DefianceSpecialController : NetworkBehaviour
     {
+        [SyncVar(hook = nameof(OnDefianceActivationChanged))]
         private bool forceDefianceActivation;
         //private bool forcedDefianceSessionActive;
 
@@ -22,6 +24,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             bool wasRequested = forceDefianceActivation;
             forceDefianceActivation = false;
             return wasRequested;
+        }
+
+        private void OnDefianceActivationChanged(bool newValue)
+        {
+            forceDefianceActivation = newValue;
         }
 
         /*public void MarkForcedDefianceSession()
