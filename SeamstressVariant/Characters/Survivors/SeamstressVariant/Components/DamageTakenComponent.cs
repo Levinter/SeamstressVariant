@@ -1,20 +1,16 @@
+using R2API;
 using RoR2;
+using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Networking;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 {
-    internal class DamageTakenComponent : NetworkBehaviour, IOnIncomingDamageServerReceiver, IOnTakeDamageServerReceiver
+    internal class DamageTakenComponent : NetworkBehaviour, IOnIncomingDamageServerReceiver
     {
-        public CharacterBody body;
-
         public void OnIncomingDamageServer(DamageInfo damageInfo)
         {
-            
-        }
-
-        public void OnTakeDamageServer(DamageReport damageReport)
-        {
-            
+            throw new System.NotImplementedException();
         }
     }
 }
