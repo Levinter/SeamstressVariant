@@ -1,5 +1,6 @@
 using RoR2;
 using RoR2.Skills;
+using SeamstressVariant.Survivors.SeamstressVariant.SkillStates;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -26,6 +27,20 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             healthComponent = GetComponent<HealthComponent>();
             defianceSpecialController = GetComponent<DefianceSpecialController>();
             specialSkill = skillLocator?.special;
+
+            // Fail fast once for hard dependencies required by this component.
+            if (networkId == null || body == null || healthComponent == null || specialSkill == null)
+            {
+                Log.Warning("DeathGateComponent: missing required components; disabling.");
+                enabled = false;
+                return;
+            }
+
+            if (mySkillDef == null)
+            {
+                mySkillDef = HealingHeart.specialSkillDef;
+            }
+
             prevStock = specialSkill.stock;
             specialSkillAvailableServer = specialSkill.stock > 0;
         }
@@ -33,15 +48,22 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         //Check if the player has the special skill available and update the server value
         private void FixedUpdate()
         {
-            int currentStock = specialSkill.stock;
-            bool hasStock = currentStock > 0;
-
-            if(specialSkill.skillDef != mySkillDef && IsAuthority)
+            if (!enabled || !IsAuthority)
             {
-                if(specialSkill.stock != prevStock)
-                {
-                    CmdSpecialSkillAvailable(hasStock);
-                }
+                return;
+            }
+
+            if (mySkillDef != null && specialSkill.skillDef != mySkillDef)
+            {
+                return;
+            }
+
+            int currentStock = specialSkill.stock;
+
+            bool hasStock = currentStock > 0;
+            if (hasStock != specialSkillAvailableServer)
+            {
+                CmdSpecialSkillAvailable(hasStock);
             }
 
             prevStock = currentStock;
@@ -57,7 +79,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         [ClientRpc]
         public void RpcActivateSpecialSkill()
         {
-            if (IsAuthority)
+            if (enabled && IsAuthority)
             {
                 Log.Warning("DeathGateComponent: Activating special skill.");
                 specialSkill.ExecuteIfReady();
@@ -68,7 +90,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         //Check for incoming lethal damage and activate the special skill if the player has it available
         public void OnIncomingDamageServer(DamageInfo damageInfo)
         {
-            bool incomingDamageIsLethal = damageInfo.damage >= healthComponent.health;
+            if (mySkillDef != null && specialSkill.skillDef != mySkillDef)
+            {
+                return;
+            }
+
+            bool incomingDamageIsLethal = damageInfo.damage >= healthComponent.combinedHealth;
             if (!incomingDamageIsLethal || !specialSkillAvailableServer)
             {
                 return;
@@ -78,12 +105,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
             Log.Warning($"DeathGateComponent: Incoming lethal damage detected. Special skill available: {specialSkillAvailableServer}.");
 
-            if (specialSkillAvailableServer)
+            if (specialSkillAvailableServer && !body.HasBuff(SeamstressVariantBuffs.defianceBuff))
             {
-                // Let the lethal hit resolve to exactly 1 HP instead of preserving current HP.
-                float damageToLeaveOneHp = Mathf.Max(healthComponent.health - 1f, 0f);
                 damageInfo.damageType |= DamageType.NonLethal;
-                damageInfo.damage = damageToLeaveOneHp;
 
                 body.AddBuff(SeamstressVariantBuffs.defianceBuff);
 
