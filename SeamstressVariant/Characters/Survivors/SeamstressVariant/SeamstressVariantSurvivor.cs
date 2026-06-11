@@ -129,6 +129,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             // Tracks whether the next special execute should force Defiance entry (death-gate path).
             bodyPrefab.AddComponent<DefianceSpecialController>();
+
+            // Server-authoritative lethal interception path for forced special execution.
+            bodyPrefab.AddComponent<DeathGateComponent>();
             //anything else here
         }
 
@@ -352,7 +355,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         {
             On.RoR2.HealthComponent.Heal += HealthComponent_Heal;
             On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
-            On.RoR2.HealthComponent.TakeDamageProcess += HealthComponent_TakeDamageProcess;
+            //On.RoR2.HealthComponent.TakeDamageProcess += HealthComponent_TakeDamageProcess;
             GlobalEventManager.onServerDamageDealt += GlobalEventManager_onServerDamageDealt;
             On.RoR2.HealthComponent.GetHealthBarValues += HealthComponent_GetHealthBarValues;
             RecalculateStatsAPI.GetStatCoefficients += RecalculateStatsAPI_GetStatCoefficients;
@@ -516,47 +519,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && self.body.GetBuffCount(SeamstressVariantBuffs.defianceBuff) == 0
                 && NetworkServer.active)
             {
-                bool incomingDamageIsLethal = damageInfo.damage >= self.health;
-                GenericSkill specialSkill = self.body.skillLocator?.special;
-                DefianceSpecialController defianceSpecialController = self.body.GetComponent<DefianceSpecialController>();
-
-                if (incomingDamageIsLethal && specialSkill != null && defianceSpecialController != null)
-                {
-                    Log.Warning("Incoming damage is lethal. Attempting to trigger Defiance if special is ready.");
-                    Log.Debug("Checking special skill readiness. Current stock: " + specialSkill.stock);
-
-                    defianceSpecialController.RequestForcedDefianceActivation();
-
-                    if (specialSkill.stock > 0)
-                    {
-                        // Let the lethal hit resolve to exactly 1 HP instead of preserving current HP.
-                        float damageToLeaveOneHp = Mathf.Max(self.health - 1f, 0f);
-                        damageInfo.damageType |= DamageType.NonLethal;
-                        damageInfo.damage = damageToLeaveOneHp;
-
-                        Log.Warning("Forced Defiance activation successful. Preventing death and routing to SpecialController.");
-                        self.body.AddBuff(SeamstressVariantBuffs.defianceBuff);
-                        
-                        specialSkill.AddOneStock();
-                        specialSkill.ExecuteIfReady();
-                        /*EntityStateMachine specialStateMachine = EntityStateMachine.FindByCustomName(self.body.gameObject, "Special");
-                        if (specialStateMachine != null)
-                        {
-                            specialStateMachine.SetNextState(new HealingHeart());
-                        }
-                        else
-                        {
-                            Log.Warning("Forced Defiance: Special state machine not found. Rolling back.");
-                            self.body.RemoveBuff(SeamstressVariantBuffs.defianceBuff);
-                            defianceSpecialController.ClearForcedDefianceActivation();
-                        }*/
-                    }
-                    else
-                    {
-                        Log.Warning("Forced Defiance activation failed. Clearing forced activation.");
-                        defianceSpecialController.ClearForcedDefianceActivation();
-                    }
-                }
+                // Lethal death-gate handling is owned by DeathGateComponent via IOnIncomingDamageServerReceiver.
+                // Keep this hook for non-lethal processing and potential future shared logic.
             }
 
             orig(self, damageInfo);
