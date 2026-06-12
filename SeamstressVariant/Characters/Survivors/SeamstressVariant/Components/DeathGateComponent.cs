@@ -13,6 +13,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         public SkillDef mySkillDef;
         private bool IsAuthority => Util.HasEffectiveAuthority(networkId);
         private NetworkIdentity networkId;
+        private EntityStateMachine heartEsm;
         private CharacterBody body;
         private HealthComponent healthComponent;
         private SkillLocator skillLocator;
@@ -26,6 +27,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             skillLocator = GetComponent<SkillLocator>();
             healthComponent = GetComponent<HealthComponent>();
             defianceSpecialController = GetComponent<DefianceSpecialController>();
+            heartEsm = EntityStateMachine.FindByCustomName(gameObject, "Special");
+
             specialSkill = skillLocator?.special;
 
             // Fail fast once for hard dependencies required by this component.
@@ -82,8 +85,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             if (enabled && IsAuthority)
             {
                 Log.Warning("DeathGateComponent: Activating special skill.");
-                specialSkill.ExecuteIfReady();
-                specialSkill.AddOneStock();
+                /*specialSkill.ExecuteIfReady();
+                specialSkill.AddOneStock();*/
+
+                heartEsm.SetNextState(new DefiantHeart());
             }
         }
 
