@@ -1,8 +1,9 @@
 using EntityStates;
+using R2API;
 using RoR2;
 using RoR2.Skills;
-using SeamstressVariant.Survivors.SeamstressVariant.Components;
 using SeamstressMod.Seamstress.Content;
+using SeamstressVariant.Survivors.SeamstressVariant.Components;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -21,8 +22,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         private float startupFreezeEndTime;
         private float currentDrainPerTick;
         private bool startupFreezeActive;
-        private bool canReactivate;
-        private bool transitioningToReactivate;
         private bool fired;
         private bool exitingDueToHeartExhaustion;
 
@@ -41,11 +40,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             currentDrainPerTick = heartDrainPerTick;
             startupFreezeEndTime = startupFreezeDuration;
             startupFreezeActive = startupFreezeDuration > 0f;
-            canReactivate = false;
-            transitioningToReactivate = false;
-            exitingDueToHeartExhaustion = false;
 
-            if (startupFreezeActive && heart != null)
+            if (isAuthority)
             {
                 heart.RequestSetDefiantStartupFreezeActive(true);
             }
@@ -90,7 +86,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             startupFreezeActive = false;
 
-            if (heart != null)
+            if (isAuthority)
             {
                 heart.RequestSetDefiantStartupFreezeActive(false);
             }
@@ -98,71 +94,37 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         private void EnterSustainedPhase()
         {
-            if (heart == null)
-            {
-                if (CanExitState())
-                {
-                    outer.SetNextStateToMain();
-                }
-                return;
-            }
-
             if (heartOverlayController != null)
             {
                 heartOverlayController.SetHeartDrainActive(true);
             }
 
-            if (GetModelAnimator() && (NetworkServer.active || isAuthority))
+            PlayAnimation("Gesture, Override", "BufferEmpty");
+
+            if (isAuthority)
             {
-                PlayAnimation("Gesture, Override", "BufferEmpty");
+                heart.RequestSetDefianceVisualsActive(true);
             }
 
-            heart.RequestSetDefianceVisualsActive(true);
-
-            if (!heart.CanSustainDefiantHeart())
+            if (isAuthority && !heart.CanSustainDefiantHeart())
             {
-                if (CanExitState())
-                {
-                    outer.SetNextStateToMain();
-                }
-                return;
+                outer.SetNextStateToMain();
             }
         }
 
         private void UpdateSustainedPhase()
         {
-            if (heart == null)
+
+            if (isAuthority && !heart.CanSustainDefiantHeart())
             {
-                if (CanExitState())
-                {
-                    outer.SetNextStateToMain();
-                }
+                outer.SetNextStateToMain();
                 return;
             }
 
-            if (!heart.CanSustainDefiantHeart())
+            if (isAuthority && inputBank.skill4.justPressed)
             {
-                if (CanExitState())
-                {
-                    outer.SetNextStateToMain();
-                }
-                return;
-            }
-
-            if (!canReactivate)
-            {
-                canReactivate = inputBank == null || !inputBank.skill4.down;
-            }
-
-            if (canReactivate && inputBank != null && inputBank.skill4.down)
-            {
-                transitioningToReactivate = true;
-
-                if (CanExitState())
-                {
-                    Log.Warning("Trying to transition from Defiant Heart to Healing Heart.");
-                    outer.SetNextState(new HealingHeart());
-                }
+                Log.Warning("Trying to transition from Defiant Heart to Healing Heart.");
+                outer.SetNextState(new HealingHeart());
                 return;
             }
 
@@ -232,20 +194,46 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 scale = 1f
             }, false);
         }
+        public override void ModifyNextState(EntityState nextState)
+        {
+            base.ModifyNextState(nextState);
+            if (nextState is HealingHeart healingHeart)
+            {
+                healingHeart.normalExit = false;
+                if (NetworkServer.active)
+                    TransferHeartServer();
+            }
+        }
+
+        private void TransferHeartServer()
+        {
+            // not entirely sure about this one. maybe need to give `healingHeart.storedHeart` this value?
+            float healAmount = heart.ConsumeHeart(heart.GetHeart());
+            if (healAmount > 0f)
+            {
+                var procChainMask = new ProcChainMask();
+                procChainMask.AddModdedProc(SeamstressVariantSurvivor.bypassHeartConversion);
+
+                this.characterBody.healthComponent.Heal(healAmount, procChainMask, true);
+            }
+        }
+
 
         public override void OnExit()
         {
             Log.Warning("Exiting Defiant Heart state.");
-            GenericSkill specialSkill = skillLocator?.special;
 
             EndStartupFreeze();
+            ApplyTransformExitEffect();
 
             heartOverlayController?.SetHeartDrainActive(false);
 
-            if(NetworkServer.active)
+            if (NetworkServer.active)
             {
-                DotController.RemoveAllDots(characterBody.gameObject);
-                RemoveDefiance();
+                DotController.RemoveAllDots(gameObject);
+
+                if (characterBody.HasBuff(SeamstressVariantBuffs.defianceBuff))
+                    characterBody.RemoveBuff(SeamstressVariantBuffs.defianceBuff);
 
                 if (exitingDueToHeartExhaustion)
                 {
@@ -253,25 +241,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 }
             }
 
-            if (specialSkill != null)
-            {
-                Log.Debug("Defiant Heart onExit. Stocks:" + specialSkill.stock);
-                specialSkill.DeductStock(1);
-                Log.Debug("Defiant Heart onExit after deduct. Stocks:" + specialSkill.stock);
-            }
-
-            heart?.RequestSetDefianceVisualsActive(false);
+            if (isAuthority)
+                heart?.RequestSetDefianceVisualsActive(false);
 
             base.OnExit();
-        }
-
-        private void RemoveDefiance()
-        {
-            int defianceCount = characterBody.GetBuffCount(SeamstressVariantBuffs.defianceBuff);
-            if (defianceCount > 0 && !transitioningToReactivate)
-            {
-                characterBody.RemoveBuff(SeamstressVariantBuffs.defianceBuff);
-            }
         }
 
         public override InterruptPriority GetMinimumInterruptPriority()

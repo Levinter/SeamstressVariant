@@ -230,10 +230,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 return;
             }
 
-            if (hasAuthority)
-            {
-                CmdRequestSetDefianceVisualsActive(active);
-            }
+            CmdRequestSetDefianceVisualsActive(active);
         }
 
         [Command]
@@ -261,10 +258,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 return;
             }
 
-            if (hasAuthority)
-            {
-                CmdRequestSetDefiantStartupFreezeActive(active);
-            }
+            CmdRequestSetDefiantStartupFreezeActive(active);
         }
 
         [Command]

@@ -128,7 +128,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             bodyPrefab.AddComponent<DefianceBenefitsController>();
 
             // Tracks whether the next special execute should force Defiance entry (death-gate path).
-            bodyPrefab.AddComponent<DefianceSpecialController>();
+            //bodyPrefab.AddComponent<DefianceSpecialController>();
 
             // Server-authoritative lethal interception path for forced special execution.
             bodyPrefab.AddComponent<DeathGateComponent>();
