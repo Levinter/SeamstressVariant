@@ -9,8 +9,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
     internal class DeathGateComponent : NetworkBehaviour, IOnIncomingDamageServerReceiver
     {
         private bool specialSkillAvailableServer;
-        private int prevStock;
-        public SkillDef mySkillDef;
         private bool IsAuthority => Util.HasEffectiveAuthority(networkId);
         private NetworkIdentity networkId;
         private EntityStateMachine heartEsm;
@@ -18,7 +16,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private HealthComponent healthComponent;
         private SkillLocator skillLocator;
         private GenericSkill specialSkill;
-        private DefianceSpecialController defianceSpecialController;
 
         public void Awake()
         {
@@ -26,50 +23,30 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             body = GetComponent<CharacterBody>();
             skillLocator = GetComponent<SkillLocator>();
             healthComponent = GetComponent<HealthComponent>();
-            defianceSpecialController = GetComponent<DefianceSpecialController>();
             heartEsm = EntityStateMachine.FindByCustomName(gameObject, "Special");
+        }
 
-            specialSkill = skillLocator?.special;
-
-            // Fail fast once for hard dependencies required by this component.
-            if (networkId == null || body == null || healthComponent == null || specialSkill == null)
-            {
-                Log.Warning("DeathGateComponent: missing required components; disabling.");
-                enabled = false;
-                return;
-            }
-
-            if (mySkillDef == null)
-            {
-                mySkillDef = HealingHeart.specialSkillDef;
-            }
-
-            prevStock = specialSkill.stock;
-            specialSkillAvailableServer = specialSkill.stock > 0;
+        private void Start()
+        {
+            // timing issues are a bitch
+            specialSkill = skillLocator.special;
         }
 
         //Check if the player has the special skill available and update the server value
         private void FixedUpdate()
         {
-            if (!enabled || !IsAuthority)
+            if (!IsAuthority)
             {
                 return;
             }
 
-            if (mySkillDef != null && specialSkill.skillDef != mySkillDef)
+            bool isAvailable = specialSkill.stock > 0 && specialSkill.skillDef == HealingHeart.specialSkillDef;
+            if (isAvailable != specialSkillAvailableServer)
             {
-                return;
+                CmdSpecialSkillAvailable(isAvailable);
             }
 
-            int currentStock = specialSkill.stock;
-
-            bool hasStock = currentStock > 0;
-            if (hasStock != specialSkillAvailableServer)
-            {
-                CmdSpecialSkillAvailable(hasStock);
-            }
-
-            prevStock = currentStock;
+            specialSkillAvailableServer = isAvailable;
         }
 
         [Command]
@@ -82,46 +59,52 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         [ClientRpc]
         public void RpcActivateSpecialSkill()
         {
-            if (enabled && IsAuthority)
+            if (IsAuthority)
             {
                 Log.Warning("DeathGateComponent: Activating special skill.");
                 /*specialSkill.ExecuteIfReady();
                 specialSkill.AddOneStock();*/
 
                 heartEsm.SetNextState(new DefiantHeart());
+                specialSkill.DeductStock(1);
             }
         }
 
         //Check for incoming lethal damage and activate the special skill if the player has it available
         public void OnIncomingDamageServer(DamageInfo damageInfo)
         {
-            if (mySkillDef != null && specialSkill.skillDef != mySkillDef)
+            // dont activate if we have a different special skill
+            if (specialSkill.skillDef != HealingHeart.specialSkillDef)
             {
                 return;
             }
 
+            // dont activate if the special skill is not available
+            if (!specialSkillAvailableServer)
+            {
+                return;
+            }
+
+            // dont activate if we are already defying death
+            if (body.HasBuff(SeamstressVariantBuffs.defianceBuff))
+            {
+                return;
+            }
+
+            // dont activate unless itll kill us
             bool incomingDamageIsLethal = damageInfo.damage >= healthComponent.combinedHealth;
-            if (!incomingDamageIsLethal || !specialSkillAvailableServer)
+            if (!incomingDamageIsLethal)
             {
                 return;
             }
-
-            defianceSpecialController?.RequestForcedDefianceActivation();
 
             Log.Warning($"DeathGateComponent: Incoming lethal damage detected. Special skill available: {specialSkillAvailableServer}.");
 
-            if (specialSkillAvailableServer && !body.HasBuff(SeamstressVariantBuffs.defianceBuff))
-            {
-                damageInfo.damageType |= DamageType.NonLethal;
+            damageInfo.damageType |= DamageType.NonLethal;
 
-                body.AddBuff(SeamstressVariantBuffs.defianceBuff);
+            body.AddBuff(SeamstressVariantBuffs.defianceBuff);
 
-                RpcActivateSpecialSkill();
-            }
-            else
-            {
-                defianceSpecialController?.ClearForcedDefianceActivation();
-            }
+            RpcActivateSpecialSkill();
         }
     }
 }

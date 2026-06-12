@@ -80,7 +80,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             {
                 ReconcileScissorsFromStock(visualStock);
             }
-            else if (hasAuthority)
+            else if (Util.HasEffectiveAuthority(gameObject))
             {
                 CmdRequestScissorReconcile(visualStock);
             }
@@ -201,12 +201,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 ApplyScissorFiredServer(isLeft);
                 return;
             }
-
-            if (hasAuthority)
-            {
-                CmdRequestScissorFired(isLeft);
-                return;
-            }
+            CmdRequestScissorFired(isLeft);
 
             Log.Warning($"ScissorController: ignored consume request without authority side={(isLeft ? "L" : "R")}");
         }
