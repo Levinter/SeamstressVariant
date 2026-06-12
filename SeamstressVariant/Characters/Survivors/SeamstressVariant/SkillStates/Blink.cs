@@ -68,13 +68,28 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     if (availableHealth >= totalCost)
                     {
                         // Health alone can cover the cost.
-                        healthComponent.Networkhealth = Mathf.Max(healthComponent.health - totalCost, 1f);
+                        healthComponent.TakeDamage(new DamageInfo
+                        {
+                            damage = 25f,
+                            damageColorIndex = DamageColorIndex.SuperBleed,
+                            damageType = DamageType.NonLethal | DamageType.BypassArmor,
+                            position = characterBody.corePosition,
+                            procCoefficient = 0f
+                        });
                     }
                     else
                     {
                         // Drain health to floor, then pull the remainder from Heart.
                         float remainder = totalCost - availableHealth;
-                        healthComponent.Networkhealth = 1f;
+                        
+                        healthComponent.TakeDamage(new DamageInfo
+                        {
+                            damage = 25f,
+                            damageColorIndex = DamageColorIndex.SuperBleed,
+                            damageType = DamageType.NonLethal | DamageType.BypassArmor,
+                            position = characterBody.corePosition,
+                            procCoefficient = 0f
+                        });
 
                         BleedingHeartComponent heart = characterBody.GetComponent<BleedingHeartComponent>();
                         if (heart != null)

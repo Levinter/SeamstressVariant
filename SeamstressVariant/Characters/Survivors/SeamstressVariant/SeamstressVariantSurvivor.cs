@@ -358,7 +358,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             GlobalEventManager.onServerDamageDealt += GlobalEventManager_onServerDamageDealt;
             On.RoR2.HealthComponent.GetHealthBarValues += HealthComponent_GetHealthBarValues;
             RecalculateStatsAPI.GetStatCoefficients += RecalculateStatsAPI_GetStatCoefficients;
+
+            bypassHeartConversion = ProcTypeAPI.ReserveProcType();
         }
+
+        public static ModdedProcType bypassHeartConversion;
 
         private void RecalculateStatsAPI_GetStatCoefficients(CharacterBody sender, RecalculateStatsAPI.StatHookEventArgs args)
         {
@@ -468,27 +472,19 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         private float HealthComponent_Heal(On.RoR2.HealthComponent.orig_Heal orig, HealthComponent self, float amount, ProcChainMask procChainMask, bool nonRegen)
         {
             if (self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName) && self.alive){
-                float previousHealth = self.health;
-                float incomingHeal = Mathf.Max(0f, amount);
-                float healed = orig(self, amount, procChainMask, nonRegen);
-
-                if (incomingHeal > 0f && NetworkServer.active)
+                if (procChainMask.HasModdedProc(bypassHeartConversion) == false)
                 {
-                    var heart = self.GetComponent<BleedingHeartComponent>();
-                    
-                    if (heart != null)
+                    if (self.TryGetComponent<BleedingHeartComponent>(out var heart))
                     {
-                        // Redirect attempted healing into Heart, even when HP is already full.
-                        heart.AddToHeart(incomingHeal);
-                        self.Networkhealth = previousHealth;
+                        heart.AddToHeart(amount);
+                        amount = 0f;
                     }
                 }
-
-                return healed;
-            } else {
-                return orig (self, amount, procChainMask, nonRegen);
             }
+
+            return orig (self, amount, procChainMask, nonRegen);
         }
+            
 
         private void HealthComponent_TakeDamage(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo damageInfo)
         {
