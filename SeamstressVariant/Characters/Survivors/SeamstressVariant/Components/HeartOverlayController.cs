@@ -68,12 +68,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         {
             if (heartDrainActive == active)
             {
-                Log.Warning("Heart drain active state is already " + active);
+                //Log.Warning("Heart drain active state is already " + active);
                 return;
             }
 
             heartDrainActive = active;
-            Log.Warning("Setting heart drain active state to " + active);
+            //Log.Warning("Setting heart drain active state to " + active);
             ApplyThemeToOverlayInstances();
             ApplyOverlayStateToTrackedInstances();
         }
@@ -197,18 +197,18 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             if (EnableThemePerfLogging)
             {
                 Stopwatch stopwatch = Stopwatch.StartNew();
-                ApplyThemeToOverlayInstances();
+                //ApplyThemeToOverlayInstances();
                 stopwatch.Stop();
                 RecordThemePerfSample((float)stopwatch.Elapsed.TotalMilliseconds);
             }
             else
             {
-                ApplyThemeToOverlayInstances();
+                //ApplyThemeToOverlayInstances();
             }
 
             if (EnableThemePerfLogging && Time.unscaledTime >= nextThemePerfLogTime)
             {
-                FlushThemePerfLog();
+                //FlushThemePerfLog();
                 nextThemePerfLogTime = Time.unscaledTime + ThemePerfLogInterval;
             }
         }
@@ -440,12 +440,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         {
             if (themeApplyCallCount <= 0)
             {
-                Log.Info("HeartOverlay theme perf: no apply calls in sample window.");
+                //Log.Info("HeartOverlay theme perf: no apply calls in sample window.");
                 return;
             }
 
             float avgMs = themeApplyTotalMs / themeApplyCallCount;
-            Log.Info($"HeartOverlay theme perf: calls={themeApplyCallCount}, avgMs={avgMs:F4}, maxMs={themeApplyMaxMs:F4}, totalMs={themeApplyTotalMs:F4}, caches={overlayThemeCaches.Count}");
+            //Log.Info($"HeartOverlay theme perf: calls={themeApplyCallCount}, avgMs={avgMs:F4}, maxMs={themeApplyMaxMs:F4}, totalMs={themeApplyTotalMs:F4}, caches={overlayThemeCaches.Count}");
 
             themeApplyCallCount = 0;
             themeApplyTotalMs = 0f;

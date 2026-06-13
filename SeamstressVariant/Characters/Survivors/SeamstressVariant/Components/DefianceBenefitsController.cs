@@ -94,7 +94,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
         private void ApplyDefianceBenefits()
         {
-            Log.Warning("Applying Defiance benefits.");
+            //Log.Warning("Applying Defiance benefits.");
             ApplyDefianceFlags();
             ApplyStateImmunities();
 
@@ -143,7 +143,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         {
             appliedBodyFlags = DefianceBodyFlags & ~characterBody.bodyFlags;
             characterBody.bodyFlags |= DefianceBodyFlags;
-            Log.Warning($"Applied Defiance body flags: {appliedBodyFlags}");
+            //Log.Warning($"Applied Defiance body flags: {appliedBodyFlags}");
         }
 
         private void RestoreDefianceFlags()
@@ -175,7 +175,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             setStateOnHurt.canBeTaunted = false;
             setStateOnHurt.Cleanse();
             stateImmunitiesApplied = true;
-            Log.Warning("Applied Defiance state immunities.");
+            //Log.Warning("Applied Defiance state immunities.");
         }
 
         private void RestoreStateImmunities()

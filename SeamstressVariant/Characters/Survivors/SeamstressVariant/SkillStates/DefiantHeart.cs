@@ -50,6 +50,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             Util.PlaySound("Play_imp_overlord_attack2_tell", gameObject);
 
             ApplyTransformEnterEffect();
+
+            Log.Warning("Entered Defiant Heart state.");
         }
 
         public override void FixedUpdate()
@@ -141,7 +143,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                         characterBody.gameObject,
                         characterBody.mainHurtBox,
                         DotController.DotIndex.Bleed,
-                        3f, 1f, 1);
+                        1f, 1f, (uint)currentDrainPerTick);
                 }
 
                 currentDrainPerTick += 1f;
@@ -163,7 +165,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         private void ApplyTransformEnterEffect()
         {
-            Log.Debug("Attempting to apply transform enter effect.");
+            //Log.Debug("Attempting to apply transform enter effect.");
             if (!SeamstressVariantAssets.defiantTransformEnterEffect || !characterBody)
             {
                 return;
@@ -202,11 +204,13 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 healingHeart.normalExit = false;
                 if (NetworkServer.active)
                     TransferHeartServer();
+                    healingHeart.skillLocator.special.DeductStock(1);
             }
         }
 
         private void TransferHeartServer()
         {
+            Log.Warning("DefiantHeart: Transferring heart on server. Current heart: " + heart.GetHeart());
             // not entirely sure about this one. maybe need to give `healingHeart.storedHeart` this value?
             float healAmount = heart.ConsumeHeart(heart.GetHeart());
             if (healAmount > 0f)
@@ -215,6 +219,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 procChainMask.AddModdedProc(SeamstressVariantSurvivor.bypassHeartConversion);
 
                 this.characterBody.healthComponent.Heal(healAmount, procChainMask, true);
+                Log.Warning("DefiantHeart: Healed for " + healAmount);
             }
         }
 

@@ -50,7 +50,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             {
                 SetLeftScissor(true);
                 SetRightScissor(true);
-                Log.Info("ScissorController: initialized both scissors on server.");
+                //Log.Info("ScissorController: initialized both scissors on server.");
             }
 
             ApplyVisualState();
@@ -104,7 +104,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 SetRightScissor(wantRight);
             }
 
-            Log.Info($"ScissorController: reconciled from stock={visualStock} left={hasLeftScissor} right={hasRightScissor}");
+            //Log.Info($"ScissorController: reconciled from stock={visualStock} left={hasLeftScissor} right={hasRightScissor}");
         }
 
         private void TryCacheScissorModels()
@@ -129,7 +129,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 if (scissorL)
                 {
                     scissorLModel = scissorL.gameObject;
-                    Log.Info($"ScissorController: cached left scissor model '{scissorLModel.name}'.");
+                    //Log.Info($"ScissorController: cached left scissor model '{scissorLModel.name}'.");
                 }
             }
 
@@ -139,21 +139,21 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 if (scissorR)
                 {
                     scissorRModel = scissorR.gameObject;
-                    Log.Info($"ScissorController: cached right scissor model '{scissorRModel.name}'.");
+                    //Log.Info($"ScissorController: cached right scissor model '{scissorRModel.name}'.");
                 }
             }
         }
 
         private void ApplyVisualState()
         {   
-            Log.Warning("ApplyVisualState: Applying visual state");
+            //Log.Warning("ApplyVisualState: Applying visual state");
             SetScissorVisual(scissorLModel, hasLeftScissor);
             SetScissorVisual(scissorRModel, hasRightScissor);
         }
 
         private static void SetScissorVisual(GameObject model, bool active)
         {
-            Log.Warning("Setting scissor visual: " + (model != null ? model.name : "null") + " active=" + active);
+            //Log.Warning("Setting scissor visual: " + (model != null ? model.name : "null") + " active=" + active);
 
             if (model == null)
             {
@@ -162,9 +162,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
             if (model.activeSelf != active)
             {
-                Log.Warning("Activating model: " + model.name);
+                //Log.Warning("Activating model: " + model.name);
                 model.SetActive(active);
-                Log.Warning("Model active state is now: " + model.activeSelf);
+                //Log.Warning("Model active state is now: " + model.activeSelf);
             }
         }
 
@@ -174,7 +174,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             hasLeftScissor = newValue;
             TryCacheScissorModels();
             SetScissorVisual(scissorLModel, newValue);
-            Log.Debug($"ScissorController: left sync -> {newValue}");
+            //Log.Debug($"ScissorController: left sync -> {newValue}");
         }
 
         private void OnHasRightScissorChanged(bool newValue)
@@ -182,7 +182,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             hasRightScissor = newValue;
             TryCacheScissorModels();
             SetScissorVisual(scissorRModel, newValue);
-            Log.Debug($"ScissorController: right sync -> {newValue}");
+            //Log.Debug($"ScissorController: right sync -> {newValue}");
         }
 
         /// <summary>
@@ -203,7 +203,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             }
             CmdRequestScissorFired(isLeft);
 
-            Log.Warning($"ScissorController: ignored consume request without authority side={(isLeft ? "L" : "R")}");
+            //Log.Warning($"ScissorController: ignored consume request without authority side={(isLeft ? "L" : "R")}");
         }
 
         [Command]
@@ -228,7 +228,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             bool alreadyMissing = isLeft ? !hasLeftScissor : !hasRightScissor;
             if (alreadyMissing)
             {
-                Log.Warning($"ScissorController: consume ignored, side already missing side={(isLeft ? "L" : "R")}");
+                //Log.Warning($"ScissorController: consume ignored, side already missing side={(isLeft ? "L" : "R")}");
                 return;
             }
 
@@ -241,26 +241,26 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 SetRightScissor(false);
             }
 
-            Log.Info($"ScissorController: consumed side={(isLeft ? "L" : "R")} left={hasLeftScissor} right={hasRightScissor}");
+            //Log.Info($"ScissorController: consumed side={(isLeft ? "L" : "R")} left={hasLeftScissor} right={hasRightScissor}");
         }
 
         public void SetLeftScissor(bool active)
         {
             if (!NetworkServer.active)
             {
-                Log.Warning("ScissorController: SetLeftScissor ignored on non-server instance.");
+                //Log.Warning("ScissorController: SetLeftScissor ignored on non-server instance.");
                 return;
             }
 
             if (characterBody == null)
             {
-                Log.Error("ScissorController: missing CharacterBody while setting left scissor.");
+                //Log.Error("ScissorController: missing CharacterBody while setting left scissor.");
                 return;
             }
 
             if (SeamstressVariantBuffs.scissorLeftBuff == null)
             {
-                Log.Error("ScissorController: left buff definition is null.");
+                //Log.Error("ScissorController: left buff definition is null.");
                 return;
             }
 
@@ -282,7 +282,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
             if (previous != active)
             {
-                Log.Info($"ScissorController: left state {previous} -> {active}");
+                //Log.Info($"ScissorController: left state {previous} -> {active}");
             }
         }
 
@@ -290,19 +290,19 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         {
             if (!NetworkServer.active)
             {
-                Log.Warning("ScissorController: SetRightScissor ignored on non-server instance.");
+                //Log.Warning("ScissorController: SetRightScissor ignored on non-server instance.");
                 return;
             }
 
             if (characterBody == null)
             {
-                Log.Error("ScissorController: missing CharacterBody while setting right scissor.");
+                //Log.Error("ScissorController: missing CharacterBody while setting right scissor.");
                 return;
             }
 
             if (SeamstressVariantBuffs.scissorRightBuff == null)
             {
-                Log.Error("ScissorController: right buff definition is null.");
+                //Log.Error("ScissorController: right buff definition is null.");
                 return;
             }
 
@@ -324,7 +324,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
             if (previous != active)
             {
-                Log.Info($"ScissorController: right state {previous} -> {active}");
+                //Log.Info($"ScissorController: right state {previous} -> {active}");
             }
         }
     }
