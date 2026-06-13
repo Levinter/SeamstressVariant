@@ -79,7 +79,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 return;
             }
 
-            bool incomingDamageIsLethal = damageInfo.damage >= healthComponent.combinedHealth;
+            Log.Warning("Incoming Damage Type: " + damageInfo.damageType);
+
+            bool incomingDamageIsLethal = damageInfo.damage >= healthComponent.combinedHealth && (damageInfo.damageType & DamageType.NonLethal) == 0;
             if (!incomingDamageIsLethal)
             {
                 return;

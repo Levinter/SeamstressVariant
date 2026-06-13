@@ -29,10 +29,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             destealthMaterial = SeamstressAssets.destealthMaterial;
             heart = GetComponent<BleedingHeartComponent>();
 
-            //storedHeart = heart.GetHeart();
-            //Log.Warning("HEALING HEART. ForcedDefianceActivation: " + forcedDefianceActivation);
-            //Log.Warning("HEALING HEART. Is Authority? " + isAuthority);
-
             if (normalExit)
             {
                 PlayCrossfade("FullBody, Override", "RipHeart", "Dash.playbackRate", baseDuration * 2.25f, 0.05f);
@@ -66,22 +62,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             if (fixedAge >= baseDuration)
             {
-                Log.Warning("HealingHeart: Base duration elapsed. Attempting to exit state. NormalExit: " + normalExit);
-                if (normalExit)
-                {
-                    PlayDestealthAnimation();
-
-                    if (NetworkServer.active)
-                    {
-                        Log.Warning("HealingHeart: Calling TransferHeartServer");
-                        //transferApplied = true;
-                        TransferHeartServer();
-                    }
-
-                    normalExit = false;
-                    Log.Fatal("normalExit = " + normalExit);
-                }
-
                 if (isAuthority)
                 {
                     outer.SetNextStateToMain();
@@ -103,6 +83,17 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         public override void OnExit()
         {
+            if (normalExit)
+            {
+                PlayDestealthAnimation();
+
+                if (NetworkServer.active)
+                {
+                    TransferHeartServer();
+                }
+            }
+
+            Log.Warning("Exiting HealingHeart state. NormalExit: " + normalExit);
             base.OnExit();
         }
 

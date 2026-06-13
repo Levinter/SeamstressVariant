@@ -142,8 +142,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                         characterBody.gameObject,
                         characterBody.gameObject,
                         characterBody.mainHurtBox,
-                        DotController.DotIndex.Bleed,
-                        1f, 1f, (uint)currentDrainPerTick);
+                        DotController.DotIndex.SuperBleed,
+                        1f, currentDrainPerTick, 1);
                 }
 
                 currentDrainPerTick += 1f;
@@ -182,20 +182,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             }, false);
         }
 
-        private void ApplyTransformExitEffect()
-        {
-            if (!SeamstressVariantAssets.defiantTransformExitEffect || !characterBody)
-            {
-                return;
-            }
-
-            EffectManager.SpawnEffect(SeamstressVariantAssets.defiantTransformExitEffect, new EffectData
-            {
-                origin = characterBody.corePosition,
-                rotation = Quaternion.identity,
-                scale = 1f
-            }, false);
-        }
         public override void ModifyNextState(EntityState nextState)
         {
             base.ModifyNextState(nextState);
@@ -229,7 +215,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             Log.Warning("Exiting Defiant Heart state.");
 
             EndStartupFreeze();
-            ApplyTransformExitEffect();
 
             heartOverlayController?.SetHeartDrainActive(false);
 

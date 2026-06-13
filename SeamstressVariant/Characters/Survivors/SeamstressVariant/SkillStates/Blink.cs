@@ -70,7 +70,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                         // Health alone can cover the cost.
                         healthComponent.TakeDamage(new DamageInfo
                         {
-                            damage = 25f,
+                            damage = totalCost,
                             damageColorIndex = DamageColorIndex.SuperBleed,
                             damageType = DamageType.NonLethal | DamageType.BypassArmor,
                             position = characterBody.corePosition,
@@ -84,7 +84,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                         
                         healthComponent.TakeDamage(new DamageInfo
                         {
-                            damage = 25f,
+                            damage = totalCost,
                             damageColorIndex = DamageColorIndex.SuperBleed,
                             damageType = DamageType.NonLethal | DamageType.BypassArmor,
                             position = characterBody.corePosition,
