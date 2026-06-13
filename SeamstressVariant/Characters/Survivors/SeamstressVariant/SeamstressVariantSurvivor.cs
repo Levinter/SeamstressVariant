@@ -476,15 +476,14 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 {
                     if (self.TryGetComponent<BleedingHeartComponent>(out var heart))
                     {
-                        heart.AddToHeart(amount);
-                        amount = 0f;
-                    }
+                            heart.AddToHeart(amount);
+                            amount = 0f;
+                        }
                 }
             }
 
             return orig (self, amount, procChainMask, nonRegen);
         }
-            
 
         private void HealthComponent_TakeDamage(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo damageInfo)
         {
@@ -493,11 +492,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName)
                 && self.body.HasBuff(SeamstressVariantBuffs.defianceBuff)
                 && damageInfo != null
-                && damageInfo.damage > 0f)
+                && damageInfo.damage >= self.combinedHealth)
             {
-                //Log.Warning("TakeDamageHook: Damage prevented by Defiance.");
+                Log.Warning("TakeDamageHook: Death prevented by Defiance.");
                 damageInfo.damageType |= DamageType.NonLethal;
-                damageInfo.damage = 0f;
+                //damageInfo.damage = 0f;
             }
 
             orig(self, damageInfo);
