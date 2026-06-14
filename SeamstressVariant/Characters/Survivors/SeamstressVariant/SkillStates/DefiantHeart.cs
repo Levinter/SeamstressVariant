@@ -51,7 +51,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             ApplyTransformEnterEffect();
 
-            Log.Warning("Entered Defiant Heart state.");
+            //Log.Warning("Entered Defiant Heart state.");
         }
 
         public override void FixedUpdate()
@@ -125,7 +125,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             if (isAuthority && inputBank.skill4.justPressed)
             {
-                Log.Warning("Trying to transition from Defiant Heart to Healing Heart.");
+                //Log.Warning("Trying to transition from Defiant Heart to Healing Heart.");
                 outer.SetNextState(new HealingHeart());
                 return;
             }
@@ -196,7 +196,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         private void TransferHeartServer()
         {
-            Log.Warning("DefiantHeart: Transferring heart on server. Current heart: " + heart.GetHeart());
+            //Log.Warning("DefiantHeart: Transferring heart on server. Current heart: " + heart.GetHeart());
             // not entirely sure about this one. maybe need to give `healingHeart.storedHeart` this value?
             float healAmount = heart.ConsumeHeart(heart.GetHeart());
             if (healAmount > 0f)
@@ -205,14 +205,14 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 procChainMask.AddModdedProc(SeamstressVariantSurvivor.bypassHeartConversion);
 
                 this.characterBody.healthComponent.Heal(healAmount, procChainMask, true);
-                Log.Warning("DefiantHeart: Healed for " + healAmount);
+                //Log.Warning("DefiantHeart: Healed for " + healAmount);
             }
         }
 
 
         public override void OnExit()
         {
-            Log.Warning("Exiting Defiant Heart state.");
+            //Log.Warning("Exiting Defiant Heart state.");
 
             EndStartupFreeze();
 
