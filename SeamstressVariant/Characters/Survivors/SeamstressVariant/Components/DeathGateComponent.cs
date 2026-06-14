@@ -61,7 +61,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         {
             if (IsAuthority)
             {
-                Log.Fatal("DeathGateComponent: Activating special skill.");
+                //Log.Fatal("DeathGateComponent: Activating special skill.");
                 /*specialSkill.ExecuteIfReady();
                 specialSkill.AddOneStock();*/
 
@@ -79,13 +79,15 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 return;
             }
 
-            bool incomingDamageIsLethal = damageInfo.damage >= healthComponent.combinedHealth;
+            //Log.Warning("Incoming Damage Type: " + damageInfo.damageType);
+
+            bool incomingDamageIsLethal = damageInfo.damage >= healthComponent.combinedHealth && (damageInfo.damageType & DamageType.NonLethal) == 0;
             if (!incomingDamageIsLethal)
             {
                 return;
             }
 
-            Log.Fatal($"DeathGateComponent: Incoming lethal damage detected.");
+            //Log.Fatal($"DeathGateComponent: Incoming lethal damage detected.");
 
             // dont activate if we have a different special skill
             if (specialSkill.skillDef != HealingHeart.specialSkillDef)
@@ -93,7 +95,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 return;
             }
 
-            Log.Warning("DeathGateComponent: Special skill available for activation: " + specialSkillAvailableServer);
+            //Log.Warning("DeathGateComponent: Special skill available for activation: " + specialSkillAvailableServer);
 
             // dont activate if the special skill is not available
             if (!specialSkillAvailableServer)
@@ -105,7 +107,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
             body.AddBuff(SeamstressVariantBuffs.defianceBuff);
 
-            Log.Warning("Defiance buff applied? " + body.HasBuff(SeamstressVariantBuffs.defianceBuff));
+            //Log.Warning("Defiance buff applied? " + body.HasBuff(SeamstressVariantBuffs.defianceBuff));
 
             RpcActivateSpecialSkill();
         }

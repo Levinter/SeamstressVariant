@@ -24,14 +24,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         {
             base.OnEnter();
 
-            Log.Warning("Entered Healing Heart state. NormalExit: " + normalExit);
+            //Log.Warning("Entered Healing Heart state. NormalExit: " + normalExit);
 
             destealthMaterial = SeamstressAssets.destealthMaterial;
             heart = GetComponent<BleedingHeartComponent>();
-
-            //storedHeart = heart.GetHeart();
-            //Log.Warning("HEALING HEART. ForcedDefianceActivation: " + forcedDefianceActivation);
-            //Log.Warning("HEALING HEART. Is Authority? " + isAuthority);
 
             if (normalExit)
             {
@@ -66,22 +62,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             if (fixedAge >= baseDuration)
             {
-                Log.Warning("HealingHeart: Base duration elapsed. Attempting to exit state. NormalExit: " + normalExit);
-                if (normalExit)
-                {
-                    PlayDestealthAnimation();
-
-                    if (NetworkServer.active)
-                    {
-                        Log.Warning("HealingHeart: Calling TransferHeartServer");
-                        //transferApplied = true;
-                        TransferHeartServer();
-                    }
-
-                    normalExit = false;
-                    Log.Fatal("normalExit = " + normalExit);
-                }
-
                 if (isAuthority)
                 {
                     outer.SetNextStateToMain();
@@ -103,12 +83,23 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         public override void OnExit()
         {
+            if (normalExit)
+            {
+                PlayDestealthAnimation();
+
+                if (NetworkServer.active)
+                {
+                    TransferHeartServer();
+                }
+            }
+
+            //Log.Warning("Exiting HealingHeart state. NormalExit: " + normalExit);
             base.OnExit();
         }
 
         private void TransferHeartServer()
         {
-            Log.Warning("HealingHeart: Transferring heart on server. Current heart: " + heart.GetHeart());
+            //Log.Warning("HealingHeart: Transferring heart on server. Current heart: " + heart.GetHeart());
             float healAmount = heart.ConsumeHeart(heart.GetHeart());
             if (healAmount > 0f)
             {
@@ -116,7 +107,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 procChainMask.AddModdedProc(SeamstressVariantSurvivor.bypassHeartConversion);
 
                 this.characterBody.healthComponent.Heal(healAmount, procChainMask, true);
-                Log.Warning("HealingHeart: Healed for " + healAmount);
+                //Log.Warning("HealingHeart: Healed for " + healAmount);
             }
         }
 

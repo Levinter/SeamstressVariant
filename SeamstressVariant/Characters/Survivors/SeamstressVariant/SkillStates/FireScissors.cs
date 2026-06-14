@@ -72,7 +72,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 _firingLeft      = true;
             }
 
-            Log.Info($"FireScissors: enter side={(_firingLeft ? "L" : "R")} hasLeft={hasLeft} hasRight={hasRight} target={(_lockedTarget != null)}");
+            //Log.Info($"FireScissors: enter side={(_firingLeft ? "L" : "R")} hasLeft={hasLeft} hasRight={hasRight} target={(_lockedTarget != null)}");
 
             Animator modelAnimator = GetModelAnimator();
             if (modelAnimator)
@@ -83,7 +83,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         public override void OnExit()
         {
-            Log.Debug($"FireScissors: exit age={fixedAge:F2} fired={hasFired}");
+            //Log.Debug($"FireScissors: exit age={fixedAge:F2} fired={hasFired}");
             base.OnExit();
         }
 
@@ -107,7 +107,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         {
             if (projectilePrefab == null)
             {
-                Log.Error($"FireScissors: missing projectile prefab for side={(_firingLeft ? "L" : "R")}");
+                //Log.Error($"FireScissors: missing projectile prefab for side={(_firingLeft ? "L" : "R")}");
                 return;
             }
 
@@ -154,10 +154,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 }
                 else
                 {
-                    Log.Warning($"FireScissors: missing ScissorController while firing side={(_firingLeft ? "L" : "R")}");
+                    //Log.Warning($"FireScissors: missing ScissorController while firing side={(_firingLeft ? "L" : "R")}");
                 }
 
-                Log.Info($"FireScissors: fired side={(_firingLeft ? "L" : "R")} target={targetObject != null} critRollFromStat={critStat:F2}");
+                //Log.Info($"FireScissors: fired side={(_firingLeft ? "L" : "R")} target={targetObject != null} critRollFromStat={critStat:F2}");
             }
         }
 
