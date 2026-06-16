@@ -125,7 +125,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             {
                 currentHeart = Mathf.Min(currentHeart + amount, MaxHeart);
                 //Log.Debug("AMOUNT IN HEART = " + currentHeart);
-                body.MarkAllStatsDirty();
+                if (currentHeart < MaxHeart)
+                {
+                    body.MarkAllStatsDirty();
+                }
             }
         }
 

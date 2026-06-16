@@ -142,7 +142,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                         characterBody.gameObject,
                         characterBody.gameObject,
                         characterBody.mainHurtBox,
-                        DotController.DotIndex.SuperBleed,
+                        DotController.DotIndex.Bleed,
                         1f, currentDrainPerTick, 1);
                 }
 
