@@ -13,6 +13,9 @@ namespace SeamstressVariant
 {
     //[BepInDependency("com.rune580.riskofoptions")]
     [BepInDependency("com.kenko.Seamstress", BepInDependency.DependencyFlags.HardDependency)]
+    [BepInDependency(R2API.PrefabAPI.PluginGUID)]
+    [BepInDependency(R2API.LanguageAPI.PluginGUID)]
+    [BepInDependency(R2API.RecalculateStatsAPI.PluginGUID)]
     [BepInDependency(R2API.ProcTypeAPI.PluginGUID)]
     [BepInDependency(Survariants.Survariants.PluginGUID)]
     [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.EveryoneNeedSameModVersion)]
