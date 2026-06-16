@@ -197,7 +197,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         private void TransferHeartServer()
         {
             //Log.Warning("DefiantHeart: Transferring heart on server. Current heart: " + heart.GetHeart());
-            // not entirely sure about this one. maybe need to give `healingHeart.storedHeart` this value?
             float healAmount = heart.ConsumeHeart(heart.GetHeart());
             if (healAmount > 0f)
             {
