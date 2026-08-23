@@ -7,6 +7,9 @@ using UnityEngine;
 using UnityEngine.Networking;
 using SeamstressVariant.Survivors.SeamstressVariant.Components;
 using SeamstressVariant.Survivors.SeamstressVariant.SkillStates;
+using MonoMod.Cil;
+using Mono.Cecil.Cil;
+using System;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant
 {
@@ -353,7 +356,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
         private void AddHooks()
         {
-            On.RoR2.HealthComponent.Heal += HealthComponent_Heal;
+            IL.RoR2.HealthComponent.Heal += HealthComponent_Heal;
             On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
             GlobalEventManager.onServerDamageDealt += GlobalEventManager_onServerDamageDealt;
             On.RoR2.HealthComponent.GetHealthBarValues += HealthComponent_GetHealthBarValues;
@@ -469,20 +472,48 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             DotController.InflictDot(ref inflictDotInfo);
         }
 
-        private float HealthComponent_Heal(On.RoR2.HealthComponent.orig_Heal orig, HealthComponent self, float amount, ProcChainMask procChainMask, bool nonRegen)
+        private void HealthComponent_Heal(ILContext il)
         {
-            if (self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName) && self.alive){
-                if (procChainMask.HasModdedProc(bypassHeartConversion) == false)
+            var c = new ILCursor(il)
+            {
+                Index = -1
+            };
+
+            if (!c.TryGotoPrev(MoveType.After, x => x.MatchStarg(out _)))
+            {
+                Log.Fatal("HealthComponent_Heal hook failed\r\n" + il.ToString());
+                return;
+            }
+
+            c.MoveAfterLabels();
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Ldarg_1);
+            c.Emit(OpCodes.Ldarg_2);
+            c.Emit(OpCodes.Ldarg_3);
+            c.EmitDelegate<Func<HealthComponent, float, ProcChainMask, bool, float>>((self, amount, procChainMask, nonRegen) =>
+            {
+                if (self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName) && self.alive)
                 {
-                    if (self.TryGetComponent<BleedingHeartComponent>(out var heart))
+                    if (procChainMask.HasModdedProc(bypassHeartConversion) == false)
                     {
+                        if (self.TryGetComponent<BleedingHeartComponent>(out var heart))
+                        {
                             heart.AddToHeart(amount);
                             amount = 0f;
                         }
+                    }
                 }
-            }
+                return amount;
+            });
+            c.Emit(OpCodes.Starg, 1);
 
-            return orig (self, amount, procChainMask, nonRegen);
+            // This just does `if (amount <= 0f) return 0f`
+            // so we exit before the server does SendHeal which seems to print 1 even if the heal is 0.
+            c.Emit(OpCodes.Ldarg_1);
+            c.Emit(OpCodes.Ldc_R4, 0f);
+            c.Emit(OpCodes.Bgt, c.Next);
+            c.Emit(OpCodes.Ldc_R4, 0f);
+            c.Emit(OpCodes.Ret);
         }
 
         private void HealthComponent_TakeDamage(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo damageInfo)

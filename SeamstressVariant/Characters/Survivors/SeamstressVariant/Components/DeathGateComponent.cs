@@ -16,6 +16,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private HealthComponent healthComponent;
         private SkillLocator skillLocator;
         private GenericSkill specialSkill;
+        private BleedingHeartComponent bleedingHeartComponent;
 
         public void Awake()
         {
@@ -24,6 +25,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             skillLocator = GetComponent<SkillLocator>();
             healthComponent = GetComponent<HealthComponent>();
             heartEsm = EntityStateMachine.FindByCustomName(gameObject, "Special");
+            bleedingHeartComponent = GetComponent<BleedingHeartComponent>();
         }
 
         private void Start()
@@ -99,6 +101,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
             // dont activate if the special skill is not available
             if (!specialSkillAvailableServer)
+            {
+                return;
+            }
+
+            //check if theres something stored in heart
+            if (bleedingHeartComponent.GetHeart() <= 0)
             {
                 return;
             }

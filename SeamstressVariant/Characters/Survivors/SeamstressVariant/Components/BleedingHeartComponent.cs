@@ -121,11 +121,17 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         // Add Health to heart from healing
         public void AddToHeart(float amount)
         {
-            if (isInitialized && healthComponent != null && healthComponent.alive)
+            if (amount > 0f)
             {
-                currentHeart = Mathf.Min(currentHeart + amount, MaxHeart);
-                //Log.Debug("AMOUNT IN HEART = " + currentHeart);
-                body.MarkAllStatsDirty();
+                if (isInitialized && healthComponent != null && healthComponent.alive)
+                {
+                    currentHeart = Mathf.Min(currentHeart + amount, MaxHeart);
+                    //Log.Debug("AMOUNT IN HEART = " + currentHeart);
+                    if (currentHeart < MaxHeart)
+                    {
+                        body.MarkAllStatsDirty();
+                    }
+                }
             }
         }
 
