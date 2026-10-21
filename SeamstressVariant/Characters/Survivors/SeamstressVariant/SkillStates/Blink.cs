@@ -41,8 +41,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             // If the authority doesn't have enough health + heart to cover the cost, cancel immediately.
             if (isAuthority)
             {
-                float level = characterBody ? characterBody.level : 0f;
-                float requiredCost = SeamstressVariantConfig.GetBlinkHealthCostForLevel(level);
+                //float level = characterBody ? characterBody.level : 0f;
+                float requiredCost = 30f;
                 if (requiredCost > 0f && healthComponent)
                 {
                     float availableHealth = Mathf.Max(healthComponent.health - 1f, 0f);
@@ -59,8 +59,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             if (NetworkServer.active && healthComponent)
             {
-                float level = characterBody ? characterBody.level : 0f;
-                float totalCost = SeamstressVariantConfig.GetBlinkHealthCostForLevel(level);
+                //float level = characterBody ? characterBody.level : 0f;
+                float totalCost = 30f;
                 if (totalCost > 0f)
                 {
                     float availableHealth = Mathf.Max(healthComponent.health - 1f, 0f);

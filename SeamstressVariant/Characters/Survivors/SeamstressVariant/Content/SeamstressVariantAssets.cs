@@ -188,12 +188,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 projectileSimple.desiredForwardSpeed = ScissorProjectileTravelSpeed;
             }
 
-            /*ProjectileDamage projectileDamage = proj.GetComponent<ProjectileDamage>();
+            ProjectileDamage projectileDamage = proj.GetComponent<ProjectileDamage>();
             if (projectileDamage)
             {
-                // Strip inherited damage flags from ImpVoidspike so the projectile is pure direct hit.
-                projectileDamage.damageType = DamageType.Generic;
-            }*/
+                // Using superbleedoncrit to avoid having to implement a custom damage type, projectilve will have guaranteed critical strike.
+                projectileDamage.damageType = DamageType.SuperBleedOnCrit;
+            }
 
             ProjectileStickOnImpact stickOnImpact = proj.GetComponent<ProjectileStickOnImpact>();
             if (stickOnImpact)

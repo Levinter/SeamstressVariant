@@ -7,9 +7,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         public const float clawDamageCoefficient = 1f;
         public const float meleeScissorDamageCoefficient = 1.5f;
 
-        public const float scissorImpactDamageCoefficient = 1.5f;
-        public const float scissorExplosionDamageCoefficient = 4.0f;
-        public const float dashDamageCoefficient = 4.0f;
+        //the scissor damage is always a crit because of the superbleedoncrit damage type on the prefab, so the damage is technically 5.0f
+        public const float scissorExplosionDamageCoefficient = 2.5f;
         public const float explodeRadius = 20f;
     }
 }

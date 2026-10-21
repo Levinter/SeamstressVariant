@@ -53,8 +53,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             #region Secondary
             Language.Add(prefix + "SECONDARY_SCISSORS_NAME", "Symbiotic Scissors");
-                Language.Add(prefix + "SECONDARY_SCISSORS_DESCRIPTION", $"Command your scissors to seek out a nearby enemy and strike them, exploding for <style=cIsDamage>{100f * SeamstressVariantStaticValues.scissorExplosionDamageCoefficient}% damage</style> and applying <color=#9B3737>Bleed</color>.");
+                Language.Add(prefix + "SECONDARY_SCISSORS_DESCRIPTION", $"Command your scissors to seek out a nearby enemy and strike them, exploding for <style=cIsDamage>{100f * SeamstressVariantStaticValues.scissorExplosionDamageCoefficient}% damage with a guaranteed critical strike</style> and applying <color=#9B3737>Hemorrhage</color>.");
             Language.Add("KEYWORD_SYMBIOTIC", $"<style=cKeywordName>Symbiotic</style><style=cSub><style=cIsUtility>While off cooldown</style>, your scissors follow you and cause claw attacks to hit an additional time with increased range for <style=cIsDamage>{100f * SeamstressVariantStaticValues.meleeScissorDamageCoefficient}% damage</style>.</style>");
+            Language.Add("KEYWORD_HEMORRHAGE", $"<style=cKeywordName>Hemorrhage</style><style=cSub>Deals <style=cIsDamage>2000% base damage</style> over <style=cIsDamage>15 seconds</style>.</style>");
             #endregion
 
             #region Utility

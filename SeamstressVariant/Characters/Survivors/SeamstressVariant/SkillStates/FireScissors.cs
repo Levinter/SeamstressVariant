@@ -137,6 +137,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     targetObject = _lockedTarget.healthComponent.body.gameObject;
                 }
 
+                // Im leaving crit bool true so it procs superbleedoncrit. The damage type is set to SuperBleedOnCrit in the prefab.
                 ProjectileManager.instance.FireProjectile(
                     projectilePrefab,
                     aimRay.origin,
@@ -144,7 +145,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     gameObject,
                     damageStat,
                     force,
-                    Util.CheckRoll(critStat, characterBody.master),
+                    true,
                     DamageColorIndex.Default,
                     targetObject);
 

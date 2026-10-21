@@ -16,7 +16,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             if (body == null)
                 return true;
 
-            float cost = SeamstressVariantConfig.GetBlinkHealthCostForLevel(body.level);
+            float cost = 30f;
             if (cost <= 0f)
                 return true;
 

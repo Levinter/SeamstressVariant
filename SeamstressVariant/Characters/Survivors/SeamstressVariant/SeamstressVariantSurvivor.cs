@@ -93,7 +93,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             base.InitializeCharacter();
 
-            SeamstressVariantConfig.Init();
+            //SeamstressVariantConfig.Init();
             SeamstressVariantStates.Init();
             SeamstressVariantTokens.Init();
 
@@ -227,7 +227,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 skillName = "FireScissors",
                 skillNameToken = SEAMSTRESS_VARIANT_PREFIX + "SECONDARY_SCISSORS_NAME",
                 skillDescriptionToken = SEAMSTRESS_VARIANT_PREFIX + "SECONDARY_SCISSORS_DESCRIPTION",
-                keywordTokens = new string[] { "KEYWORD_SYMBIOTIC" },
+                keywordTokens = new string[] { "KEYWORD_SYMBIOTIC", "KEYWORD_HEMORRHAGE" },
                 skillIcon =  assetBundle.LoadAsset<Sprite>("texSkewerIcon"),
 
                 activationState = new EntityStates.SerializableEntityStateType(typeof(SkillStates.FireScissors)),
