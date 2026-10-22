@@ -55,7 +55,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         public void CmdSpecialSkillAvailable(bool value)
         {
             specialSkillAvailableServer = value;
-            //Log.Warning($"DeathGateComponent: Special skill availability updated on server: {specialSkillAvailableServer}.");
+            Log.Warning($"DeathGateComponent: Special skill availability updated on server: {specialSkillAvailableServer}.");
         }
 
         [ClientRpc]
@@ -89,7 +89,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 return;
             }
 
-            //Log.Fatal($"DeathGateComponent: Incoming lethal damage detected.");
+            Log.Fatal($"DeathGateComponent: Incoming lethal damage detected.");
 
             // dont activate if we have a different special skill
             if (specialSkill.skillDef != HealingHeart.specialSkillDef)
@@ -97,7 +97,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 return;
             }
 
-            //Log.Warning("DeathGateComponent: Special skill available for activation: " + specialSkillAvailableServer);
+            Log.Warning("DeathGateComponent: Special skill available for activation: " + specialSkillAvailableServer);
 
             // dont activate if the special skill is not available
             if (!specialSkillAvailableServer)
@@ -113,9 +113,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             
             damageInfo.damageType |= DamageType.NonLethal;
 
+            body.AddTimedBuff(RoR2Content.Buffs.HiddenInvincibility, 1.5f); //pls dont die
             body.AddBuff(SeamstressVariantBuffs.defianceBuff);
 
-            //Log.Warning("Defiance buff applied? " + body.HasBuff(SeamstressVariantBuffs.defianceBuff));
+            Log.Warning("Defiance buff applied? " + body.HasBuff(SeamstressVariantBuffs.defianceBuff));
 
             RpcActivateSpecialSkill();
         }

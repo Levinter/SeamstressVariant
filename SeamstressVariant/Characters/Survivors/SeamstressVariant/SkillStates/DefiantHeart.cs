@@ -51,7 +51,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             ApplyTransformEnterEffect();
 
-            //Log.Warning("Entered Defiant Heart state.");
+            Log.Warning("Entered Defiant Heart state.");
         }
 
         public override void FixedUpdate()

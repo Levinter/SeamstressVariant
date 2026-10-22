@@ -357,10 +357,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         private void AddHooks()
         {
             IL.RoR2.HealthComponent.Heal += HealthComponent_Heal;
-            On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
+            //On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
             GlobalEventManager.onServerDamageDealt += GlobalEventManager_onServerDamageDealt;
             On.RoR2.HealthComponent.GetHealthBarValues += HealthComponent_GetHealthBarValues;
             RecalculateStatsAPI.GetStatCoefficients += RecalculateStatsAPI_GetStatCoefficients;
+            On.RoR2.HealthComponent.TakeDamageProcess += HealthComponent_TakeDamageProcess;
 
             bypassHeartConversion = ProcTypeAPI.ReserveProcType();
         }
@@ -516,7 +517,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             c.Emit(OpCodes.Ret);
         }
 
-        private void HealthComponent_TakeDamage(On.RoR2.HealthComponent.orig_TakeDamage orig, HealthComponent self, DamageInfo damageInfo)
+        private void HealthComponent_TakeDamageProcess(On.RoR2.HealthComponent.orig_TakeDamageProcess orig, HealthComponent self, DamageInfo damageInfo)
         {
             if (self != null
                 && self.body != null
@@ -527,10 +528,47 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             {
                 Log.Warning("TakeDamageHook: Death prevented by Defiance.");
                 damageInfo.damageType |= DamageType.NonLethal;
-                //damageInfo.damage = 0f;
             }
 
             orig(self, damageInfo);
         }
+
+        /*private void HealthComponent_TakeDamageProcess(On.RoR2.HealthComponent.orig_TakeDamageProcess orig, HealthComponent self, DamageInfo damageInfo)
+        {
+            if (self != null
+                && self.alive
+                && self.body != null
+                && self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName)
+                && damageInfo != null
+                && damageInfo.damage > 0f
+                && self.body.GetBuffCount(SeamstressVariantBuffs.defianceBuff) == 0
+                )
+            {
+                bool incomingDamageIsLethal = damageInfo.damage >= self.combinedHealth && (damageInfo.damageType & DamageType.NonLethal) == 0;
+                GenericSkill specialSkill = self.body.skillLocator?.special;
+
+                if (incomingDamageIsLethal && specialSkill != null)
+                {
+                    Log.Warning("Incoming damage is lethal. Attempting to trigger Defiance if special is ready.");
+                    Log.Debug("Checking special skill readiness. Current stock: " + specialSkill.stock);
+
+                    if (specialSkill.stock > 0)
+                    {
+                        damageInfo.damageType |= DamageType.NonLethal;
+
+                        // Adding buff here in hopes the fucking character stops dying to random bullshit during defiance activation
+                        self.body.AddBuff(SeamstressVariantBuffs.defianceBuff);
+                        Log.Warning("Defiance buff applied? " + self.body.HasBuff(SeamstressVariantBuffs.defianceBuff));
+                        
+                    }
+                    else
+                    {
+                        Log.Fatal("Failed to activate Defiance. Clearing forced activation.");
+                    }
+                }
+            }
+
+            orig(self, damageInfo);
+        }*/
     }
 }
