@@ -470,10 +470,6 @@ namespace SeamstressVariant.Modules
         {
             return childLocator.transformPairs.Where((pair) => pair.name.ToLowerInvariant() == child.ToLowerInvariant()).FirstOrDefault().name;
         }
-        private static Transform FindChildInsensitive(this ChildLocator childLocator, string child)
-        {
-            return childLocator.FindChild(childLocator.FindChildNameInsensitive(child));
-        }
         private static GameObject FindChildGameObjectInsensitive(this ChildLocator childLocator, string child)
         {
             return childLocator.FindChildGameObject(childLocator.FindChildNameInsensitive(child));

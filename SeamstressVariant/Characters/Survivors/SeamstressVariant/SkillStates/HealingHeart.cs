@@ -16,9 +16,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         private BleedingHeartComponent heart;
         private Material destealthMaterial;
         private TemporaryOverlayInstance persistentDefianceOverlay;
-        //private float storedHeart;
         public bool normalExit = true;
-        //private bool transferApplied = false;
 
         public override void OnEnter()
         {
@@ -36,6 +34,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
                 if (NetworkServer.active && characterBody.HasBuff(SeamstressVariantBuffs.defianceBuff) == false)
                 {
+                    characterBody.AddTimedBuff(RoR2Content.Buffs.HiddenInvincibility, 1.0f); //pls dont die
                     characterBody.AddBuff(SeamstressVariantBuffs.defianceBuff);
                 }
             }

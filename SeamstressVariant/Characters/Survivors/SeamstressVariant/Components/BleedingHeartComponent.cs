@@ -18,7 +18,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private GameObject trailEffectL;
         private bool sustainedVisualActive;
         private TemporaryOverlayInstance persistentDefianceOverlay;
-        private EffectManagerHelper defianceBleedEffect;
 
         // Heart settings
         [SyncVar(hook = nameof(OnMaxHeartChanged))]
@@ -30,7 +29,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         [SyncVar(hook = nameof(OnDefiantStartupFreezeActiveChanged))]
         private bool defiantStartupFreezeActive;
         private int activeBleedStacks = 0;
-        private int nearbyEnemyCount = 0;
         private const float NearbyEnemyRadius = 30f;
         private float scanTimer = 0f;
         private float healTimer = 0f;
@@ -81,7 +79,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             {
                 scanTimer = ScanInterval;
                 ScanNearbyEnemies();
-                //Log.Debug("NEARBY ENEMIES = " + nearbyEnemyCount + " | BLEED STACKS = " + activeBleedStacks);
             }
 
             if (healTimer <= 0f)
@@ -284,11 +281,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             OnDefiantStartupFreezeActiveChanged(active);
         }
         
-        public int GetNearbyEnemyCount()
-        {
-            return nearbyEnemyCount;
-        }
-
         private void ScanNearbyEnemies()
         {
             if (body == null)
@@ -298,29 +290,18 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
             Vector3 center = body.footPosition;
             float radiusSqr = NearbyEnemyRadius * NearbyEnemyRadius;
-            int enemyCount = 0;
             int bleedCount = 0;
 
             foreach (CharacterBody otherBody in CharacterBody.readOnlyInstancesList)
             {
-                /*if (!CountsAsNearbyCharacter(otherBody))
+                Vector3 delta = otherBody.footPosition - center;
+                if (delta.sqrMagnitude <= radiusSqr)
                 {
-                    continue;
-                }*/
-
-                //if (otherBody.teamComponent.teamIndex != TeamIndex.Player)
-                //{
-                    Vector3 delta = otherBody.footPosition - center;
-                    if (delta.sqrMagnitude <= radiusSqr)
-                    {
-                        enemyCount++;
-                        bleedCount += otherBody.GetBuffCount(RoR2Content.Buffs.Bleeding);
-                        bleedCount += otherBody.GetBuffCount(RoR2Content.Buffs.SuperBleed);
-                    }
-                //}
+                    bleedCount += otherBody.GetBuffCount(RoR2Content.Buffs.Bleeding);
+                    bleedCount += otherBody.GetBuffCount(RoR2Content.Buffs.SuperBleed);
+                }
             }
 
-            nearbyEnemyCount = enemyCount;
             activeBleedStacks = bleedCount;
         }
 
@@ -334,52 +315,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             float healAmount = HealPerBleedStack * activeBleedStacks;
             healthComponent.Heal(healAmount, default);
             //Log.Debug("Passive heal: " + healAmount + " (" + activeBleedStacks + " stacks)");
-        }
-
-        private bool CountsAsNearbyCharacter(CharacterBody otherBody)
-        {
-            if (otherBody == null || otherBody == body || otherBody.healthComponent == null || !otherBody.healthComponent.alive)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        private void ApplyDefianceBleedEffect()
-        {
-            if (defianceBleedEffect)
-            {
-                return;
-            }
-
-            GameObject bleedEffectPrefab = LegacyResourcesAPI.Load<GameObject>("Prefabs/BleedEffect");
-            if (!bleedEffectPrefab)
-            {
-                return;
-            }
-
-            defianceBleedEffect = EffectManager.GetAndActivatePooledEffect(bleedEffectPrefab, transform, true);
-        }
-
-        private void RemoveDefianceBleedEffect()
-        {
-            if (!defianceBleedEffect)
-            {
-                return;
-            }
-
-            if (defianceBleedEffect.OwningPool != null)
-            {
-                defianceBleedEffect.transform.SetParent(null);
-                defianceBleedEffect.ReturnToPool();
-            }
-            else
-            {
-                Object.Destroy(defianceBleedEffect.gameObject);
-            }
-
-            defianceBleedEffect = null;
         }
 
         private Transform FindModelChild(string childName)
@@ -424,7 +359,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             }
 
             sustainedVisualActive = true;
-            //ApplyDefianceBleedEffect();
 
             Animator anim = GetModelAnimator();
             if (anim && destealthMaterial && persistentDefianceOverlay == null)
@@ -459,9 +393,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             {
                 return;
             }
-
             sustainedVisualActive = false;
-            //RemoveDefianceBleedEffect();
+            sustainedVisualActive = false;
 
             if (persistentDefianceOverlay != null)
             {

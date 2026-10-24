@@ -219,6 +219,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             if (NetworkServer.active)
             {
+                characterBody.AddTimedBuff(RoR2Content.Buffs.HiddenInvincibility, 1.0f); //pls dont die
+
                 DotController.RemoveAllDots(gameObject);
 
                 if (characterBody.HasBuff(SeamstressVariantBuffs.defianceBuff))

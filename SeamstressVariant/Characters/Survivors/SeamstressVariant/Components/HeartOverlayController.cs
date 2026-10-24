@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Diagnostics;
 using RoR2;
 using RoR2.HudOverlay;
 using RoR2.UI;
@@ -32,17 +31,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private static GameObject overlayPrefab;
         private static string overlayChildLocatorEntry;
         private static bool overlayAssetsLoaded = false;
-        private static bool EnableThemePerfLogging = false;
-        private const float ThemePerfLogInterval = 10f;
         private static readonly int overlayValueParamHash = Animator.StringToHash("corruption");
         private static readonly int overlayDrainStateParamHash = Animator.StringToHash("isCorrupted");
         private static readonly Color overlayWineColor = new Color32(196, 66, 82, 255);
         private static readonly Color overlayDrainColor = Color.red;
 
-        private int themeApplyCallCount;
-        private float themeApplyTotalMs;
-        private float themeApplyMaxMs;
-        private float nextThemePerfLogTime;
         [SyncVar(hook = nameof(OnHeartDrainActiveChanged))]
         private bool heartDrainActive;
 
@@ -55,8 +48,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         {
             EnsureOverlayAssetsLoaded();
             RegisterOverlay();
-
-            nextThemePerfLogTime = Time.unscaledTime + ThemePerfLogInterval;
         }
 
         private void OnHeartDrainActiveChanged(bool newValue)
@@ -188,29 +179,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             }
 
             ApplyOverlayStateToTrackedInstances();
-        }
-
-        private void LateUpdate()
-        {
-            if (heartComponent == null) return;
-
-            if (EnableThemePerfLogging)
-            {
-                Stopwatch stopwatch = Stopwatch.StartNew();
-                //ApplyThemeToOverlayInstances();
-                stopwatch.Stop();
-                RecordThemePerfSample((float)stopwatch.Elapsed.TotalMilliseconds);
-            }
-            else
-            {
-                //ApplyThemeToOverlayInstances();
-            }
-
-            if (EnableThemePerfLogging && Time.unscaledTime >= nextThemePerfLogTime)
-            {
-                //FlushThemePerfLog();
-                nextThemePerfLogTime = Time.unscaledTime + ThemePerfLogInterval;
-            }
         }
 
         private void OnOverlayInstanceAdded(OverlayController controller, GameObject instance)
@@ -426,30 +394,5 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             }
         }
 
-        private void RecordThemePerfSample(float elapsedMs)
-        {
-            themeApplyCallCount++;
-            themeApplyTotalMs += elapsedMs;
-            if (elapsedMs > themeApplyMaxMs)
-            {
-                themeApplyMaxMs = elapsedMs;
-            }
-        }
-
-        private void FlushThemePerfLog()
-        {
-            if (themeApplyCallCount <= 0)
-            {
-                //Log.Info("HeartOverlay theme perf: no apply calls in sample window.");
-                return;
-            }
-
-            float avgMs = themeApplyTotalMs / themeApplyCallCount;
-            //Log.Info($"HeartOverlay theme perf: calls={themeApplyCallCount}, avgMs={avgMs:F4}, maxMs={themeApplyMaxMs:F4}, totalMs={themeApplyTotalMs:F4}, caches={overlayThemeCaches.Count}");
-
-            themeApplyCallCount = 0;
-            themeApplyTotalMs = 0f;
-            themeApplyMaxMs = 0f;
-        }
     }
 }

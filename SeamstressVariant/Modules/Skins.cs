@@ -65,25 +65,6 @@ namespace SeamstressVariant.Modules
             internal string Name;
         }
 
-        private static CharacterModel.RendererInfo[] getRendererMaterials(CharacterModel.RendererInfo[] defaultRenderers, params Material[] materials)
-        {
-            CharacterModel.RendererInfo[] newRendererInfos = new CharacterModel.RendererInfo[defaultRenderers.Length];
-            defaultRenderers.CopyTo(newRendererInfos, 0);
-
-            for (int i = 0; i < newRendererInfos.Length; i++)
-            {
-                try
-                {
-                    newRendererInfos[i].defaultMaterial = materials[i];
-                }
-                catch
-                {
-                    Log.Error("error adding skin rendererinfo material. make sure you're not passing in too many");
-                }
-            }
-
-            return newRendererInfos;
-        }
         /// <summary>
         /// pass in strings for mesh assets in your bundle. pass the same amount and order based on your rendererinfos, filling with null as needed
         /// <code>

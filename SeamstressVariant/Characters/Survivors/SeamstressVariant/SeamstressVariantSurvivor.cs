@@ -4,7 +4,6 @@ using RoR2;
 using RoR2.Skills;
 using R2API;
 using UnityEngine;
-using UnityEngine.Networking;
 using SeamstressVariant.Survivors.SeamstressVariant.Components;
 using SeamstressVariant.Survivors.SeamstressVariant.SkillStates;
 using MonoMod.Cil;
@@ -74,18 +73,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         public override CharacterModel prefabCharacterModel { get; protected set; }
         public override GameObject displayPrefab { get; protected set; }
 
-        public override void Initialize()
-        {
-            //uncomment if you have multiple characters
-            //ConfigEntry<bool> characterEnabled = Config.CharacterEnableConfig("Survivors", "Henry");
-
-            //if (!characterEnabled.Value)
-            //    return;
-
-            base.Initialize();
-
-        }
-        
         public override void InitializeCharacter()
         {
             //need the character unlockable before you initialize the survivordef
@@ -357,7 +344,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         private void AddHooks()
         {
             IL.RoR2.HealthComponent.Heal += HealthComponent_Heal;
-            //On.RoR2.HealthComponent.TakeDamage += HealthComponent_TakeDamage;
             GlobalEventManager.onServerDamageDealt += GlobalEventManager_onServerDamageDealt;
             On.RoR2.HealthComponent.GetHealthBarValues += HealthComponent_GetHealthBarValues;
             RecalculateStatsAPI.GetStatCoefficients += RecalculateStatsAPI_GetStatCoefficients;
@@ -573,7 +559,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 && self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName)
                 && self.body.HasBuff(SeamstressVariantBuffs.defianceBuff)
                 && damageInfo != null
-                && damageInfo.damage >= self.combinedHealth)
+                && damageInfo.damage > 0f)
             {
                 Log.Warning("TakeDamageHook: Death prevented by Defiance.");
                 damageInfo.damageType |= DamageType.NonLethal;
@@ -582,42 +568,5 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             orig(self, damageInfo);
         }
 
-        /*private void HealthComponent_TakeDamageProcess(On.RoR2.HealthComponent.orig_TakeDamageProcess orig, HealthComponent self, DamageInfo damageInfo)
-        {
-            if (self != null
-                && self.alive
-                && self.body != null
-                && self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName)
-                && damageInfo != null
-                && damageInfo.damage > 0f
-                && self.body.GetBuffCount(SeamstressVariantBuffs.defianceBuff) == 0
-                )
-            {
-                bool incomingDamageIsLethal = damageInfo.damage >= self.combinedHealth && (damageInfo.damageType & DamageType.NonLethal) == 0;
-                GenericSkill specialSkill = self.body.skillLocator?.special;
-
-                if (incomingDamageIsLethal && specialSkill != null)
-                {
-                    Log.Warning("Incoming damage is lethal. Attempting to trigger Defiance if special is ready.");
-                    Log.Debug("Checking special skill readiness. Current stock: " + specialSkill.stock);
-
-                    if (specialSkill.stock > 0)
-                    {
-                        damageInfo.damageType |= DamageType.NonLethal;
-
-                        // Adding buff here in hopes the fucking character stops dying to random bullshit during defiance activation
-                        self.body.AddBuff(SeamstressVariantBuffs.defianceBuff);
-                        Log.Warning("Defiance buff applied? " + self.body.HasBuff(SeamstressVariantBuffs.defianceBuff));
-                        
-                    }
-                    else
-                    {
-                        Log.Fatal("Failed to activate Defiance. Clearing forced activation.");
-                    }
-                }
-            }
-
-            orig(self, damageInfo);
-        }*/
     }
 }
