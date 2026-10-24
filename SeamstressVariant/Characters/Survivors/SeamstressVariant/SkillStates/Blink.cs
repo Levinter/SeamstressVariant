@@ -105,6 +105,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             blinkPrefab = SeamstressAssets.smallBlinkEffect;
             destealthMaterial = SeamstressAssets.destealthMaterial;
 
+            characterBody.AddTimedBuff(RoR2Content.Buffs.HiddenInvincibility, 0.2f);
+
             Util.PlaySound(beginSoundString, gameObject);
 
             Animator modelAnimator = GetModelAnimator();

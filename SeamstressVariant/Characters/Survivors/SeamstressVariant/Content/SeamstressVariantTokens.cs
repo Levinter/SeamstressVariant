@@ -23,7 +23,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             string desc = "Seamstress Variant is a hyper scaler that uses her health as a resource to fuel her damage and defiance.<color=#CCD3E0>" + Environment.NewLine + Environment.NewLine
              + "< ! > Her claw attack is pretty weak, managing her scissors for increased damage is key." + Environment.NewLine + Environment.NewLine
              + "< ! > Stacking health is your priority, the more health, the more bleed chance, the more bleed chance the more healing." + Environment.NewLine + Environment.NewLine
-             + "< ! > Blink as no cooldown, but it costs health" + Environment.NewLine + Environment.NewLine
+             + "< ! > Blink as minimal cooldown, but it costs health" + Environment.NewLine + Environment.NewLine
              + "< ! > With enough resources you can maintain Defiant Heart for extenced periods of time, allowing you to tank almost everything." + Environment.NewLine + Environment.NewLine;
 
             string outro = "..and so she left, her heart still beating.";
@@ -53,14 +53,14 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             #region Secondary
             Language.Add(prefix + "SECONDARY_SCISSORS_NAME", "Symbiotic Scissors");
-                Language.Add(prefix + "SECONDARY_SCISSORS_DESCRIPTION", $"Command your scissors to seek out a nearby enemy and strike them, exploding for <style=cIsDamage>{100f * SeamstressVariantStaticValues.scissorExplosionDamageCoefficient}% damage with a guaranteed critical strike</style> and applying <color=#9B3737>Hemorrhage</color>.");
+                Language.Add(prefix + "SECONDARY_SCISSORS_DESCRIPTION", $"Command your scissors to seek out a nearby enemy and strike them, exploding for <style=cIsDamage>{100f * SeamstressVariantStaticValues.scissorExplosionDamageCoefficient}% damage</style> with a guaranteed critical strike and applying <color=#9B3737>Hemorrhage</color>.");
             Language.Add("KEYWORD_SYMBIOTIC", $"<style=cKeywordName>Symbiotic</style><style=cSub><style=cIsUtility>While off cooldown</style>, your scissors follow you and cause claw attacks to hit an additional time with increased range for <style=cIsDamage>{100f * SeamstressVariantStaticValues.meleeScissorDamageCoefficient}% damage</style>.</style>");
             Language.Add("KEYWORD_HEMORRHAGE", $"<style=cKeywordName>Hemorrhage</style><style=cSub>Deals <style=cIsDamage>2000% base damage</style> over <style=cIsDamage>15 seconds</style>.</style>");
             #endregion
 
             #region Utility
             Language.Add(prefix + "UTILITY_BLINK_NAME", "Blink");
-            Language.Add(prefix + "UTILITY_BLINK_DESCRIPTION", $"<style=cIsUtility>Invulnerable.</style> Blink a short distance. <style=cIsHealth>Costs health on use</style>.");
+            Language.Add(prefix + "UTILITY_BLINK_DESCRIPTION", $"<style=cIsUtility>Invulnerable.</style> Blink a short distance. <style=cIsHealth>Costs 30 health on use</style>.");
             #endregion
 
             #region Special

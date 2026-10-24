@@ -260,7 +260,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 activationStateMachineName = "Body",
                 interruptPriority = EntityStates.InterruptPriority.PrioritySkill,
 
-                baseRechargeInterval = 0.2f,
+                baseRechargeInterval = 0.25f,
                 baseMaxStock = 1,
 
                 rechargeStock = 1,
@@ -461,95 +461,34 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
         private void HealthComponent_Heal(ILContext il)
         {
-            // HealthComponent.Heal uses two bool locals: one for crit healing and one
-            // to mark healing that is converted instead of restoring current health.
-            VariableDefinition healConversionFlag = null;
-            int booleanLocalCount = 0;
-            foreach (VariableDefinition variable in il.Body.Variables)
+            var c = new ILCursor(il)
             {
-                if (variable.VariableType.FullName == "System.Boolean")
-                {
-                    healConversionFlag = variable;
-                    booleanLocalCount++;
-                }
-            }
+                Index = -1
+            };
 
-            if (booleanLocalCount != 2 || healConversionFlag == null)
+            if (!(c.TryGotoPrev(x => x.MatchAdd(), x => x.MatchCallOrCallvirt(typeof(HealthComponent).GetProperty("Networkhealth").GetSetMethod())) && c.TryGotoPrev(x => x.MatchBgeUn(out _))))
             {
                 Log.Fatal("HealthComponent_Heal hook failed\r\n" + il.ToString());
                 return;
             }
-
-            // Inject after the conversion flag's initialization so our assignment is
-            // preserved by the rest of Heal and prevents HP restoration without skipping
-            // its heal notifications and item callbacks.
-            Instruction flagInitialization = null;
-            foreach (Instruction instruction in il.Body.Instructions)
-            {
-                if (StoresLocal(instruction, healConversionFlag))
-                {
-                    flagInitialization = instruction;
-                    break;
-                }
-            }
-
-            if (flagInitialization == null)
-            {
-                Log.Fatal("HealthComponent_Heal hook failed to locate its heal-conversion flag\r\n" + il.ToString());
-                return;
-            }
-
-            var c = new ILCursor(il)
-            {
-                Index = il.Body.Instructions.IndexOf(flagInitialization) + 1
-            };
-            c.MoveAfterLabels();
             c.Emit(OpCodes.Ldarg_0);
             c.Emit(OpCodes.Ldarg_1);
             c.Emit(OpCodes.Ldarg_2);
-            c.EmitDelegate<Func<HealthComponent, float, ProcChainMask, bool>>((self, amount, procChainMask) =>
+            c.EmitDelegate<Func<float, HealthComponent, float, ProcChainMask, float>>((flag, self, actualamount, procChainMask) =>
             {
-                if (self.body == null
-                    || self.body.bodyIndex != BodyCatalog.FindBodyIndex(bodyName)
-                    || !self.alive
-                    || procChainMask.HasModdedProc(bypassHeartConversion)
-                    || !self.TryGetComponent<BleedingHeartComponent>(out var heart))
+                if (self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName) && self.alive)
                 {
-                    return false;
+                    if (procChainMask.HasModdedProc(bypassHeartConversion) == false)
+                    {
+                        if (self.TryGetComponent<BleedingHeartComponent>(out var heart))
+                        {
+                            heart.AddToHeart(actualamount);
+                            flag = 0f;
+                        }
+                    }
                 }
-
-                heart.AddToHeart(amount);
-                return true;
+                return flag;
             });
-            c.Emit(OpCodes.Stloc, healConversionFlag);
-        }
-
-        // Mono.Cecil emits local assignments in either generic or index-specific forms.
-        private static bool StoresLocal(Instruction instruction, VariableDefinition variable)
-        {
-            if (instruction.Operand == variable)
-            {
-                return instruction.OpCode == OpCodes.Stloc || instruction.OpCode == OpCodes.Stloc_S;
-            }
-
-            if (instruction.OpCode == OpCodes.Stloc_0)
-            {
-                return variable.Index == 0;
-            }
-            if (instruction.OpCode == OpCodes.Stloc_1)
-            {
-                return variable.Index == 1;
-            }
-            if (instruction.OpCode == OpCodes.Stloc_2)
-            {
-                return variable.Index == 2;
-            }
-            if (instruction.OpCode == OpCodes.Stloc_3)
-            {
-                return variable.Index == 3;
-            }
-
-            return false;
         }
 
         private void HealthComponent_TakeDamageProcess(On.RoR2.HealthComponent.orig_TakeDamageProcess orig, HealthComponent self, DamageInfo damageInfo)
