@@ -75,6 +75,13 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         //Check for incoming lethal damage and activate the special skill if the player has it available
         public void OnIncomingDamageServer(DamageInfo damageInfo)
         {
+            //applying damage.rejected to block fucking void fog damage
+            if (body.HasBuff(RoR2Content.Buffs.HiddenInvincibility))
+            {
+                damageInfo.rejected = true;
+                return;
+            }
+
             // dont activate if we are already defying death
             if (body.HasBuff(SeamstressVariantBuffs.defianceBuff))
             {
