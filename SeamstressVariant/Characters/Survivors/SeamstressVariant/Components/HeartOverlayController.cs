@@ -220,6 +220,14 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             ApplyOverlayStateToTrackedInstances();
         }
 
+        private void LateUpdate()
+        {
+            if (overlayThemeCaches.Count > 0)
+            {
+                ApplyThemeToOverlayInstances();
+            }
+        }
+
         private void UpdateSpecialSkillCooldownState()
         {
             bool onCooldown = specialSkill != null && specialSkill.stock <= 0;
