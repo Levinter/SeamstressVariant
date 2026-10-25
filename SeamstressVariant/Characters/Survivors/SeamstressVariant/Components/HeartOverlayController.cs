@@ -23,21 +23,26 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         }
 
         private BleedingHeartComponent heartComponent;
+        private GenericSkill specialSkill;
         private OverlayController overlayController;
         private readonly List<ImageFillController> fillUiList = new List<ImageFillController>();
         private readonly List<TextMeshProUGUI> textList = new List<TextMeshProUGUI>();
+        private readonly List<TextMeshProUGUI> bleedChanceTextList = new List<TextMeshProUGUI>();
         private readonly List<OverlayThemeCache> overlayThemeCaches = new List<OverlayThemeCache>();
 
         private static GameObject overlayPrefab;
         private static string overlayChildLocatorEntry;
+        private const string BleedChanceTextObjectName = "BleedChanceValue";
         private static bool overlayAssetsLoaded = false;
         private static readonly int overlayValueParamHash = Animator.StringToHash("corruption");
         private static readonly int overlayDrainStateParamHash = Animator.StringToHash("isCorrupted");
         private static readonly Color overlayWineColor = new Color32(196, 66, 82, 255);
         private static readonly Color overlayDrainColor = Color.red;
+        private static readonly Color overlayCooldownColor = new Color32(128, 128, 128, 255);
 
         [SyncVar(hook = nameof(OnHeartDrainActiveChanged))]
         private bool heartDrainActive;
+        private bool specialSkillOnCooldown;
 
         private void Awake()
         {
@@ -46,6 +51,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
         private void Start()
         {
+            SkillLocator skillLocator = GetComponent<SkillLocator>();
+            specialSkill = skillLocator?.special;
             EnsureOverlayAssetsLoaded();
             RegisterOverlay();
         }
@@ -99,8 +106,33 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             overlayClone.SetActive(false);
             Object.DontDestroyOnLoad(overlayClone);
 
+            AddBleedChanceDisplay(overlayClone);
             ApplyOverlayTheme(overlayClone);
             return overlayClone;
+        }
+
+        private static void AddBleedChanceDisplay(GameObject overlayRoot)
+        {
+            TextMeshProUGUI heartText = overlayRoot.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (heartText == null)
+            {
+                return;
+            }
+
+            heartText.fontSize *= 2.0f;
+            GameObject bleedChanceObject = Object.Instantiate(heartText.gameObject, heartText.transform.parent, false);
+            bleedChanceObject.name = BleedChanceTextObjectName;
+
+            TextMeshProUGUI bleedChanceText = bleedChanceObject.GetComponent<TextMeshProUGUI>();
+            bleedChanceText.fontSize = heartText.fontSize * 0.7f;
+            bleedChanceText.enableAutoSizing = false;
+            bleedChanceText.text = "1%";
+
+            RectTransform heartRect = heartText.rectTransform;
+            RectTransform bleedChanceRect = bleedChanceText.rectTransform;
+            bleedChanceRect.anchoredPosition = heartRect.anchoredPosition
+                + new Vector2(0f, -heartText.fontSize * 0.8f);
+            bleedChanceRect.SetAsLastSibling();
         }
 
         private static void ApplyOverlayTheme(GameObject overlayRoot)
@@ -151,6 +183,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 overlayController.onInstanceRemove -= OnOverlayInstanceRemoved;
                 fillUiList.Clear();
                 textList.Clear();
+                bleedChanceTextList.Clear();
                 overlayThemeCaches.Clear();
                 HudOverlayManager.RemoveOverlay(overlayController);
                 overlayController = null;
@@ -163,6 +196,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         {
             if (heartComponent == null) return;
 
+            UpdateSpecialSkillCooldownState();
             EnsureTrackedOverlayInstances();
 
             float max = heartComponent.GetMaxHeart();
@@ -177,8 +211,25 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             {
                 text.SetText(displayValue.ToString());
             }
+            int bleedChance = 1 + heartComponent.GetBleedChanceBonusFromHeart();
+            foreach (TextMeshProUGUI text in bleedChanceTextList)
+            {
+                text.SetText("{0}%", bleedChance);
+            }
 
             ApplyOverlayStateToTrackedInstances();
+        }
+
+        private void UpdateSpecialSkillCooldownState()
+        {
+            bool onCooldown = specialSkill != null && specialSkill.stock <= 0;
+            if (specialSkillOnCooldown == onCooldown)
+            {
+                return;
+            }
+
+            specialSkillOnCooldown = onCooldown;
+            ApplyThemeToOverlayInstances();
         }
 
         private void OnOverlayInstanceAdded(OverlayController controller, GameObject instance)
@@ -192,6 +243,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             if (text != null && !textList.Contains(text))
             {
                 textList.Add(text);
+            }
+            TextMeshProUGUI bleedChanceText = FindBleedChanceText(instance);
+            if (bleedChanceText != null && !bleedChanceTextList.Contains(bleedChanceText))
+            {
+                bleedChanceTextList.Add(bleedChanceText);
             }
 
             if (FindThemeCacheIndex(instance) == -1)
@@ -232,6 +288,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             {
                 textList.Remove(text);
             }
+            TextMeshProUGUI bleedChanceText = FindBleedChanceText(instance);
+            if (bleedChanceText != null)
+            {
+                bleedChanceTextList.Remove(bleedChanceText);
+            }
 
             int cacheIndex = FindThemeCacheIndex(instance);
             if (cacheIndex >= 0)
@@ -240,9 +301,22 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             }
         }
 
+        private static TextMeshProUGUI FindBleedChanceText(GameObject instance)
+        {
+            foreach (TextMeshProUGUI text in instance.GetComponentsInChildren<TextMeshProUGUI>(true))
+            {
+                if (text.gameObject.name == BleedChanceTextObjectName)
+                {
+                    return text;
+                }
+            }
+
+            return null;
+        }
+
         private void ApplyThemeToOverlayInstances()
         {
-            Color targetColor = heartDrainActive ? overlayDrainColor : overlayWineColor;
+            Color targetColor = GetOverlayThemeColor();
 
             for (int i = overlayThemeCaches.Count - 1; i >= 0; i--)
             {
@@ -305,8 +379,18 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 texts = instance.GetComponentsInChildren<TextMeshProUGUI>(true)
             };
 
-            Color targetColor = heartDrainActive ? overlayDrainColor : overlayWineColor;
+            Color targetColor = GetOverlayThemeColor();
             ApplyThemeToOverlayCache(tempCache, targetColor, targetColor);
+        }
+
+        private Color GetOverlayThemeColor()
+        {
+            if (heartDrainActive)
+            {
+                return overlayDrainColor;
+            }
+
+            return specialSkillOnCooldown ? overlayCooldownColor : overlayWineColor;
         }
 
         private static void ApplyThemeToOverlayCache(OverlayThemeCache cache, Color fillTargetColor, Color textTargetColor)

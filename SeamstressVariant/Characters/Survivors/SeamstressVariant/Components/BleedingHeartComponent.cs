@@ -33,9 +33,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private float scanTimer = 0f;
         private float healTimer = 0f;
         private const float ScanInterval = 1f;
-        private const float HealInterval = 0.20f;
-        private const float HealPerBleedStack = 1f;
-        private const int HeartPerBleedChancePercent = 50;
+        private const float HealInterval = 0.25f;
+        private const float HealPerBleedStack = SeamstressVariantStaticValues.heartHealPerBleedPerTick;
+        private const float HeartPerBleedChancePercent = SeamstressVariantStaticValues.bleedChancePerHeart;
         private bool startupMoveLockApplied;
         private bool cachedDisableAirControlUntilCollision;
         private bool cachedDisableAirControlUntilCollisionValid;

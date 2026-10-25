@@ -9,6 +9,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
         //the scissor damage is always a crit because of the superbleedoncrit damage type on the prefab, so the value is technically double
         public const float scissorExplosionDamageCoefficient = 2.0f;
-        public const float explodeRadius = 20f;
+        //public const float explodeRadius = 20f;
+
+        public const float heartHealPerBleedPerTick = 1f;
+
+        public const float bleedChancePerHeart = 40f;
+
     }
 }
