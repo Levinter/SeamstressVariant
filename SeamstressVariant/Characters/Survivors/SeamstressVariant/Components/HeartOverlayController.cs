@@ -119,7 +119,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 return;
             }
 
-            heartText.fontSize *= 2.0f;
+            heartText.fontSize *= 1.0f;
             GameObject bleedChanceObject = Object.Instantiate(heartText.gameObject, heartText.transform.parent, false);
             bleedChanceObject.name = BleedChanceTextObjectName;
 
