@@ -92,8 +92,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         private void ApplyScissorMechanics()
         {
             // Determine if this swing should use a scissor
-            bool isLeftSwing = swingIndex % 2 == 0;
+            bool isLeftSwing = swingIndex % 2 != 0;
+            //Log.Warning("Left Swing: " + isLeftSwing);
             isScissorActive = (isLeftSwing && hasLeftScissor) || (!isLeftSwing && hasRightScissor);
+            //Log.Warning ("Active scissor: " + isScissorActive + " (swingIndex: " + swingIndex + ", hasLeft: " + hasLeftScissor + ", hasRight: " + hasRightScissor + ")");
 
             if (isScissorActive)
             {
