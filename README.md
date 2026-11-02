@@ -3,6 +3,10 @@
 
 A variant of the Seamstress survivor by Tsuyoikenko, giving her a full rework. Thanks to DTEE by allowing me to use his Seamstress Icon
 
+# Feedback
+
+I would appreciate your feedback, you can hit me up on the Risk of Rain 2 Modding discord server @Levinter
+
 # Overview
 
 Seamstress Variant is a rework from the original Seamstress made by Tsuyoikenko, with a focus on using her health as a resource to scale Damage over Time and complete invunerability through her special skill, making her an hyper scaler that can face any danger and come out on top, with the correct items.
@@ -53,15 +57,14 @@ Seamstress Variant is a rework from the original Seamstress made by Tsuyoikenko,
 
 tsuyoikenko - For the original mod that inspired me to create this one, and allowing me to use his assets, plus all the help he gave me. All credit for the original Seamstress goes to him.
 
+.score - For helping me fix networking a lot
+
+Chinchi and RandomlyAwesome - For the IL Healing Hook
+
 DTEE - For creating the nice portrait icon and allowing me to use it for this mod.
 
 And everyone on the Risk of Ran 2 modcord, for their help, tools and documentation on the process on how to create a mod.
 
-# Know Issues
-
-Some animations dont play properly when playing as a client. It is expected there is going to be more bugs while playing as a client.
-
-Due to the nature of Seamstress passive the Legendary Item Aegis is efectively useless.
 
 # Disclaimers
 
