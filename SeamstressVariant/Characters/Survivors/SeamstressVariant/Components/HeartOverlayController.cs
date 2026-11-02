@@ -11,6 +11,7 @@ using UnityEngine.UI;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 {
+    // I used a lot of AI for this component, so take that in mind
     internal class HeartOverlayController : NetworkBehaviour
     {
         private sealed class OverlayThemeCache

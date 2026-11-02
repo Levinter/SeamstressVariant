@@ -25,6 +25,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         private bool fired;
         private bool exitingDueToHeartExhaustion;
 
+        private EffectManagerHelper bleedEffect;
+
         private bool CanExitState()
         {
             return isAuthority;
@@ -52,6 +54,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             ApplyTransformEnterEffect();
 
             Log.Warning("Entered Defiant Heart state.");
+
+            characterBody.AddBuff(RoR2Content.Buffs.SuperBleed);
+
+            bleedEffect = EffectManager.GetAndActivatePooledEffect(LegacyResourcesAPI.Load<GameObject>("Prefabs/BleedEffect"), characterBody.coreTransform ?? transform, inResetLocal: true);
         }
 
         public override void FixedUpdate()
@@ -138,15 +144,25 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 {
                     heart.ConsumeHeart(currentDrainPerTick);
 
-                    DotController.InflictDot(
-                        characterBody.gameObject,
-                        characterBody.gameObject,
-                        characterBody.mainHurtBox,
-                        DotController.DotIndex.Bleed,
-                        1f, currentDrainPerTick, 1);
+                    DamageInfo damageInfo = new DamageInfo
+                    {
+                        damage = currentDrainPerTick,
+                        damageColorIndex = DamageColorIndex.Bleed,
+                        damageType = DamageType.BypassArmor | DamageType.BypassBlock | DamageType.DoT,
+                        attacker = null,
+                        inflictor = null,
+                        position = characterBody.corePosition,
+                        force = Vector3.zero,
+                        crit = false,
+                        procCoefficient = 0f
+                    };
+                    
+                    characterBody.healthComponent.TakeDamage(damageInfo);
                 }
 
                 currentDrainPerTick += 1f;
+
+                Log.Warning ("Currently bleeding out for " + currentDrainPerTick);
 
                 if (!heart.CanSustainDefiantHeart())
                 {
@@ -224,7 +240,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 DotController.RemoveAllDots(gameObject);
 
                 if (characterBody.HasBuff(SeamstressVariantBuffs.defianceBuff))
+                {
                     characterBody.RemoveBuff(SeamstressVariantBuffs.defianceBuff);
+                    characterBody.RemoveBuff(RoR2Content.Buffs.SuperBleed);
+                }
+
+                bleedEffect?.ReturnToPool();
 
                 if (exitingDueToHeartExhaustion)
                 {

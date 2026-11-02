@@ -62,7 +62,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
         public override UnlockableDef characterUnlockableDef => SeamstressVariantUnlockables.characterUnlockableDef;
         
-        public override ItemDisplaysBase itemDisplays => new SeamstressVariantItemDisplays();
+        //public override ItemDisplaysBase itemDisplays => new SeamstressVariantItemDisplays();
 
         //set in base classes
         public override AssetBundle assetBundle { get; protected set; }
@@ -452,7 +452,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 attackerObject = attackerBody.gameObject,
                 hitHurtBox = damageInfo.inflictedHurtbox,
                 dotIndex = DotController.DotIndex.SuperBleed,
-                duration = 15f * damageInfo.procCoefficient,
+                duration = 15f,
                 damageMultiplier = 1f
             };
 

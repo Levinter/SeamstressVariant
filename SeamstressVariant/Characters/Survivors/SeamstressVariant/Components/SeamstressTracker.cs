@@ -11,6 +11,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
     ///
     /// FireScissors reads GetTrackingTarget() on cast instead of running its own BullseyeSearch,
     /// so the locked-on enemy is already visible to the player before they press the skill.
+    /// I used a lot of AI for this component, so take that in mind
     /// </summary>
     public class SeamstressTracker : MonoBehaviour
     {

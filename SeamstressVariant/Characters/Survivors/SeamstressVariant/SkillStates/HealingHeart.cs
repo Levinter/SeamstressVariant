@@ -34,7 +34,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
                 if (NetworkServer.active && characterBody.HasBuff(SeamstressVariantBuffs.defianceBuff) == false)
                 {
-                    characterBody.AddTimedBuff(RoR2Content.Buffs.HiddenInvincibility, 1.0f); //pls dont die
                     characterBody.AddBuff(SeamstressVariantBuffs.defianceBuff);
                 }
             }

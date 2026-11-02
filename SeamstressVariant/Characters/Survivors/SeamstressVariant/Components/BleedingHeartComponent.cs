@@ -294,6 +294,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
             foreach (CharacterBody otherBody in CharacterBody.readOnlyInstancesList)
             {
+                // Skip yourself
+                if (otherBody == body)
+                {
+                    continue;
+                }
+
                 Vector3 delta = otherBody.footPosition - center;
                 if (delta.sqrMagnitude <= radiusSqr)
                 {

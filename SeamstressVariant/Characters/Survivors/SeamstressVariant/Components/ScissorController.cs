@@ -13,6 +13,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
     /// consumption through a Command so server state remains authoritative.
     /// When stock changes on an authority client, it requests server reconciliation so
     /// multiplayer clients can still restore scissors after recharge.
+    /// I used a lot of AI for this component, so take that in mind
     /// </summary>
     public class ScissorController : NetworkBehaviour
     {

@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 {
+    // I used a lot of AI for this component, so take that in mind
     public class SeamstressTrackingSkillDef : SkillDef
     {
         protected class InstanceData : BaseSkillInstanceData
