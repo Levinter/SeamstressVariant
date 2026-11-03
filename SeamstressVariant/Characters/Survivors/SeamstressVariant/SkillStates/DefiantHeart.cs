@@ -11,6 +11,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 {
     public class DefiantHeart : BaseSkillState
     {
+        private const float HeartDrainSegmentPercent = SeamstressVariantStaticValues.bleedDrainSegments;
+
         public static float heartDrainPerTick = 1f;
         public static float heartDrainInterval = 0.25f;
         public static float startupFreezeDuration = 1.0f;
@@ -21,6 +23,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         private float nextDrainAt;
         private float startupFreezeEndTime;
         private float currentDrainPerTick;
+        private int completedDrainSegments;
+        private int drainTicksAtCurrentRate;
+        private int drainTicksPerIncrease;
         private bool startupFreezeActive;
         private bool fired;
         private bool exitingDueToHeartExhaustion;
@@ -40,6 +45,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             heartOverlayController = GetComponent<HeartOverlayController>();
             nextDrainAt = heartDrainInterval;
             currentDrainPerTick = heartDrainPerTick;
+            completedDrainSegments = 0;
+            drainTicksAtCurrentRate = 0;
+            drainTicksPerIncrease = Mathf.Max(1, Mathf.RoundToInt(1f / heartDrainInterval));
             startupFreezeEndTime = startupFreezeDuration;
             startupFreezeActive = startupFreezeDuration > 0f;
 
@@ -53,7 +61,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             ApplyTransformEnterEffect();
 
-            Log.Warning("Entered Defiant Heart state.");
+            //Log.Warning("Entered Defiant Heart state.");
 
             characterBody.AddBuff(RoR2Content.Buffs.SuperBleed);
 
@@ -139,14 +147,17 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             if (fixedAge >= nextDrainAt)
             {
                 nextDrainAt += heartDrainInterval;
+                float maxDrainPerSegment = heart.GetMaxHeart() * HeartDrainSegmentPercent;
+                int drainAmount = Mathf.FloorToInt(completedDrainSegments * maxDrainPerSegment
+                    + Mathf.Min(currentDrainPerTick, maxDrainPerSegment));
 
                 if (NetworkServer.active)
                 {
-                    heart.ConsumeHeart(currentDrainPerTick);
+                    heart.ConsumeHeart(drainAmount);
 
                     DamageInfo damageInfo = new DamageInfo
                     {
-                        damage = currentDrainPerTick,
+                        damage = drainAmount,
                         damageColorIndex = DamageColorIndex.Bleed,
                         damageType = DamageType.BypassArmor | DamageType.BypassBlock | DamageType.DoT,
                         attacker = null,
@@ -160,9 +171,23 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     characterBody.healthComponent.TakeDamage(damageInfo);
                 }
 
-                currentDrainPerTick += 1f;
+                drainTicksAtCurrentRate++;
+                if (drainTicksAtCurrentRate >= drainTicksPerIncrease)
+                {
+                    if (currentDrainPerTick >= maxDrainPerSegment)
+                    {
+                        completedDrainSegments++;
+                        currentDrainPerTick = Mathf.Min(1f, maxDrainPerSegment);
+                    }
+                    else
+                    {
+                        currentDrainPerTick = Mathf.Min(currentDrainPerTick * 2f, maxDrainPerSegment);
+                    }
 
-                Log.Warning ("Currently bleeding out for " + currentDrainPerTick);
+                    drainTicksAtCurrentRate = 0;
+                }
+
+                //Log.Warning ("Currently bleeding out for " + drainAmount);
 
                 if (!heart.CanSustainDefiantHeart())
                 {
@@ -235,7 +260,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             if (NetworkServer.active)
             {
-                characterBody.AddTimedBuff(RoR2Content.Buffs.HiddenInvincibility, 1.0f); //pls dont die
+                characterBody.AddTimedBuff(SeamstressVariantBuffs.rejectBuff, 1.0f); //pls dont die
 
                 DotController.RemoveAllDots(gameObject);
 

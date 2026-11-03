@@ -468,7 +468,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             if (!(c.TryGotoPrev(x => x.MatchAdd(), x => x.MatchCallOrCallvirt(typeof(HealthComponent).GetProperty("Networkhealth").GetSetMethod())) && c.TryGotoPrev(x => x.MatchBgeUn(out _))))
             {
-                Log.Fatal("HealthComponent_Heal hook failed\r\n" + il.ToString());
+                //Log.Fatal("HealthComponent_Heal hook failed\r\n" + il.ToString());
                 return;
             }
             c.Emit(OpCodes.Ldarg_0);
@@ -496,16 +496,25 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             if (self != null
                 && self.body != null
                 && self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName)
+                && self.body.HasBuff(SeamstressVariantBuffs.rejectBuff)
+                && damageInfo != null
+                && damageInfo.damage > 0f && (damageInfo.damageType & DamageType.NonLethal) == 0)
+            {
+                damageInfo.rejected = true;
+            }
+
+            if (self != null
+                && self.body != null
+                && self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName)
                 && self.body.HasBuff(SeamstressVariantBuffs.defianceBuff)
                 && damageInfo != null
-                && damageInfo.damage > 0f)
+                && damageInfo.damage > 0f && (damageInfo.damageType & DamageType.NonLethal) == 0)
             {
-                Log.Warning("TakeDamageHook: Death prevented by Defiance.");
+                //Log.Warning("TakeDamageHook: Death prevented by Defiance.");
                 damageInfo.damageType |= DamageType.NonLethal;
             }
 
             orig(self, damageInfo);
         }
-
     }
 }

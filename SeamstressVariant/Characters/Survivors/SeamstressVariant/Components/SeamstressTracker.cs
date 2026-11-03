@@ -48,7 +48,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 if (_trackingPrefab == null)
                 {
                     _trackingPrefab = LegacyResourcesAPI.Load<GameObject>("Prefabs/HuntressTrackingIndicator");
-                    Log.Warning("SeamstressTracker: SeamstressAssets.telekinesisTracker was null, falling back to HuntressTrackingIndicator.");
+                    //Log.Warning("SeamstressTracker: SeamstressAssets.telekinesisTracker was null, falling back to HuntressTrackingIndicator.");
                 }
             }
 

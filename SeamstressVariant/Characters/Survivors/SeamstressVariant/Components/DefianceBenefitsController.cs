@@ -14,7 +14,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private SetStateOnHurt setStateOnHurt;
         // Kek
 
-        private static readonly CharacterBody.BodyFlags DefianceBodyFlags = CharacterBody.BodyFlags.Unmovable | CharacterBody.BodyFlags.IgnoreKnockup;
+        private static readonly CharacterBody.BodyFlags DefianceBodyFlags = CharacterBody.BodyFlags.Unmovable | CharacterBody.BodyFlags.IgnoreKnockup | CharacterBody.BodyFlags.ImmuneToExecutes;
         private int previousBuffCount = 0;
         private CharacterBody.BodyFlags appliedBodyFlags;
         private bool stateImmunitiesApplied;
@@ -38,7 +38,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
             if (characterBody == null)
             {
-                Log.Error("DefianceBenefitsController: CharacterBody not found on this GameObject");
+                //Log.Error("DefianceBenefitsController: CharacterBody not found on this GameObject");
                 enabled = false;
                 return;
             }
@@ -47,7 +47,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             previousBuffCount = characterBody.GetBuffCount(SeamstressVariantBuffs.defianceBuff);
             if (previousBuffCount > 0)
             {
-                Log.Debug("DefianceBenefitsController: Detected existing Defiance buff on Awake, applying benefits");
+                //Log.Debug("DefianceBenefitsController: Detected existing Defiance buff on Awake, applying benefits");
                 ApplyDefianceBenefits();
             }
         }

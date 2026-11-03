@@ -15,5 +15,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
         public const float bleedChancePerHeart = 40f;
 
+        public const float bleedDrainSegments = 0.10f;
+
     }
 }

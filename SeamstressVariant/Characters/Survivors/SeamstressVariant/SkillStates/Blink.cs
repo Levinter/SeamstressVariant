@@ -72,7 +72,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                         {
                             damage = totalCost,
                             damageColorIndex = DamageColorIndex.SuperBleed,
-                            damageType = DamageType.NonLethal | DamageType.BypassArmor,
+                            damageType = DamageType.NonLethal | DamageType.BypassArmor | DamageType.BypassBlock,
                             position = characterBody.corePosition,
                             procCoefficient = 0f
                         });
@@ -86,7 +86,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                         {
                             damage = totalCost,
                             damageColorIndex = DamageColorIndex.SuperBleed,
-                            damageType = DamageType.NonLethal | DamageType.BypassArmor,
+                            damageType = DamageType.NonLethal | DamageType.BypassArmor | DamageType.BypassBlock,
                             position = characterBody.corePosition,
                             procCoefficient = 0f
                         });
