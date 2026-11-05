@@ -460,7 +460,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 attackerObject = attackerBody.gameObject,
                 hitHurtBox = damageInfo.inflictedHurtbox,
                 dotIndex = DotController.DotIndex.SuperBleed,
-                duration = 15f,
+                duration = 15f * damageInfo.procCoefficient,
                 damageMultiplier = 1f
             };
 
