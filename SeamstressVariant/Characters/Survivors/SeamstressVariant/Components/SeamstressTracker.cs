@@ -58,11 +58,15 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private void OnEnable()
         {
             _indicator.active = true;
+            _indicator.targetTransform = null;
         }
 
         private void OnDisable()
         {
             _indicator.active = false;
+            _indicator.targetTransform = null;
+            _trackingTarget = null;
+            _trackerUpdateStopwatch = 0f;
         }
 
         private void FixedUpdate()

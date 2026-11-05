@@ -11,6 +11,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
     public class ClawCombo : BaseMeleeAttack
     {
         private GameObject _swingEffectInstance;
+        private GenericSkill _primarySkill;
+        private bool _primarySkillReplaced;
         private bool hasLeftScissor = false;
         private bool hasRightScissor = false;
         private bool isScissorActive = false;
@@ -22,6 +24,13 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         public override void OnEnter()
         {
+            _primarySkill = characterBody != null ? characterBody.skillLocator?.primary : null;
+            if (_primarySkill != null)
+            {
+                _primarySkill.onSkillChanged += OnPrimarySkillChanged;
+                _primarySkillReplaced = !(_primarySkill.skillDef is SeamstressClawSkillDef);
+            }
+
             // Read scissor state from the dedicated passive controller.
             var scissors = characterBody != null ? characterBody.GetComponent<ScissorController>() : null;
             if (scissors != null)
@@ -126,6 +135,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         public override void FixedUpdate()
         {
+            if (_primarySkillReplaced)
+                return;
+
             base.FixedUpdate();
 
             if (!isScissorActive) return;
@@ -205,11 +217,24 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         public override void OnExit()
         {
+            if (_primarySkill != null)
+                _primarySkill.onSkillChanged -= OnPrimarySkillChanged;
+
             if (_swingEffectInstance != null)
                 EntityState.Destroy(_swingEffectInstance);
             if (_scissorSwingEffectInstance != null)
                 EntityState.Destroy(_scissorSwingEffectInstance);
             base.OnExit();
+        }
+
+        private void OnPrimarySkillChanged(GenericSkill skill)
+        {
+            if (skill.skillDef is SeamstressClawSkillDef)
+                return;
+
+            _primarySkillReplaced = true;
+            if (isAuthority)
+                outer.SetNextStateToMain();
         }
     }
 }

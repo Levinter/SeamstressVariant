@@ -29,6 +29,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         private bool startupFreezeActive;
         private bool fired;
         private bool exitingDueToHeartExhaustion;
+        private GenericSkill specialSkill;
 
         private EffectManagerHelper bleedEffect;
 
@@ -50,6 +51,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             drainTicksPerIncrease = Mathf.Max(1, Mathf.RoundToInt(1f / heartDrainInterval));
             startupFreezeEndTime = startupFreezeDuration;
             startupFreezeActive = startupFreezeDuration > 0f;
+            specialSkill = skillLocator.special;
 
             if (isAuthority)
             {
@@ -158,7 +160,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     DamageInfo damageInfo = new DamageInfo
                     {
                         damage = drainAmount,
-                        damageColorIndex = DamageColorIndex.Bleed,
+                        damageColorIndex = DamageColorIndex.SuperBleed,
                         damageType = DamageType.BypassArmor | DamageType.BypassBlock | DamageType.DoT,
                         attacker = null,
                         inflictor = null,
@@ -212,7 +214,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 return;
             }
 
-            float envelopeScale = 3.5f;
+            float envelopeScale = 4f;
             Vector3 origin = characterBody.corePosition + Vector3.up * (characterBody.radius * 0.75f);
 
             EffectManager.SpawnEffect(SeamstressVariantAssets.defiantTransformEnterEffect, new EffectData
@@ -230,8 +232,13 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             {
                 healingHeart.normalExit = false;
                 if (NetworkServer.active)
-                    TransferHeartServer();
-                    healingHeart.skillLocator.special.DeductStock(1);
+                    if (specialSkill.skillDef == HealingHeart.specialSkillDef)
+                    {
+                        TransferHeartServer();
+                    }
+                    
+                    //healingHeart.skillLocator.special.DeductStock(1);
+                    specialSkill.DeductStock(1);
             }
         }
 
@@ -270,7 +277,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     characterBody.RemoveBuff(RoR2Content.Buffs.SuperBleed);
                 }
 
-                bleedEffect?.ReturnToPool();
+                
 
                 if (exitingDueToHeartExhaustion)
                 {
@@ -280,6 +287,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             if (isAuthority)
                 heart?.RequestSetDefianceVisualsActive(false);
+                bleedEffect?.ReturnToPool();
 
             base.OnExit();
         }

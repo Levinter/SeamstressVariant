@@ -29,6 +29,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         [SyncVar(hook = nameof(OnDefiantStartupFreezeActiveChanged))]
         private bool defiantStartupFreezeActive;
         private int activeBleedStacks = 0;
+        private float pendingAegisOverflow;
         private const float NearbyEnemyRadius = 30f;
         private float scanTimer = 0f;
         private float healTimer = 0f;
@@ -116,20 +117,38 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         }
 
         // Add Health to heart from healing
-        public void AddToHeart(float amount)
+        public float AddToHeart(float amount)
         {
-            if (amount > 0f)
+            pendingAegisOverflow = 0f;
+            if (amount <= 0f || !isInitialized || healthComponent == null || !healthComponent.alive)
             {
-                if (isInitialized && healthComponent != null && healthComponent.alive)
-                {
-                    currentHeart = Mathf.Min(currentHeart + amount, MaxHeart);
-                    //Log.Debug("AMOUNT IN HEART = " + currentHeart);
-                    if (currentHeart < MaxHeart)
-                    {
-                        body.MarkAllStatsDirty();
-                    }
-                }
+                return 0f;
             }
+
+            float overflow = Mathf.Max(currentHeart + amount - MaxHeart, 0f);
+            currentHeart = Mathf.Min(currentHeart + amount, MaxHeart);
+            //Log.Debug("AMOUNT IN HEART = " + currentHeart);
+            if (currentHeart < MaxHeart)
+            {
+                body.MarkAllStatsDirty();
+            }
+
+            Log.Debug("Added " + amount + " to Heart. Current Heart = " + currentHeart + ", Overflow = " + overflow);
+
+            return overflow;
+        }
+        public void SetPendingAegisOverflow(float amount)
+        {
+            Log.Debug("Setting pendingAegisOverflow to " + amount);
+            pendingAegisOverflow = Mathf.Max(amount, 0f);
+        }
+
+        public float ConsumePendingAegisOverflow()
+        {
+            float overflow = pendingAegisOverflow;
+            pendingAegisOverflow = 0f;
+            Log.Debug("Consumed pendingAegisOverflow: " + overflow);
+            return overflow;
         }
 
         // return the current amount of health on heart

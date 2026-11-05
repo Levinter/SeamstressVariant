@@ -97,6 +97,14 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             AddHooks();
         }
 
+        private static BodyIndex bodyIndexVar;
+
+        [SystemInitializer (new Type [] { typeof(BodyCatalog) })]
+        private static void GetBodyIndex()
+        {
+            bodyIndexVar = BodyCatalog.FindBodyIndex("SeamstressVariantBody");
+        }
+
         private void AdditionalBodySetup()
         {
             AddHitboxes();
@@ -188,7 +196,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             //the primary skill is created using a constructor for a typical primary
             //it is also a SteppedSkillDef. Custom Skilldefs are very useful for custom behaviors related to casting a skill. see ror2's different skilldefs for reference
-            SteppedSkillDef primarySkillDef1 = Skills.CreateSkillDef<SteppedSkillDef>(new SkillDefInfo
+            SeamstressClawSkillDef primarySkillDef1 = Skills.CreateSkillDef<SeamstressClawSkillDef>(new SkillDefInfo
                 (
                     "HenrySlash",
                     SEAMSTRESS_VARIANT_PREFIX + "PRIMARY_SLASH_NAME",
@@ -356,7 +364,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
         private void RecalculateStatsAPI_GetStatCoefficients(CharacterBody sender, RecalculateStatsAPI.StatHookEventArgs args)
         {
-            if (sender == null || sender.bodyIndex != BodyCatalog.FindBodyIndex(bodyName))
+            if (sender == null || sender.bodyIndex != bodyIndexVar)
             {
                 return;
             }
@@ -379,7 +387,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         private HealthComponent.HealthBarValues HealthComponent_GetHealthBarValues(On.RoR2.HealthComponent.orig_GetHealthBarValues orig, HealthComponent self)
         {
             HealthComponent.HealthBarValues values = orig(self);
-            if (self.body != null && self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName))
+            if (self.body != null && self.body.bodyIndex == bodyIndexVar)
             {
                 values.hasInfusion = true;
             }
@@ -397,7 +405,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 return;
             }
 
-            if (attackerBody.bodyIndex != BodyCatalog.FindBodyIndex(bodyName))
+            if (attackerBody.bodyIndex != bodyIndexVar)
             {
                 return;
             }
@@ -466,9 +474,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 Index = -1
             };
 
-            if (!(c.TryGotoPrev(x => x.MatchAdd(), x => x.MatchCallOrCallvirt(typeof(HealthComponent).GetProperty("Networkhealth").GetSetMethod())) && c.TryGotoPrev(x => x.MatchBgeUn(out _))))
+            ILLabel label = null;
+
+            if (!(c.TryGotoPrev(x => x.MatchAdd(), x => x.MatchCallOrCallvirt(typeof(HealthComponent).GetProperty("Networkhealth").GetSetMethod())) && c.TryGotoPrev(x => x.MatchBgeUn(out label))))
             {
-                //Log.Fatal("HealthComponent_Heal hook failed\r\n" + il.ToString());
+                Log.Fatal("HealthComponent_Heal hook failed\r\n" + il.ToString());
                 return;
             }
             c.Emit(OpCodes.Ldarg_0);
@@ -476,26 +486,45 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             c.Emit(OpCodes.Ldarg_2);
             c.EmitDelegate<Func<float, HealthComponent, float, ProcChainMask, float>>((flag, self, actualamount, procChainMask) =>
             {
-                if (self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName) && self.alive)
+                if (self.body.bodyIndex == bodyIndexVar && self.alive)
                 {
-                    if (procChainMask.HasModdedProc(bypassHeartConversion) == false)
+                    if (self.TryGetComponent<BleedingHeartComponent>(out var heart))
                     {
-                        if (self.TryGetComponent<BleedingHeartComponent>(out var heart))
+                        heart.SetPendingAegisOverflow(0f);
+                        if (!procChainMask.HasModdedProc(bypassHeartConversion))
                         {
-                            heart.AddToHeart(actualamount);
+                            Log.Debug("HealthComponent_Heal: Converting " + actualamount + " healing into Heart.");
+                            heart.SetPendingAegisOverflow(heart.AddToHeart(actualamount));
                             flag = 0f;
                         }
                     }
                 }
                 return flag;
             });
+            c.GotoLabel(label);
+            c.Emit(OpCodes.Ldarg_0);
+            c.Emit(OpCodes.Ldloc_3);
+            c.EmitDelegate<Func<HealthComponent, float, float>>((self, overheal) =>
+            {
+                if (self.body != null
+                    && self.body.bodyIndex == bodyIndexVar
+                    && self.TryGetComponent<BleedingHeartComponent>(out var heart))
+                {
+                    return heart.ConsumePendingAegisOverflow();
+                }
+
+                return overheal;
+            });
+            c.Emit(OpCodes.Stloc_3);
         }
+
+        
 
         private void HealthComponent_TakeDamageProcess(On.RoR2.HealthComponent.orig_TakeDamageProcess orig, HealthComponent self, DamageInfo damageInfo)
         {
             if (self != null
                 && self.body != null
-                && self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName)
+                && self.body.bodyIndex == bodyIndexVar
                 && self.body.HasBuff(SeamstressVariantBuffs.rejectBuff)
                 && damageInfo != null
                 && damageInfo.damage > 0f && (damageInfo.damageType & DamageType.NonLethal) == 0)
@@ -505,7 +534,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
             if (self != null
                 && self.body != null
-                && self.body.bodyIndex == BodyCatalog.FindBodyIndex(bodyName)
+                && self.body.bodyIndex == bodyIndexVar
                 && self.body.HasBuff(SeamstressVariantBuffs.defianceBuff)
                 && damageInfo != null
                 && damageInfo.damage > 0f && (damageInfo.damageType & DamageType.NonLethal) == 0)

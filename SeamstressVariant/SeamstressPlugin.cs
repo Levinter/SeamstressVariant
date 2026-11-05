@@ -8,6 +8,7 @@ using System.Security.Permissions;
 
 [module: UnverifiableCode]
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
+[assembly: HG.Reflection.SearchableAttribute.OptIn]
 
 namespace SeamstressVariant
 {
@@ -17,7 +18,7 @@ namespace SeamstressVariant
     [BepInDependency(R2API.LanguageAPI.PluginGUID)]
     [BepInDependency(R2API.RecalculateStatsAPI.PluginGUID)]
     [BepInDependency(R2API.ProcTypeAPI.PluginGUID)]
-    [BepInDependency(Survariants.Survariants.PluginGUID)]
+    [BepInDependency(Survariants.Survariants.PluginGUID, BepInDependency.DependencyFlags.HardDependency)]
     [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.EveryoneNeedSameModVersion)]
     [BepInPlugin(MODUID, MODNAME, MODVERSION)]
     public class SeamstressVariantPlugin : BaseUnityPlugin

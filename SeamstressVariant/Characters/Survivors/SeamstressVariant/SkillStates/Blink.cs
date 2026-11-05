@@ -2,6 +2,7 @@ using EntityStates;
 using KinematicCharacterController;
 using RoR2;
 using SeamstressMod.Seamstress.Content;
+using SeamstressVariant.Survivors.SeamstressVariant;
 using SeamstressVariant.Survivors.SeamstressVariant.Components;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -12,6 +13,10 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
     {
         private const float BlinkDistance = 10f;
         private const float ExitMomentumFraction = 0.15f;
+
+        private GenericSkill _utilitySkill;
+        private bool _utilitySkillReplaced;
+        private bool _blinkInitialized;
 
         protected Transform modelTransform;
 
@@ -33,6 +38,19 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         {
             base.OnEnter();
 
+            _utilitySkill = characterBody != null ? characterBody.skillLocator?.utility : null;
+            if (_utilitySkill != null)
+                _utilitySkill.onSkillChanged += OnUtilitySkillChanged;
+            _utilitySkillReplaced = !IsBlinkSkillActive();
+
+            if (_utilitySkillReplaced)
+            {
+                if (isAuthority)
+                    outer.SetNextStateToMain();
+                return;
+            }
+
+            _blinkInitialized = true;
             hasAimRequest = false;
 
             duration = 0.1f;
@@ -211,6 +229,14 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         public override void FixedUpdate()
         {
+            if (_utilitySkillReplaced || !IsBlinkSkillActive())
+            {
+                _utilitySkillReplaced = true;
+                if (isAuthority)
+                    outer.SetNextStateToMain();
+                return;
+            }
+
             base.FixedUpdate();
 
             if (isAuthority && characterMotor && characterDirection)
@@ -227,6 +253,15 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         public override void OnExit()
         {
+            if (_utilitySkill != null)
+                _utilitySkill.onSkillChanged -= OnUtilitySkillChanged;
+
+            if (!_blinkInitialized)
+            {
+                base.OnExit();
+                return;
+            }
+
             gameObject.layer = LayerIndex.defaultLayer.intVal;
             if (characterMotor)
             {
@@ -273,6 +308,21 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             
 
             base.OnExit();
+        }
+
+        private bool IsBlinkSkillActive()
+        {
+            return _utilitySkill != null && _utilitySkill.skillDef is BlinkSkillDef;
+        }
+
+        private void OnUtilitySkillChanged(GenericSkill skill)
+        {
+            if (IsBlinkSkillActive())
+                return;
+
+            _utilitySkillReplaced = true;
+            if (isAuthority)
+                outer.SetNextStateToMain();
         }
 
         public override InterruptPriority GetMinimumInterruptPriority()

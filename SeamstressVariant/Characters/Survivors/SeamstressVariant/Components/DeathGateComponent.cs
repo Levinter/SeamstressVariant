@@ -42,7 +42,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 return;
             }
 
-            bool isAvailable = specialSkill.stock > 0 && specialSkill.skillDef == HealingHeart.specialSkillDef;
+            bool isAvailable = specialSkill.stock > 0;
             if (isAvailable != specialSkillAvailableServer)
             {
                 CmdSpecialSkillAvailable(isAvailable);
@@ -103,12 +103,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             }
 
             //Log.Fatal($"DeathGateComponent: Incoming lethal damage detected.");
-
-            // dont activate if we have a different special skill
-            if (specialSkill.skillDef != HealingHeart.specialSkillDef)
-            {
-                return;
-            }
 
             //Log.Warning("DeathGateComponent: Special skill available for activation: " + specialSkillAvailableServer);
 

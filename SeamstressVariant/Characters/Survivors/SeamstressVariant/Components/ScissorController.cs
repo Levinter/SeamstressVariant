@@ -32,29 +32,38 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private bool hasRightScissor;
 
         //Used in claw attacks to determine whether to apply scissor damage bonuses.
-        public bool HasLeftScissor => hasLeftScissor;
-        public bool HasRightScissor => hasRightScissor;
+        public bool HasLeftScissor => _secondarySkillActive && hasLeftScissor;
+        public bool HasRightScissor => _secondarySkillActive && hasRightScissor;
 
         // Server-side stock snapshot used for lightweight reconciliation.
         private int _lastVisualStock = -1;
+        private GenericSkill secondarySkill;
+        private SeamstressTracker tracker;
+        private bool _secondarySkillActive;
+        private bool _hasEvaluatedSecondarySkill;
 
         private void Awake()
         {
             characterBody = GetComponent<CharacterBody>();
+            tracker = GetComponent<SeamstressTracker>();
         }
 
         private void Start()
         {
             TryCacheScissorModels();
 
-            if (NetworkServer.active)
-            {
-                SetLeftScissor(true);
-                SetRightScissor(true);
-                //Log.Info("ScissorController: initialized both scissors on server.");
-            }
+            secondarySkill = characterBody != null ? characterBody.skillLocator?.secondary : null;
+            if (secondarySkill != null)
+                secondarySkill.onSkillChanged += OnSecondarySkillChanged;
 
+            RefreshSecondarySkillState();
             ApplyVisualState();
+        }
+
+        private void OnDestroy()
+        {
+            if (secondarySkill != null)
+                secondarySkill.onSkillChanged -= OnSecondarySkillChanged;
         }
 
         private void FixedUpdate()
@@ -64,11 +73,15 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 return;
             }
 
-            var secondary = characterBody.skillLocator?.secondary;
+            GenericSkill secondary = characterBody.skillLocator?.secondary;
             if (secondary == null)
             {
                 return;
             }
+
+            RefreshSecondarySkillState();
+            if (!_secondarySkillActive)
+                return;
 
             // Only the base 2 stocks map to scissor visuals.
             int visualStock = Mathf.Clamp(secondary.stock, 0, 2);
@@ -90,8 +103,51 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             _lastVisualStock = visualStock;
         }
 
+        private void OnSecondarySkillChanged(GenericSkill skill)
+        {
+            RefreshSecondarySkillState();
+        }
+
+        private bool IsScissorSkillActive()
+        {
+            GenericSkill secondary = characterBody != null ? characterBody.skillLocator?.secondary : null;
+            return secondary != null && secondary.skillDef is SeamstressTrackingSkillDef;
+        }
+
+        private void RefreshSecondarySkillState()
+        {
+            bool isActive = IsScissorSkillActive();
+            if (_hasEvaluatedSecondarySkill && _secondarySkillActive == isActive)
+                return;
+
+            _hasEvaluatedSecondarySkill = true;
+            _secondarySkillActive = isActive;
+            _lastVisualStock = -1;
+
+            if (tracker != null && tracker.enabled != isActive)
+                tracker.enabled = isActive;
+
+            if (isActive)
+            {
+                GenericSkill secondary = characterBody.skillLocator.secondary;
+                int visualStock = Mathf.Clamp(secondary.stock, 0, 2);
+                if (NetworkServer.active)
+                    ReconcileScissorsFromStock(visualStock);
+            }
+            else if (NetworkServer.active)
+            {
+                SetLeftScissor(false);
+                SetRightScissor(false);
+            }
+
+            ApplyVisualState();
+        }
+
         private void ReconcileScissorsFromStock(int visualStock)
         {
+            if (!IsScissorSkillActive())
+                return;
+
             bool wantLeft = visualStock >= 2;
             bool wantRight = visualStock >= 1;
 
@@ -148,8 +204,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private void ApplyVisualState()
         {   
             //Log.Warning("ApplyVisualState: Applying visual state");
-            SetScissorVisual(scissorLModel, hasLeftScissor);
-            SetScissorVisual(scissorRModel, hasRightScissor);
+            SetScissorVisual(scissorLModel, HasLeftScissor);
+            SetScissorVisual(scissorRModel, HasRightScissor);
         }
 
         private static void SetScissorVisual(GameObject model, bool active)
@@ -197,6 +253,9 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
         public void NotifyScissorFired(bool isLeft)
         {
+            if (!_secondarySkillActive)
+                return;
+
             if (NetworkServer.active)
             {
                 ApplyScissorFiredServer(isLeft);
@@ -221,7 +280,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
         private void ApplyScissorFiredServer(bool isLeft)
         {
-            if (!NetworkServer.active)
+            if (!NetworkServer.active || !IsScissorSkillActive())
             {
                 return;
             }
