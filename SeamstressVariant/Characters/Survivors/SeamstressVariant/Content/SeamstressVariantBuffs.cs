@@ -15,9 +15,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         // active special buff: while present, damage cannot reduce health below 1
         public static BuffDef defianceBuff;
 
-        // reject buff because lmao
-        public static BuffDef rejectBuff;
-
         public static void Init(AssetBundle assetBundle)
         {
             scissorLeftBuff = Modules.Content.CreateAndAddBuff("SeamstressVariantScissorLeft",
@@ -38,11 +35,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 false,
                 false);
 
-            rejectBuff = Modules.Content.CreateAndAddBuff("SeamstressVariantReject",
-                LegacyResourcesAPI.Load<BuffDef>("BuffDefs/HiddenInvincibility").iconSprite,
-                new Color(0.9f, 0.1f, 0.1f),
-                false,
-                false);
         }
     }
 }

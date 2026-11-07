@@ -355,7 +355,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
             GlobalEventManager.onServerDamageDealt += GlobalEventManager_onServerDamageDealt;
             On.RoR2.HealthComponent.GetHealthBarValues += HealthComponent_GetHealthBarValues;
             RecalculateStatsAPI.GetStatCoefficients += RecalculateStatsAPI_GetStatCoefficients;
-            On.RoR2.HealthComponent.TakeDamageProcess += HealthComponent_TakeDamageProcess;
 
             bypassHeartConversion = ProcTypeAPI.ReserveProcType();
         }
@@ -516,34 +515,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 return overheal;
             });
             c.Emit(OpCodes.Stloc_3);
-        }
-
-        
-
-        private void HealthComponent_TakeDamageProcess(On.RoR2.HealthComponent.orig_TakeDamageProcess orig, HealthComponent self, DamageInfo damageInfo)
-        {
-            if (self != null
-                && self.body != null
-                && self.body.bodyIndex == bodyIndexVar
-                && self.body.HasBuff(SeamstressVariantBuffs.rejectBuff)
-                && damageInfo != null
-                && damageInfo.damage > 0f && (damageInfo.damageType & DamageType.NonLethal) == 0)
-            {
-                damageInfo.rejected = true;
-            }
-
-            if (self != null
-                && self.body != null
-                && self.body.bodyIndex == bodyIndexVar
-                && self.body.HasBuff(SeamstressVariantBuffs.defianceBuff)
-                && damageInfo != null
-                && damageInfo.damage > 0f && (damageInfo.damageType & DamageType.NonLethal) == 0)
-            {
-                //Log.Warning("TakeDamageHook: Death prevented by Defiance.");
-                damageInfo.damageType |= DamageType.NonLethal;
-            }
-
-            orig(self, damageInfo);
         }
     }
 }

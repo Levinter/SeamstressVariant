@@ -34,7 +34,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
                 if (NetworkServer.active && characterBody.HasBuff(SeamstressVariantBuffs.defianceBuff) == false)
                 {
-                    characterBody.AddBuff(SeamstressVariantBuffs.defianceBuff);
+                    characterBody.AddTimedBuff(SeamstressVariantBuffs.defianceBuff, 1f);
                 }
             }
         }
@@ -67,7 +67,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             }
         }
 
-        public override void ModifyNextState(EntityState nextState)
+        /*public override void ModifyNextState(EntityState nextState)
         {
             base.ModifyNextState(nextState);
             if (NetworkServer.active && characterBody.HasBuff(SeamstressVariantBuffs.defianceBuff))
@@ -77,7 +77,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                     characterBody.RemoveBuff(SeamstressVariantBuffs.defianceBuff);
                 }
             }
-        }
+        }*/
 
         public override void OnExit()
         {

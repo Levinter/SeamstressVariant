@@ -12,9 +12,11 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
     {
         private CharacterBody characterBody;
         private SetStateOnHurt setStateOnHurt;
-        // Kek
 
-        private static readonly CharacterBody.BodyFlags DefianceBodyFlags = CharacterBody.BodyFlags.Unmovable | CharacterBody.BodyFlags.IgnoreKnockup | CharacterBody.BodyFlags.ImmuneToExecutes;
+        private static readonly CharacterBody.BodyFlags DefianceBodyFlags = CharacterBody.BodyFlags.Unmovable
+            | CharacterBody.BodyFlags.IgnoreKnockup
+            | CharacterBody.BodyFlags.ImmuneToExecutes
+            | CharacterBody.BodyFlags.Buddha;
         private int previousBuffCount = 0;
         private CharacterBody.BodyFlags appliedBodyFlags;
         private bool stateImmunitiesApplied;

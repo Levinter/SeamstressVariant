@@ -251,6 +251,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
                 var procChainMask = new ProcChainMask();
                 procChainMask.AddModdedProc(SeamstressVariantSurvivor.bypassHeartConversion);
 
+                characterBody.AddTimedBuff(DLC2Content.Buffs.HiddenRejectAllDamage, 1f);
+
                 this.characterBody.healthComponent.Heal(healAmount, procChainMask, true);
                 //Log.Warning("DefiantHeart: Healed for " + healAmount);
             }
@@ -267,22 +269,19 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             if (NetworkServer.active)
             {
-                characterBody.AddTimedBuff(SeamstressVariantBuffs.rejectBuff, 1.0f); //pls dont die
+                if (exitingDueToHeartExhaustion)
+                {
+                    characterBody.healthComponent.Suicide();
+                }
 
                 DotController.RemoveAllDots(gameObject);
 
                 if (characterBody.HasBuff(SeamstressVariantBuffs.defianceBuff))
                 {
                     characterBody.RemoveBuff(SeamstressVariantBuffs.defianceBuff);
-                    characterBody.RemoveBuff(RoR2Content.Buffs.SuperBleed);
                 }
 
-                
-
-                if (exitingDueToHeartExhaustion)
-                {
-                    characterBody.healthComponent.Suicide();
-                }
+                characterBody.RemoveBuff(RoR2Content.Buffs.SuperBleed);
             }
 
             if (isAuthority)

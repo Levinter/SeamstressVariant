@@ -75,19 +75,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         //Check for incoming lethal damage and activate the special skill if the player has it available
         public void OnIncomingDamageServer(DamageInfo damageInfo)
         {
-            //applying damage.rejected to block fucking void fog damage
-            /*if (body.HasBuff(SeamstressVariantBuffs.rejectBuff))
-            {
-                damageInfo.rejected = true;
-                Log.Warning("DeathGateComponent: Damage rejected due to reject buff.");
-                return;
-            }*/
-
-            if (body.HasBuff(SeamstressVariantBuffs.rejectBuff))
-            {
-                return;
-            }
-
             // dont activate if we are already defying death
             if (body.HasBuff(SeamstressVariantBuffs.defianceBuff))
             {
@@ -120,7 +107,6 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             
             damageInfo.damageType |= DamageType.NonLethal;
 
-            body.AddTimedBuff(SeamstressVariantBuffs.rejectBuff, 1.5f); //pls dont die
             body.AddBuff(SeamstressVariantBuffs.defianceBuff);
 
             //Log.Warning("Defiance buff applied? " + body.HasBuff(SeamstressVariantBuffs.defianceBuff));
