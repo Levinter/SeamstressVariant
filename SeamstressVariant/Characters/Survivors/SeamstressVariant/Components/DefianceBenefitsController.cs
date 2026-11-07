@@ -110,6 +110,12 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             }
         }
 
+        internal void ApplyDefianceImmediately()
+        {
+            previousBuffCount = characterBody.GetBuffCount(SeamstressVariantBuffs.defianceBuff);
+            ApplyDefianceBenefits();
+        }
+
         private void RestoreDefianceBenefits()
         {
             RestoreStateImmunities();

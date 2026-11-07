@@ -4,6 +4,7 @@ using SeamstressMod.Seamstress.Content;
 using EntityStates;
 using RoR2;
 using UnityEngine;
+using HG;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 {
@@ -24,7 +25,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
         public override void OnEnter()
         {
-            _primarySkill = characterBody != null ? characterBody.skillLocator?.primary : null;
+            _primarySkill = characterBody.AsValidOrNull()?.skillLocator.AsValidOrNull()?.primary;
             if (_primarySkill != null)
             {
                 _primarySkill.onSkillChanged += OnPrimarySkillChanged;

@@ -64,7 +64,12 @@ namespace SeamstressVariant.Modules
                     GameObject followerPrefab = rules[j].followerPrefab;
                     if (followerPrefab)
                     {
-                        string key = followerPrefab.name?.ToLowerInvariant();
+                        string key = followerPrefab.name;
+                        if (key != null)
+                        {
+                            key = key.ToLowerInvariant();
+                        }
+
                         if (!itemDisplayPrefabs.ContainsKey(key))
                         {
                             itemDisplayPrefabs[key] = followerPrefab;

@@ -1,4 +1,5 @@
 using EntityStates;
+using HG;
 using R2API;
 using RoR2;
 using RoR2.Skills;
@@ -265,7 +266,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
 
             EndStartupFreeze();
 
-            heartOverlayController?.SetHeartDrainActive(false);
+            heartOverlayController.AsValidOrNull()?.SetHeartDrainActive(false);
 
             if (NetworkServer.active)
             {
@@ -285,8 +286,8 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
             }
 
             if (isAuthority)
-                heart?.RequestSetDefianceVisualsActive(false);
-                bleedEffect?.ReturnToPool();
+                heart.AsValidOrNull()?.RequestSetDefianceVisualsActive(false);
+                bleedEffect.AsValidOrNull()?.ReturnToPool();
 
             base.OnExit();
         }

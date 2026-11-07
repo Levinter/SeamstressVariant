@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using HG;
 using RoR2;
 using RoR2.HudOverlay;
 using RoR2.UI;
@@ -53,7 +54,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         private void Start()
         {
             SkillLocator skillLocator = GetComponent<SkillLocator>();
-            specialSkill = skillLocator?.special;
+            specialSkill = skillLocator.AsValidOrNull()?.special;
             EnsureOverlayAssetsLoaded();
             RegisterOverlay();
         }

@@ -1,3 +1,4 @@
+using HG;
 using RoR2;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -52,7 +53,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         {
             TryCacheScissorModels();
 
-            secondarySkill = characterBody != null ? characterBody.skillLocator?.secondary : null;
+            secondarySkill = characterBody.AsValidOrNull()?.skillLocator.AsValidOrNull()?.secondary;
             if (secondarySkill != null)
                 secondarySkill.onSkillChanged += OnSecondarySkillChanged;
 
@@ -73,7 +74,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 return;
             }
 
-            GenericSkill secondary = characterBody.skillLocator?.secondary;
+            GenericSkill secondary = characterBody.AsValidOrNull()?.skillLocator.AsValidOrNull()?.secondary;
             if (secondary == null)
             {
                 return;
@@ -110,7 +111,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
         private bool IsScissorSkillActive()
         {
-            GenericSkill secondary = characterBody != null ? characterBody.skillLocator?.secondary : null;
+            GenericSkill secondary = characterBody.AsValidOrNull()?.skillLocator.AsValidOrNull()?.secondary;
             return secondary != null && secondary.skillDef is SeamstressTrackingSkillDef;
         }
 

@@ -1,3 +1,4 @@
+using HG;
 using RoR2;
 using RoR2.Skills;
 using SeamstressVariant.Survivors.SeamstressVariant.SkillStates;
@@ -6,7 +7,7 @@ using UnityEngine.Networking;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 {
-    internal class DeathGateComponent : NetworkBehaviour, IOnIncomingDamageServerReceiver
+    internal class DeathGateComponent : NetworkBehaviour
     {
         private bool specialSkillAvailableServer;
         private bool IsAuthority => Util.HasEffectiveAuthority(networkId);
@@ -72,45 +73,33 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
             }
         }
 
-        //Check for incoming lethal damage and activate the special skill if the player has it available
-        public void OnIncomingDamageServer(DamageInfo damageInfo)
+        internal void TryActivateDefiance()
         {
-            // dont activate if we are already defying death
+            //If we already have defiance we stop
             if (body.HasBuff(SeamstressVariantBuffs.defianceBuff))
             {
                 return;
             }
 
-            //Log.Warning("Incoming Damage Type: " + damageInfo.damageType);
-
-            bool incomingDamageIsLethal = damageInfo.damage >= healthComponent.combinedHealth && (damageInfo.damageType & DamageType.NonLethal) == 0;
-            if (!incomingDamageIsLethal)
-            {
-                return;
-            }
-
-            //Log.Fatal($"DeathGateComponent: Incoming lethal damage detected.");
-
-            //Log.Warning("DeathGateComponent: Special skill available for activation: " + specialSkillAvailableServer);
-
-            // dont activate if the special skill is not available
+            //If no special available, we die
             if (!specialSkillAvailableServer)
             {
                 return;
             }
 
-            //check if theres something stored in heart
+            //If zero heart we die 
             if (bleedingHeartComponent.GetHeart() <= 0)
             {
                 return;
             }
-            
-            damageInfo.damageType |= DamageType.NonLethal;
 
             body.AddBuff(SeamstressVariantBuffs.defianceBuff);
 
-            //Log.Warning("Defiance buff applied? " + body.HasBuff(SeamstressVariantBuffs.defianceBuff));
-
+            //Our health should be zero or less, so we set it to 1 to avoid dying
+            //healthComponent.Networkhealth = 1f;
+            
+            DefianceBenefitsController benefitsController = GetComponent<DefianceBenefitsController>();
+            benefitsController.AsValidOrNull()?.ApplyDefianceImmediately();
             RpcActivateSpecialSkill();
         }
     }

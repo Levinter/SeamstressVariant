@@ -1,4 +1,5 @@
 using EntityStates;
+using HG;
 using KinematicCharacterController;
 using RoR2;
 using SeamstressMod.Seamstress.Content;
@@ -38,7 +39,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.SkillStates
         {
             base.OnEnter();
 
-            _utilitySkill = characterBody != null ? characterBody.skillLocator?.utility : null;
+            _utilitySkill = characterBody.AsValidOrNull()?.skillLocator.AsValidOrNull()?.utility;
             if (_utilitySkill != null)
                 _utilitySkill.onSkillChanged += OnUtilitySkillChanged;
             _utilitySkillReplaced = !IsBlinkSkillActive();

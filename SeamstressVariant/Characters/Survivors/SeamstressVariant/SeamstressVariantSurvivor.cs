@@ -9,6 +9,7 @@ using SeamstressVariant.Survivors.SeamstressVariant.SkillStates;
 using MonoMod.Cil;
 using Mono.Cecil.Cil;
 using System;
+using HG;
 
 namespace SeamstressVariant.Survivors.SeamstressVariant
 {
@@ -352,6 +353,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         private void AddHooks()
         {
             IL.RoR2.HealthComponent.Heal += HealthComponent_Heal;
+            IL.RoR2.HealthComponent.TakeDamageProcess += HealthComponent_TakeDamageProcess;
             GlobalEventManager.onServerDamageDealt += GlobalEventManager_onServerDamageDealt;
             On.RoR2.HealthComponent.GetHealthBarValues += HealthComponent_GetHealthBarValues;
             RecalculateStatsAPI.GetStatCoefficients += RecalculateStatsAPI_GetStatCoefficients;
@@ -360,6 +362,33 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
         }
 
         public static ModdedProcType bypassHeartConversion;
+
+        private void HealthComponent_TakeDamageProcess(ILContext il)
+        {
+            var c = new ILCursor(il);
+            var networkHealthSetter = typeof(HealthComponent).GetProperty("Networkhealth").GetSetMethod();
+
+            if (!c.TryGotoNext(MoveType.After, instruction => instruction.MatchCallOrCallvirt(networkHealthSetter)))
+            {
+                Log.Fatal("HealthComponent_TakeDamageProcess hook failed\r\n" + il.ToString());
+                return;
+            }
+
+            c.Emit(OpCodes.Ldarg_0);
+            c.EmitDelegate<Action<HealthComponent>>(self =>
+            {
+                if (self == null
+                    || self.body == null
+                    || self.body.bodyIndex != bodyIndexVar
+                    || self.health >= 1f)
+                {
+                    return;
+                }
+
+                DeathGateComponent deathGate = self.GetComponent<DeathGateComponent>();
+                deathGate.AsValidOrNull()?.TryActivateDefiance();
+            });
+        }
 
         private void RecalculateStatsAPI_GetStatCoefficients(CharacterBody sender, RecalculateStatsAPI.StatHookEventArgs args)
         {
@@ -395,9 +424,15 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
 
         private void GlobalEventManager_onServerDamageDealt(DamageReport report)
         {
-            DamageInfo damageInfo = report?.damageInfo;
-            CharacterBody attackerBody = report?.attackerBody;
-            CharacterBody victimBody = report?.victimBody;
+            DamageInfo damageInfo = null;
+            CharacterBody attackerBody = null;
+            CharacterBody victimBody = null;
+            if (report != null)
+            {
+                damageInfo = report.damageInfo;
+                attackerBody = report.attackerBody;
+                victimBody = report.victimBody;
+            }
 
             if (attackerBody == null || victimBody == null || damageInfo == null)
             {
