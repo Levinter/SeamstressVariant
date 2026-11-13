@@ -380,12 +380,14 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                 if (self == null
                     || self.body == null
                     || self.body.bodyIndex != bodyIndexVar
-                    || self.health >= 1f)
+                    || self.body.HasBuff(SeamstressVariantBuffs.defianceBuff)
+                    || self.alive)
                 {
                     return;
                 }
 
                 DeathGateComponent deathGate = self.GetComponent<DeathGateComponent>();
+                Log.Warning ("DeathGate Hook activated");
                 deathGate.AsValidOrNull()?.TryActivateDefiance();
             });
         }
@@ -527,7 +529,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant
                         heart.SetPendingAegisOverflow(0f);
                         if (!procChainMask.HasModdedProc(bypassHeartConversion))
                         {
-                            Log.Debug("HealthComponent_Heal: Converting " + actualamount + " healing into Heart.");
+                            //Log.Debug("HealthComponent_Heal: Converting " + actualamount + " healing into Heart.");
                             heart.SetPendingAegisOverflow(heart.AddToHeart(actualamount));
                             flag = 0f;
                         }

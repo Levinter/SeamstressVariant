@@ -133,13 +133,13 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
                 body.MarkAllStatsDirty();
             }
 
-            Log.Debug("Added " + amount + " to Heart. Current Heart = " + currentHeart + ", Overflow = " + overflow);
+            //Log.Debug("Added " + amount + " to Heart. Current Heart = " + currentHeart + ", Overflow = " + overflow);
 
             return overflow;
         }
         public void SetPendingAegisOverflow(float amount)
         {
-            Log.Debug("Setting pendingAegisOverflow to " + amount);
+            //Log.Debug("Setting pendingAegisOverflow to " + amount);
             pendingAegisOverflow = Mathf.Max(amount, 0f);
         }
 
@@ -147,7 +147,7 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
         {
             float overflow = pendingAegisOverflow;
             pendingAegisOverflow = 0f;
-            Log.Debug("Consumed pendingAegisOverflow: " + overflow);
+            //Log.Debug("Consumed pendingAegisOverflow: " + overflow);
             return overflow;
         }
 

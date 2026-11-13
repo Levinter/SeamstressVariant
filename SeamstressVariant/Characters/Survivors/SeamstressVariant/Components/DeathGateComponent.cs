@@ -75,28 +75,23 @@ namespace SeamstressVariant.Survivors.SeamstressVariant.Components
 
         internal void TryActivateDefiance()
         {
-            //If we already have defiance we stop
-            if (body.HasBuff(SeamstressVariantBuffs.defianceBuff))
-            {
-                return;
-            }
+            Log.Warning("DeathGateComponent: TryActivateDefiance called.");
 
             //If no special available, we die
             if (!specialSkillAvailableServer)
             {
+                Log.Info("Cause of death: Special skill on cooldown");
                 return;
             }
 
             //If zero heart we die 
             if (bleedingHeartComponent.GetHeart() <= 0)
             {
+                Log.Info("Cause of death: Not enough heart");
                 return;
             }
 
             body.AddBuff(SeamstressVariantBuffs.defianceBuff);
-
-            //Our health should be zero or less, so we set it to 1 to avoid dying
-            //healthComponent.Networkhealth = 1f;
             
             DefianceBenefitsController benefitsController = GetComponent<DefianceBenefitsController>();
             benefitsController.AsValidOrNull()?.ApplyDefianceImmediately();
